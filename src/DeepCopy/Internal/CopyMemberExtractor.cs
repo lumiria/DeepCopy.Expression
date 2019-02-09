@@ -11,10 +11,10 @@ namespace DeepCopy.Internal
         private static BindingFlags bindingFlags =
             BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly;
 
-        public static IEnumerable<(MemberInfo, InnerCopyPolicy)> Extract<T>() =>
+        public static IEnumerable<(MemberInfo, CopyPolicy)> Extract<T>() =>
             Extract(typeof(T));
 
-        public static IEnumerable<(MemberInfo, InnerCopyPolicy)> Extract(Type type)
+        public static IEnumerable<(MemberInfo, CopyPolicy)> Extract(Type type)
         {
             IEnumerable<(MemberInfo, Type, CopyMemberAttribute)> targets = null;
 
@@ -48,31 +48,31 @@ namespace DeepCopy.Internal
         private static CopyMemberAttribute GetCopyMemberAttribute(MemberInfo memberInfo) =>
             (CopyMemberAttribute)memberInfo.GetCustomAttribute(typeof(CopyMemberAttribute));
 
-        private static InnerCopyPolicy Seal(Type type, CopyMemberAttribute attribute)
+        private static CopyPolicy Seal(Type type, CopyMemberAttribute attribute)
         {
             if (TypeUtils.IsValueType(type))
             {
-                return InnerCopyPolicy.Assign;
+                return CopyPolicy.Assign;
             }
             if (type.IsArray)
             {
                 if (attribute?.CopyPolicy == CopyPolicy.DeepCopy)
-                    return InnerCopyPolicy.DeepCopy;
+                    return CopyPolicy.DeepCopy;
                 if (attribute?.CopyPolicy == CopyPolicy.ShallowCopy)
-                    return InnerCopyPolicy.ShallowCopy;
+                    return CopyPolicy.ShallowCopy;
                 if (attribute?.CopyPolicy == CopyPolicy.Assign)
-                    return InnerCopyPolicy.Assign;
+                    return CopyPolicy.Assign;
                     
                 return (TypeUtils.IsValueType(type.GetElementType())
-                        ? InnerCopyPolicy.ShallowCopy
-                        : InnerCopyPolicy.DeepCopy);
+                        ? CopyPolicy.ShallowCopy
+                        : CopyPolicy.DeepCopy);
             }
 
             if (attribute?.CopyPolicy == CopyPolicy.ShallowCopy)
-                return InnerCopyPolicy.MemberwiseClone;
+                return CopyPolicy.ShallowCopy;
             if (attribute?.CopyPolicy == CopyPolicy.Assign)
-                return InnerCopyPolicy.Assign;
-            return InnerCopyPolicy.DeepCopy;
+                return CopyPolicy.Assign;
+            return CopyPolicy.DeepCopy;
         }
     }
 }

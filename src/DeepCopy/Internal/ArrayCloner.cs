@@ -12,14 +12,14 @@ namespace DeepCopy.Internal
             new ArrayCloner();
 
         public Expression Build(
-            InnerCopyPolicy copyPolicy,
+            CopyPolicy copyPolicy,
             Type type,
             Expression source,
             Expression destination)
         {
             var elementType = type.GetElementType();
 
-            if (copyPolicy == InnerCopyPolicy.DeepCopy)
+            if (copyPolicy == CopyPolicy.DeepCopy)
             {
                 if (type.GetArrayRank() > 1)
                 {
@@ -40,7 +40,7 @@ namespace DeepCopy.Internal
                     arrayAssign);
             }
 
-            if (copyPolicy == InnerCopyPolicy.ShallowCopy)
+            if (copyPolicy == CopyPolicy.ShallowCopy)
             {
                 return CreateShallowCopyArrayExpression(
                     type,
@@ -52,7 +52,7 @@ namespace DeepCopy.Internal
         }
 
         public Expression Build(
-            InnerCopyPolicy copyPolicy,
+            CopyPolicy copyPolicy,
             Type type,
             Expression source,
             Expression destination,
@@ -60,7 +60,7 @@ namespace DeepCopy.Internal
         {
             var elementType = type.GetElementType();
 
-            if (copyPolicy == InnerCopyPolicy.DeepCopy)
+            if (copyPolicy == CopyPolicy.DeepCopy)
             {
                 if (type.GetArrayRank() > 1)
                 {
@@ -82,7 +82,7 @@ namespace DeepCopy.Internal
                     arrayAssign);
             }
 
-            if (copyPolicy == InnerCopyPolicy.ShallowCopy)
+            if (copyPolicy == CopyPolicy.ShallowCopy)
             {
                 return CreateShallowCopyArrayExpression(
                     type,
@@ -113,7 +113,7 @@ namespace DeepCopy.Internal
             var elementAssign = elementType.IsArray
                 ? Build(
                     TypeUtils.IsValueType(elementType.GetElementType())
-                        ? InnerCopyPolicy.ShallowCopy : InnerCopyPolicy.DeepCopy,
+                        ? CopyPolicy.ShallowCopy : CopyPolicy.DeepCopy,
                     elementType,
                     Expression.ArrayIndex(source, i),
                     Expression.ArrayAccess(destination, i))
@@ -158,7 +158,7 @@ namespace DeepCopy.Internal
             var elementAssign = elementType.IsArray
                 ? Build(
                     TypeUtils.IsValueType(elementType.GetElementType())
-                        ? InnerCopyPolicy.ShallowCopy : InnerCopyPolicy.DeepCopy,
+                        ? CopyPolicy.ShallowCopy : CopyPolicy.DeepCopy,
                     elementType,
                     Expression.ArrayIndex(source, indexes),
                     Expression.ArrayAccess(destination, indexes))

@@ -63,27 +63,18 @@ namespace DeepCopy.Internal
             Expression source,
             Expression destination,
             MemberInfo member,
-            InnerCopyPolicy copyPolicy)
+            CopyPolicy copyPolicy)
         {
             var value = MemberAccessorGenerator.CreateGetter(source, member);
 
-            if (copyPolicy == InnerCopyPolicy.Assign)
+            if (copyPolicy == CopyPolicy.Assign)
             {
                 return MemberAccessorGenerator.CreateSetter(destination, member, value);
             }
 
             var memberType = value.Type;
             Expression body = null;
-            if (copyPolicy == InnerCopyPolicy.MemberwiseClone)
-            {
-                body = MemberAccessorGenerator.CreateSetter(
-                    destination,
-                    member,
-                    Expression.Convert(
-                        Expression.Call(value, ReflectionUtils.MemberwizeClone),
-                        memberType));
-            }
-            else if (memberType.IsArray)
+            if (memberType.IsArray)
             {
                 body = ArrayCloner.Instance.Build(
                     copyPolicy,
@@ -91,6 +82,15 @@ namespace DeepCopy.Internal
                     value,
                     destination,
                     member);
+            }
+            else if (copyPolicy == CopyPolicy.ShallowCopy)
+            {
+                body = MemberAccessorGenerator.CreateSetter(
+                    destination,
+                    member,
+                    Expression.Convert(
+                        Expression.Call(value, ReflectionUtils.MemberwizeClone),
+                        memberType));
             }
             else
             {

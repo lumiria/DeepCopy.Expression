@@ -124,5 +124,15 @@ namespace DeepCopy.Test
             cloned.ObjJaggedArray.IsNotSameReferenceAs(obj.ObjJaggedArray);
             cloned.ObjJaggedArray[0].IsNotSameReferenceAs(obj.ObjJaggedArray[0]);
         }
+
+        //[Fact]
+        //public void DirectArrayTest()
+        //{
+        //    var array = new int[] { 1, 2, 3, 4, 5 };
+
+        //    var cloned = ObjectCloner.Clone(array);
+
+        //    cloned.IsStructuralEqual(array);
+        //}
     }
 }
