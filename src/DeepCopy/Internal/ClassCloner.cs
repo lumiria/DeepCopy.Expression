@@ -69,10 +69,7 @@ namespace DeepCopy.Internal
             public MethodCallExpression Get(Type type, Expression source)
             {
                 var genericMethod = _cache.GetOrAdd(type, t =>
-                    {
-                        var method = typeof(ObjectCloner).GetMethod("Clone");
-                        return method.MakeGenericMethod(type);
-                    });
+                        ReflectionUtils.ObjectClone.MakeGenericMethod(t));
 
                 return Expression.Call(genericMethod, source);
             }

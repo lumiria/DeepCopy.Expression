@@ -4,7 +4,7 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <AssemblyName>DeepCopy.Expression</AssemblyName>
     <Platforms>AnyCPU;x64</Platforms>
-    <LangVersion>7.1</LangVersion>
+    <LangVersion>7.3</LangVersion>
     <Authors>lumiria</Authors>
     <Copyright>© 2019 lumiria</Copyright>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
@@ -12,6 +12,9 @@
     <PackageTags>deepcopy</PackageTags>
     <PackageLicenseUrl>https://github.com/lumiria/DeepCopy.Expression/blob/master/LICENSE</PackageLicenseUrl>
     <PackageId>DeepCopy.Expression</PackageId>
+    <Version>1.0.1</Version>
+    <AssemblyVersion>1.0.0.1</AssemblyVersion>
+    <FileVersion>1.0.0.1</FileVersion>
   </PropertyGroup>
 
 </Project>

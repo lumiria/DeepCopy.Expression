@@ -97,7 +97,7 @@ Column is the type of target object.
 |      **Assign**|     Assgin |          Assgin |           Assgin |       Assgin |
 
 ## Performance
-This is a benchmark of [TestObject](https://github.com/lumiria/DeepCopy.Expression/tests/DeepCopy.Test/TestObject.cs)'s deep clone.
+This is a benchmark of [TestObject](https://github.com/lumiria/DeepCopy.Expression/blob/master/tests/DeepCopy.Test/TestObject.cs)'s deep clone.
 Except for the first time, it is almost the same speed as the code specially impremented.
 
 |                           Method |        Mean |      Error |     StdDev | Ratio |    Gen 0 |
@@ -109,7 +109,8 @@ Except for the first time, it is almost the same speed as the code specially imp
 
 
 ## Limitations
-* Does not copy events and delegate
+* Does not copy events and delegate.
+* Not supported direct array specification.
 
 ## License
 This library is under the MIT License.

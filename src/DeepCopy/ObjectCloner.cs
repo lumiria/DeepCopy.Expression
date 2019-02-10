@@ -1,4 +1,5 @@
-﻿using DeepCopy.Internal;
+﻿using System.Runtime.Serialization;
+using DeepCopy.Internal;
 
 namespace DeepCopy
 {
@@ -15,9 +16,8 @@ namespace DeepCopy
         /// <returns>A new object that is copy of the specified object.</returns>
         public static T Clone<T>(T source)
         {
-            var instance = source.GetType() == typeof(T)
-                ? CloneExpressionGenerator<T>.NewInstance()
-                : (T)CloneExpressionGenerator.NewInstance(source.GetType());
+            var instance = (T)FormatterServices.GetUninitializedObject(
+                source.GetType());
             CopyTo(source, instance);
 
             return instance;

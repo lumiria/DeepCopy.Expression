@@ -3,7 +3,6 @@ using System.Collections.Concurrent;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Runtime.Serialization;
 using DeepCopy.Internal.Utilities;
 
 namespace DeepCopy.Internal
@@ -17,13 +16,8 @@ namespace DeepCopy.Internal
             _caches = new ConcurrentDictionary<Type, Action<object, object>>();
         }
 
-        public static object NewInstance(Type type)
-        {
-            return FormatterServices.GetUninitializedObject(type);
-        }
-
         public static Action<object, object> CreateDelegate(Type type) =>
-            _caches.GetOrAdd(type, x => Create(x).Compile());
+            _caches.GetOrAdd(type, t => Create(t).Compile());
 
         private static Expression<Action<object, object>> Create(Type type)
         {

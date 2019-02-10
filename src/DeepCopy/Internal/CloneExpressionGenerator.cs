@@ -2,7 +2,6 @@
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
-using System.Runtime.Serialization;
 using DeepCopy.Internal.Utilities;
 
 namespace DeepCopy.Internal
@@ -19,11 +18,6 @@ namespace DeepCopy.Internal
 
         public static void Clearnup() =>
             _delegate = null;
-
-        public static T NewInstance()
-        {
-            return (T)FormatterServices.GetUninitializedObject(_type);
-        }
 
         public static Action<T, T> CreateDelegate() =>
             _delegate ?? (_delegate = Create().Compile());

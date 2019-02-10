@@ -19,5 +19,8 @@ namespace DeepCopy.Internal.Utilities
 
         public static MethodInfo GetArrayLength { get; } =
             typeof(Array).GetMethod("GetLength");
+
+        public static MethodInfo ObjectClone { get; } =
+            typeof(ObjectCloner).GetMethod("Clone");
     }
 }
