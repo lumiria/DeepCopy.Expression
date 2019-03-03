@@ -89,12 +89,12 @@ class Program
 Row is the specified copy policy.
 Column is the type of target object.
 
-|                |  ValueType |           Class | Array(ValueType) | Array(Class) |
-|----------------|:----------:|:---------------:|:----------------:|:------------:|
-|     **Default**|     Assign |        DeepCopy |            Clone |     DeepCopy |
-|    **DeepCopy**|     Assign |        DeepCopy |         DeepCopy |     DeepCopy |
-| **ShallowCopy**|     Assgin | MemberwiseClone |            Clone |        Clone |
-|      **Assign**|     Assgin |          Assgin |           Assgin |       Assgin |
+|                |  ValueType |           Class | Array(ValueType) | Array(Class) | Delegate |
+|----------------|:----------:|:---------------:|:----------------:|:------------:|:--------:|
+|     **Default**|     Assign |        DeepCopy |            Clone |     DeepCopy |   Assgin |
+|    **DeepCopy**|     Assign |        DeepCopy |         DeepCopy |     DeepCopy |   Assgin |
+| **ShallowCopy**|     Assgin | MemberwiseClone |            Clone |        Clone |   Assgin |
+|      **Assign**|     Assgin |          Assgin |           Assgin |       Assgin |   Assgin |
 
 ## Performance
 This is a benchmark of [TestObject](https://github.com/lumiria/DeepCopy.Expression/blob/master/tests/DeepCopy.Test/TestObject.cs)'s deep clone.
@@ -109,7 +109,7 @@ Except for the first time, it is almost the same speed as the code specially imp
 
 
 ## Limitations
-* Does not copy events and delegate.
+* Does not copy delegate.
 * Not supported direct array specification.
 
 ## License
