@@ -9,12 +9,12 @@
     <Copyright>© 2019 lumiria</Copyright>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Description>The library for deep copying objects made with expression trees.</Description>
-    <PackageTags>deepcopy</PackageTags>
+    <PackageTags>deepcopy, clone, deepclone, shallowcopy</PackageTags>
     <PackageLicenseUrl>https://github.com/lumiria/DeepCopy.Expression/blob/master/LICENSE</PackageLicenseUrl>
     <PackageId>DeepCopy.Expression</PackageId>
-    <Version>1.0.1</Version>
-    <AssemblyVersion>1.0.0.1</AssemblyVersion>
-    <FileVersion>1.0.0.1</FileVersion>
+    <Version>1.0.2</Version>
+    <AssemblyVersion>1.0.0.2</AssemblyVersion>
+    <FileVersion>1.0.0.2</FileVersion>
   </PropertyGroup>
 
 </Project>

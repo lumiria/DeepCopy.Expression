@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Xunit;
 
@@ -123,6 +124,18 @@ namespace DeepCopy.Test
             cloned.ObjArray2.IsNotSameReferenceAs(obj.ObjArray2);
             cloned.ObjJaggedArray.IsNotSameReferenceAs(obj.ObjJaggedArray);
             cloned.ObjJaggedArray[0].IsNotSameReferenceAs(obj.ObjJaggedArray[0]);
+        }
+
+        [Fact]
+        public void DelegateTest()
+        {
+            var obj = new DelegateTestObject(() => Console.WriteLine("Action"));
+            obj.TestEvent += (_, __) => Console.WriteLine("Event");
+
+            var cloned = ObjectCloner.Clone(obj);
+
+            cloned.TestAction.IsSameReferenceAs(obj.TestAction);
+            cloned.IsEventEmpty.IsTrue();
         }
 
         //[Fact]

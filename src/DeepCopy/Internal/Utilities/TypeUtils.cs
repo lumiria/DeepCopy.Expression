@@ -13,6 +13,12 @@ namespace DeepCopy.Internal.Utilities
         public static bool IsArrayType(Type type) =>
             type.IsArray;
 
+        public static bool IsDelegate(Type type) =>
+            type.IsSubclassOf(typeof(Delegate)) || type.Equals(typeof(Delegate));
+
+        public static bool IsEvent(Type type, string fieldName) =>
+            type.GetEvent(fieldName) != null;
+
         public static IEnumerable<FieldInfo> GetFields(Type type, BindingFlags bindingFlags)
         {
             var fields = new List<IEnumerable<FieldInfo>>();

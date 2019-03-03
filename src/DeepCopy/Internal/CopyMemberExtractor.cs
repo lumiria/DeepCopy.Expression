@@ -35,6 +35,7 @@ namespace DeepCopy.Internal
 
         private static IEnumerable<(MemberInfo, Type, CopyMemberAttribute)> GetFields(Type type) =>
             TypeUtils.GetFields(type, bindingFlags)
+                .Where(x => !TypeUtils.IsEvent(x.DeclaringType, x.Name))
                 .Select(x => ((MemberInfo)x, x.FieldType, (CopyMemberAttribute)null));
 
         private static IEnumerable<(MemberInfo, Type, CopyMemberAttribute)> GetFieldsWithAttribute(Type type) =>
@@ -50,7 +51,7 @@ namespace DeepCopy.Internal
 
         private static CopyPolicy Seal(Type type, CopyMemberAttribute attribute)
         {
-            if (TypeUtils.IsValueType(type))
+            if (TypeUtils.IsValueType(type) || TypeUtils.IsDelegate(type))
             {
                 return CopyPolicy.Assign;
             }
