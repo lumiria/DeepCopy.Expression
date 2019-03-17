@@ -21,18 +21,17 @@ namespace DeepCopy.Internal.Utilities
 
         public static IEnumerable<FieldInfo> GetFields(Type type, BindingFlags bindingFlags)
         {
-            var fields = new List<IEnumerable<FieldInfo>>();
-
             var baseType = type.BaseType;
             while (baseType != null && !baseType.IsInterface)
             {
-                fields.Add(GetFields(baseType, bindingFlags));
+                foreach (var t in GetFields(baseType, bindingFlags))
+                    yield return t;
 
                 baseType = baseType.BaseType;
             }
 
-            fields.Add(type.GetFields(bindingFlags));
-            return fields.SelectMany(x => x);
+            foreach (var t in type.GetFields(bindingFlags))
+                yield return t;
         }
     }
 }

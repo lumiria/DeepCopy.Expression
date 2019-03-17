@@ -1,7 +1,8 @@
 ﻿using System;
-using System.Linq;
+using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using DeepCopy.Internal.Utilities;
 
 namespace DeepCopy.Internal
@@ -24,31 +25,37 @@ namespace DeepCopy.Internal
 
         private static Expression<Action<T, T>> Create()
         {
+            //var sw = new System.Diagnostics.Stopwatch();
+            //sw.Start();
             var sourceParameter = Expression.Parameter(_type, "source");
             var destinationParameter = Expression.Parameter(_type, "destination");
 
             var body = CreateCloneExpression(sourceParameter, destinationParameter);
 
+            //sw.Stop();
+            //Console.WriteLine($"** {sw.ElapsedMilliseconds}");
+            //sw.Start();
             return Expression.Lambda<Action<T, T>>(
                 body,
                 sourceParameter, destinationParameter);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static Expression CreateCloneExpression(ParameterExpression source, ParameterExpression destination)
         {
             var targets = CopyMemberExtractor.Extract<T>();
 
-            //System.Diagnostics.Debug.WriteLine($"{typeof(T)}");
-            //foreach (var target in targets)
-            //{
-            //    var type = target.Item1 is FieldInfo field ? field.FieldType
-            //        : ((PropertyInfo)target.Item1).PropertyType;
-            //    System.Diagnostics.Debug.WriteLine($" - {type} : {target.Item1.Name}");
-            //}
+            var expressions = new ReadOnlyCollectionBuilder<Expression>(
+                CreateExpressions(targets, source, destination));
 
-            var expressions = targets.Select(t =>
-                CreateCloneMemberExpression(source, destination, t.Item1, t.Item2));
             return Expression.Block(expressions);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static IEnumerable<Expression> CreateExpressions(IEnumerable<(MemberInfo, CopyPolicy)> targets, ParameterExpression source, ParameterExpression destination)
+        {
+            foreach (var target in targets)
+               yield return CreateCloneMemberExpression(source, destination, target.Item1, target.Item2);
         }
 
         private static Expression CreateCloneMemberExpression(

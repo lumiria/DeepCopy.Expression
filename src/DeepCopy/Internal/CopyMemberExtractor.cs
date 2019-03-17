@@ -29,14 +29,31 @@ namespace DeepCopy.Internal
                     .Where(t => t.Item3 != null);
             }
 
-            return targets.Select(t =>
-                (t.Item1, Seal(t.Item2, t.Item3)));
+            foreach (var t in targets)
+                yield return (t.Item1, Seal(t.Item2, t.Item3));
         }
 
-        private static IEnumerable<(MemberInfo, Type, CopyMemberAttribute)> GetFields(Type type) =>
-            TypeUtils.GetFields(type, bindingFlags)
-                .Where(x => !TypeUtils.IsEvent(x.DeclaringType, x.Name))
-                .Select(x => ((MemberInfo)x, x.FieldType, (CopyMemberAttribute)null));
+        private static IEnumerable<(MemberInfo, Type, CopyMemberAttribute)> GetFields(Type type)
+        {
+            var events = new HashSet<string>(type.GetEvents().Select(x => x.Name));
+
+            foreach (var field in TypeUtils.GetFields(type, bindingFlags))
+            {
+                if (!events.Contains(field.Name))
+                    yield return (field, field.FieldType, CopyMemberAttribute.Default);
+            }
+        }
+
+        //private static IEnumerable<(MemberInfo, Type, CopyMemberAttribute)> GetFields(Type type)
+        //{
+        //    foreach (var field in TypeUtils.GetFields(type, bindingFlags))
+        //    {
+        //        if (!TypeUtils.IsEvent(type, field.Name))
+        //        {
+        //            yield return (field, field.FieldType, (CopyMemberAttribute)null);
+        //        }
+        //    }
+        //}
 
         private static IEnumerable<(MemberInfo, Type, CopyMemberAttribute)> GetFieldsWithAttribute(Type type) =>
             TypeUtils.GetFields(type, bindingFlags)
@@ -57,23 +74,17 @@ namespace DeepCopy.Internal
             }
             if (type.IsArray)
             {
-                if (attribute?.CopyPolicy == CopyPolicy.DeepCopy)
-                    return CopyPolicy.DeepCopy;
-                if (attribute?.CopyPolicy == CopyPolicy.ShallowCopy)
-                    return CopyPolicy.ShallowCopy;
-                if (attribute?.CopyPolicy == CopyPolicy.Assign)
-                    return CopyPolicy.Assign;
+                if (attribute.CopyPolicy != CopyPolicy.Default)
+                    return attribute.CopyPolicy;
                     
                 return (TypeUtils.IsValueType(type.GetElementType())
                         ? CopyPolicy.ShallowCopy
                         : CopyPolicy.DeepCopy);
             }
 
-            if (attribute?.CopyPolicy == CopyPolicy.ShallowCopy)
-                return CopyPolicy.ShallowCopy;
-            if (attribute?.CopyPolicy == CopyPolicy.Assign)
-                return CopyPolicy.Assign;
-            return CopyPolicy.DeepCopy;
+            return attribute.CopyPolicy != CopyPolicy.Default
+                ? attribute.CopyPolicy
+                : CopyPolicy.DeepCopy;
         }
     }
 }

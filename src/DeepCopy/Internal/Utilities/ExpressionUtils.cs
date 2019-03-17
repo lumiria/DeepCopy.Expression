@@ -5,6 +5,12 @@ namespace DeepCopy.Internal.Utilities
 {
     internal static class ExpressionUtils
     {
+        public static Expression Zero { get; } =
+            Expression.Constant(0);
+
+        public static Expression One { get; } =
+            Expression.Constant(1);
+
         public static Expression MemberwiseClone(Type type, Expression instance) =>
             Expression.Convert(
                 Expression.Call(instance, ReflectionUtils.MemberwizeClone),

@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using DeepCopy.Internal.Utilities;
 
 namespace DeepCopy.Internal
@@ -46,11 +48,18 @@ namespace DeepCopy.Internal
             //    System.Diagnostics.Debug.WriteLine($" - {type} : {target.Item1.Name}");
             //}
 
-            var expressions = targets.Select(t =>
-                CreateCloneMemberExpression(source, destination, t.Item1, t.Item2));
+            var expressions = new ReadOnlyCollectionBuilder<Expression>(
+                CreateExpressions(targets, source, destination));
             return expressions.Any()
                 ? (Expression)Expression.Block(expressions)
                 : Expression.Empty();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static IEnumerable<Expression> CreateExpressions(IEnumerable<(MemberInfo, CopyPolicy)> targets, Expression source, Expression destination)
+        {
+            foreach (var target in targets)
+               yield return CreateCloneMemberExpression(source, destination, target.Item1, target.Item2);
         }
 
         private static Expression CreateCloneMemberExpression(
