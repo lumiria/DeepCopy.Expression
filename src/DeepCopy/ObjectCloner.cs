@@ -1,4 +1,5 @@
-﻿using System.Runtime.Serialization;
+﻿using System;
+using System.Runtime.Serialization;
 using DeepCopy.Internal;
 
 namespace DeepCopy
@@ -8,6 +9,28 @@ namespace DeepCopy
     /// </summary>
     public static class ObjectCloner
     {
+        /// <summary>
+        /// Precompiles copy processing dynamic code.
+        /// </summary>
+        /// <typeparam name="T">The type of target.</typeparam>
+        public static void Compile<T>()
+        {
+            CloneExpressionGenerator<T>.CreateDelegate();
+        }
+
+        /// <summary>
+        /// Precompiles copy processing dynamic code.
+        /// </summary>
+        /// <param name="type">The type of target.</param>
+        /// <remarks>
+        /// If you want to copy using a base class or interface, use this <see cref="Compile"/> method.
+        /// Specifies a derived class in <paramref name="type"/>。
+        /// </remarks>
+        public static void Compile(Type type)
+        {
+            CloneExpressionGenerator.CreateDelegate(type);
+        }
+
         /// <summary>
         /// Creates a new object thas is copy of the specified object.
         /// </summary>
