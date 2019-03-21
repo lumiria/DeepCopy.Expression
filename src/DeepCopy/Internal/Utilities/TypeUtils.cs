@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 
 namespace DeepCopy.Internal.Utilities
@@ -31,7 +30,7 @@ namespace DeepCopy.Internal.Utilities
             }
 
             foreach (var t in type.GetFields(bindingFlags))
-                yield return t;
+                if (!IsEvent(type, t.Name)) yield return t;
         }
     }
 }

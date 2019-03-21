@@ -16,33 +16,38 @@ namespace DeepCopy.Internal
 
         public static IEnumerable<(MemberInfo, CopyPolicy)> Extract(Type type)
         {
-            IEnumerable<(MemberInfo, Type, CopyMemberAttribute)> targets = null;
-
             if (type.GetCustomAttribute(typeof(CloneableAttribute)) == null)
             {
-                targets = GetFields(type);
+                //return GetFields(type)
+                //    .Select(field => ((MemberInfo)field, Seal(field.FieldType, CopyMemberAttribute.Default)));
+                foreach (var fieldInfo in GetFields(type))
+                    yield return (fieldInfo, Seal(fieldInfo.FieldType, CopyMemberAttribute.Default));
             }
             else
             {
-                targets = GetFieldsWithAttribute(type)
+                var targets = GetFieldsWithAttribute(type)
                     .Concat(GetPropertiesWithAttribute(type))
                     .Where(t => t.Item3 != null);
+                //.Select(t => (t.Item1, Seal(t.Item2, t.Item3)));
+                foreach (var t in targets)
+                    yield return (t.Item1, Seal(t.Item2, t.Item3));
             }
 
-            foreach (var t in targets)
-                yield return (t.Item1, Seal(t.Item2, t.Item3));
         }
 
-        private static IEnumerable<(MemberInfo, Type, CopyMemberAttribute)> GetFields(Type type)
-        {
-            var events = new HashSet<string>(type.GetEvents().Select(x => x.Name));
+        //private static IEnumerable<(MemberInfo, Type, CopyMemberAttribute)> GetFields(Type type)
+        //{
+        //    var events = new HashSet<string>(type.GetEvents().Select(x => x.Name));
 
-            foreach (var field in TypeUtils.GetFields(type, bindingFlags))
-            {
-                if (!events.Contains(field.Name))
-                    yield return (field, field.FieldType, CopyMemberAttribute.Default);
-            }
-        }
+        //    foreach (var field in TypeUtils.GetFields(type, bindingFlags))
+        //    {
+        //        if (!events.Contains(field.Name))
+        //            yield return (field, field.FieldType, CopyMemberAttribute.Default);
+        //    }
+        //}
+
+        private static IEnumerable<FieldInfo> GetFields(Type type) =>
+            TypeUtils.GetFields(type, bindingFlags);
 
         //private static IEnumerable<(MemberInfo, Type, CopyMemberAttribute)> GetFields(Type type)
         //{
@@ -50,7 +55,7 @@ namespace DeepCopy.Internal
         //    {
         //        if (!TypeUtils.IsEvent(type, field.Name))
         //        {
-        //            yield return (field, field.FieldType, (CopyMemberAttribute)null);
+        //            yield return (field, field.FieldType, CopyMemberAttribute.Default);
         //        }
         //    }
         //}
@@ -72,19 +77,26 @@ namespace DeepCopy.Internal
             {
                 return CopyPolicy.Assign;
             }
-            if (type.IsArray)
-            {
-                if (attribute.CopyPolicy != CopyPolicy.Default)
-                    return attribute.CopyPolicy;
-                    
-                return (TypeUtils.IsValueType(type.GetElementType())
-                        ? CopyPolicy.ShallowCopy
-                        : CopyPolicy.DeepCopy);
-            }
+
+            //if (type.IsArray)
+            //{
+            //    if (attribute.CopyPolicy != CopyPolicy.Default)
+            //        return attribute.CopyPolicy;
+
+            //    return (TypeUtils.IsValueType(type.GetElementType())
+            //            ? CopyPolicy.ShallowCopy
+            //            : CopyPolicy.DeepCopy);
+            //}
+
+            //return attribute.CopyPolicy != CopyPolicy.Default
+            //    ? attribute.CopyPolicy
+            //    : CopyPolicy.DeepCopy;
 
             return attribute.CopyPolicy != CopyPolicy.Default
                 ? attribute.CopyPolicy
-                : CopyPolicy.DeepCopy;
+                : type.IsArray && TypeUtils.IsValueType(type.GetElementType())
+                    ? CopyPolicy.ShallowCopy
+                    : CopyPolicy.DeepCopy;
         }
     }
 }

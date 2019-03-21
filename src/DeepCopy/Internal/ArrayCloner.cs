@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -26,6 +27,11 @@ namespace DeepCopy.Internal
                     return CreateDeepCopyRectangulerArrayExpression(
                         type, elementType, source, destination);
                 }
+
+                //return Expression.Assign(
+                //    destination,
+                //    ClonerCache.Instance.Get(elementType, source));
+
 
                 var length = Expression.ArrayLength(source);
                 var arrayAssign = Expression.Assign(
@@ -68,6 +74,12 @@ namespace DeepCopy.Internal
                         type, elementType, source, MemberAccessorGenerator.CreateGetter(destination, member));
                 }
 
+                //return MemberAccessorGenerator.CreateSetter(
+                //    destination,
+                //    member,
+                //    ClonerCache.Instance.Get(elementType, source));
+
+
                 var length = Expression.ArrayLength(source);
                 var arrayAssign = MemberAccessorGenerator.CreateSetter(
                     destination,
@@ -91,6 +103,32 @@ namespace DeepCopy.Internal
             }
 
             throw new InvalidOperationException();
+        }
+
+        public Expression Build(
+            Type type,
+            Expression source,
+            Expression destination)
+        {
+            //var elementType = type.GetElementType();
+
+            //if (type.GetArrayRank() > 1)
+            //{
+            //    return CreateDeepCopyRectangulerArrayExpression(
+            //        type, elementType, source, destination);
+            //}
+
+            var length = Expression.ArrayLength(source);
+            var arrayAssign = Expression.Assign(
+                destination,
+                Expression.NewArrayBounds(type, length));
+
+            return CreateDeepCopyArrayExpression(
+                type,
+                source,
+                destination,
+                length,
+                arrayAssign);
         }
 
         private Expression CreateShallowCopyArrayExpression(
@@ -124,7 +162,7 @@ namespace DeepCopy.Internal
 
             return Expression.Block(
                 new[] { i },
-                Expression.Assign(i, Expression.Constant(0)),
+                Expression.Assign(i, ExpressionUtils.Zero),
                 arrayAssign,
                 Expression.Loop(
                     Expression.Block(
@@ -132,7 +170,7 @@ namespace DeepCopy.Internal
                             Expression.GreaterThanOrEqual(i, length),
                             Expression.Break(endLoop)),
                         elementAssign,
-                        Expression.AddAssign(i, Expression.Constant(1))),
+                        Expression.PreIncrementAssign(i)),
                     endLoop));
         }
 
@@ -171,21 +209,43 @@ namespace DeepCopy.Internal
             {
                 var endLoop = Expression.Label($"EndLoop{rankIndex}");
                 return Expression.Block(
-                    Expression.Assign(indexes[rankIndex], Expression.Constant(0)),
+                    Expression.Assign(indexes[rankIndex], ExpressionUtils.Zero),
                     Expression.Loop(
                     Expression.Block(
                         Expression.IfThen(
                             Expression.GreaterThanOrEqual(indexes[rankIndex], lengths[rankIndex]),
                             Expression.Break(endLoop)),
                         rankIndex < rank - 1 ? Loop(rankIndex + 1) : elementAssign,
-                        Expression.AddAssign(indexes[rankIndex], Expression.Constant(1))),
+                        Expression.PreIncrementAssign(indexes[rankIndex])),
                     endLoop));
             }
 
             return Expression.Block(
                 indexes,
-                indexes.Select(i => Expression.Assign(i, Expression.Constant(0)))
+                indexes.Select(i => Expression.Assign(i, ExpressionUtils.Zero))
                     .Concat(new[] { arrayAssign, Loop(0) }));
+        }
+
+
+        private sealed class ClonerCache
+        {
+            private readonly ConcurrentDictionary<Type, MethodInfo> _cache;
+
+            private ClonerCache()
+            {
+                _cache = new ConcurrentDictionary<Type, MethodInfo>();
+            }
+
+            public static ClonerCache Instance { get; } =
+                new ClonerCache();
+
+            public MethodCallExpression Get(Type type, Expression source)
+            {
+                var genericMethod = _cache.GetOrAdd(type, t =>
+                        ReflectionUtils.ArrayClone.MakeGenericMethod(t));
+
+                return Expression.Call(genericMethod, source);
+            }
         }
     }
 }

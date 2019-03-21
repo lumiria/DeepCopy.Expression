@@ -50,6 +50,7 @@ namespace DeepCopy.Internal
 
             var expressions = new ReadOnlyCollectionBuilder<Expression>(
                 CreateExpressions(targets, source, destination));
+            //var expressions = CreateExpressions(targets, source, destination);
             return expressions.Any()
                 ? (Expression)Expression.Block(expressions)
                 : Expression.Empty();

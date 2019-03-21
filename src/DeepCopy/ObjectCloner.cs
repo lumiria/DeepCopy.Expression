@@ -42,10 +42,18 @@ namespace DeepCopy
                 cloner(source, destination);
             }
         }
+
+        public static T[] CloneArray<T>(T[] source)
+        {
+            var cloner = CloneArrayExpressionGenerator<T>.CreateDelegate();
+            return cloner(source);
+        }
+
         
         public static void Cleanup<T>()
         {
             CloneExpressionGenerator<T>.Clearnup();
+            CloneArrayExpressionGenerator<T>.Clearnup();
         }
     }
 }

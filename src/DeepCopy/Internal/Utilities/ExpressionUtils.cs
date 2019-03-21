@@ -8,9 +8,6 @@ namespace DeepCopy.Internal.Utilities
         public static Expression Zero { get; } =
             Expression.Constant(0);
 
-        public static Expression One { get; } =
-            Expression.Constant(1);
-
         public static Expression MemberwiseClone(Type type, Expression instance) =>
             Expression.Convert(
                 Expression.Call(instance, ReflectionUtils.MemberwizeClone),
