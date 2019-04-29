@@ -39,6 +39,8 @@ namespace DeepCopy
         /// <returns>A new object that is copy of the specified object.</returns>
         public static T Clone<T>(T source)
         {
+            if (source == null) return default;
+
             var instance = (T)FormatterServices.GetUninitializedObject(
                 source.GetType());
             CopyTo(source, instance);

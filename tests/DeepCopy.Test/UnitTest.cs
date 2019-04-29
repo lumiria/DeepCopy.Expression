@@ -138,6 +138,24 @@ namespace DeepCopy.Test
             cloned.IsEventEmpty.IsTrue();
         }
 
+        [Fact]
+        public void NullReferenceTest()
+        {
+            var obj = new NullReferenceTestObject();
+            var cloned = ObjectCloner.Clone(obj);
+
+            cloned.Value2 = new List<int>(new[] { 1 });
+            cloned.Value3 = new System.Collections.ObjectModel.ObservableCollection<Child>();
+            cloned.Value3.Add(new Child());
+
+            ObjectCloner.CopyTo(cloned, obj);
+
+            cloned.Value2.IsNotSameReferenceAs(obj.Value2);
+            cloned.Value2[0].IsNotSameReferenceAs(obj.Value2[0]);
+            cloned.Value3.IsNotSameReferenceAs(obj.Value3);
+            cloned.Value3[0].IsNotSameReferenceAs(obj.Value3[0]);
+        }
+
         //[Fact]
         //public void DirectArrayTest()
         //{
