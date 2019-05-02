@@ -6,7 +6,7 @@ namespace DeepCopy.Internal
     internal static class CloneArrayExpressionGenerator<T>
     {
         private static readonly Type _type;
-        private static Func<T[], T[]> _delegate;
+        private static Func<T[], ObjectReferencesCache, T[]> _delegate;
 
         static CloneArrayExpressionGenerator()
         {
@@ -16,21 +16,22 @@ namespace DeepCopy.Internal
         public static void Clearnup() =>
             _delegate = null;
 
-        public static Func<T[], T[]> CreateDelegate() =>
+        public static Func<T[], ObjectReferencesCache, T[]> CreateDelegate() =>
             _delegate ?? (_delegate = Create().Compile());
 
-        private static Expression<Func<T[], T[]>> Create()
+        private static Expression<Func<T[], ObjectReferencesCache, T[]>> Create()
         {
             var sourceParameter = Expression.Parameter(_type, "source");
+            var cacheParameter = Expression.Parameter(typeof(ObjectReferencesCache), "cache");
 
-            var body = CreateCloneExpression(sourceParameter);
+            var body = CreateCloneExpression(sourceParameter, cacheParameter);
 
-            return Expression.Lambda<Func<T[], T[]>>(
+            return Expression.Lambda<Func<T[], ObjectReferencesCache, T[]>>(
                 body,
-                sourceParameter);
+                sourceParameter, cacheParameter);
         }
 
-        private static Expression CreateCloneExpression(ParameterExpression source)
+        private static Expression CreateCloneExpression(ParameterExpression source, ParameterExpression cache)
         {
             var destination = Expression.Parameter(_type, "destination");
 
@@ -39,7 +40,8 @@ namespace DeepCopy.Internal
                 ArrayCloner.Instance.Build(
                     typeof(T),//_type,
                     source,
-                    destination),
+                    destination,
+                    cache),
                 destination);
         }
     }

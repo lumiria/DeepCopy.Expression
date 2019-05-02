@@ -156,6 +156,20 @@ namespace DeepCopy.Test
             cloned.Value3[0].IsNotSameReferenceAs(obj.Value3[0]);
         }
 
+        [Fact]
+        public void CrossReferenceTest()
+        {
+            var obj = new CrossReferenceObject();
+            var cloned = ObjectCloner.Clone(obj, true);
+
+            cloned.IsNotSameReferenceAs(obj);
+            cloned.A.IsNotSameReferenceAs(obj.A);
+            cloned.B.IsNotSameReferenceAs(obj.B);
+
+            cloned.A.IsSameReferenceAs(cloned.B.A);
+            cloned.B.IsSameReferenceAs(cloned.A.B);
+        }
+
         //[Fact]
         //public void DirectArrayTest()
         //{

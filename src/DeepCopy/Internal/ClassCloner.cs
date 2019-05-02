@@ -14,9 +14,10 @@ namespace DeepCopy.Internal
         public Expression Build(
                 Type type,
                 Expression source,
-                Expression destination)
+                Expression destination,
+                Expression cache)
         {
-            var cloneExpression = ClonerCache.Instance.Get(type, source);
+            var cloneExpression = ClonerCache.Instance.Get(type, source, cache);
 
             if (type != typeof(object))
             {
@@ -35,9 +36,10 @@ namespace DeepCopy.Internal
                 Type type,
                 Expression source,
                 Expression destination,
-                MemberInfo member)
+                MemberInfo member,
+                Expression cache)
         {
-            var cloneExpression = ClonerCache.Instance.Get(type, source);
+            var cloneExpression = ClonerCache.Instance.Get(type, source, cache);
 
             if (type != typeof(object))
             {
@@ -66,12 +68,12 @@ namespace DeepCopy.Internal
             public static ClonerCache Instance { get; } =
                 new ClonerCache();
 
-            public MethodCallExpression Get(Type type, Expression source)
+            public MethodCallExpression Get(Type type, Expression source, Expression cache)
             {
                 var genericMethod = _cache.GetOrAdd(type, t =>
                         ReflectionUtils.ObjectClone.MakeGenericMethod(t));
 
-                return Expression.Call(genericMethod, source);
+                return Expression.Call(genericMethod, source, cache);
             }
         }
     }
