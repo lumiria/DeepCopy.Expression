@@ -27,7 +27,8 @@ namespace DeepCopy.Internal
             return Expression.Assign(
                 destination,
                 Expression.Condition(
-                    Expression.TypeEqual(source, typeof(object)),
+                    //Expression.TypeEqual(source, typeof(object)),
+                    ExpressionUtils.IsObjectOrValueType(source),
                     ExpressionUtils.MemberwiseClone(type, source),
                     cloneExpression));
         }
@@ -51,7 +52,8 @@ namespace DeepCopy.Internal
                 destination,
                 member,
                 Expression.Condition(
-                    Expression.TypeEqual(source, typeof(object)),
+                    //Expression.TypeEqual(source, typeof(object)),
+                    ExpressionUtils.IsObjectOrValueType(source),
                     ExpressionUtils.MemberwiseClone(type, source),
                     cloneExpression));
         }

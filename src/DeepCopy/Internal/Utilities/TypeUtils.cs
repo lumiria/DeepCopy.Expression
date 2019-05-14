@@ -18,6 +18,9 @@ namespace DeepCopy.Internal.Utilities
         public static bool IsEvent(Type type, string fieldName) =>
             type.GetEvent(fieldName) != null;
 
+        public static bool IsObjectOrValueType(Type type) =>
+            type == typeof(object) || IsValueType(type);
+
         public static IEnumerable<FieldInfo> GetFields(Type type, BindingFlags bindingFlags)
         {
             var baseType = type.BaseType;
