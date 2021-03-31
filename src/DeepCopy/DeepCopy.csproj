@@ -1,20 +1,21 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFrameworks>net5.0;netstandard2.0</TargetFrameworks>
     <AssemblyName>DeepCopy.Expression</AssemblyName>
     <Platforms>AnyCPU;x64</Platforms>
-    <LangVersion>7.3</LangVersion>
+    <LangVersion>latest</LangVersion>
     <Authors>lumiria</Authors>
     <Copyright>© 2019 lumiria</Copyright>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Description>The library for deep copying objects made with expression trees.</Description>
     <PackageTags>deepcopy, clone, deepclone, shallowcopy</PackageTags>
-    <PackageLicenseUrl>https://github.com/lumiria/DeepCopy.Expression/blob/master/LICENSE</PackageLicenseUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageProjectUrl>https://github.com/lumiria/DeepCopy.Expression</PackageProjectUrl>
     <PackageId>DeepCopy.Expression</PackageId>
-    <Version>1.2.1</Version>
-    <AssemblyVersion>1.2.0.1</AssemblyVersion>
-    <FileVersion>1.2.0.1</FileVersion>
+    <Version>1.3.0</Version>
+    <AssemblyVersion>1.3.0.0</AssemblyVersion>
+    <FileVersion>1.3.0.0</FileVersion>
   </PropertyGroup>
 
 </Project>
