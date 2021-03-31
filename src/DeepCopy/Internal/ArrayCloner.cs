@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -246,25 +245,25 @@ namespace DeepCopy.Internal
         }
 
 
-        private sealed class ClonerCache
-        {
-            private readonly ConcurrentDictionary<Type, MethodInfo> _cache;
+        //private sealed class ClonerCache
+        //{
+        //    private readonly ConcurrentDictionary<Type, MethodInfo> _cache;
 
-            private ClonerCache()
-            {
-                _cache = new ConcurrentDictionary<Type, MethodInfo>();
-            }
+        //    private ClonerCache()
+        //    {
+        //        _cache = new ConcurrentDictionary<Type, MethodInfo>();
+        //    }
 
-            public static ClonerCache Instance { get; } =
-                new ClonerCache();
+        //    public static ClonerCache Instance { get; } =
+        //        new ClonerCache();
 
-            public MethodCallExpression Get(Type type, Expression source)
-            {
-                var genericMethod = _cache.GetOrAdd(type, t =>
-                        ReflectionUtils.ArrayClone.MakeGenericMethod(t));
+        //    public MethodCallExpression Get(Type type, Expression source)
+        //    {
+        //        var genericMethod = _cache.GetOrAdd(type, t =>
+        //                ReflectionUtils.ArrayClone.MakeGenericMethod(t));
 
-                return Expression.Call(genericMethod, source);
-            }
-        }
+        //        return Expression.Call(genericMethod, source);
+        //    }
+        //}
     }
 }

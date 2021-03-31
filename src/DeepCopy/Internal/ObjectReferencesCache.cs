@@ -4,7 +4,7 @@ namespace DeepCopy.Internal
 {
     internal sealed class ObjectReferencesCache
     {
-        private bool _isEmpty;
+        private readonly bool _isEmpty;
         private readonly ConcurrentDictionary<object, object> _cache;
 
         private ObjectReferencesCache(bool isEmpty = false)
@@ -34,9 +34,9 @@ namespace DeepCopy.Internal
 
 
         public static ObjectReferencesCache Create() =>
-            new ObjectReferencesCache(false);
+            new(false);
 
         public static ObjectReferencesCache Empty() =>
-            new ObjectReferencesCache(true);
+            new(true);
     }
 }

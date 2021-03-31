@@ -55,7 +55,7 @@ namespace DeepCopy.Internal
                 CreateExpressions(targets, source, destination, cache));
             //var expressions = CreateExpressions(targets, source, destination);
             return expressions.Any()
-                ? (Expression)Expression.Block(expressions)
+                ? Expression.Block(expressions)
                 : Expression.Empty();
         }
 
@@ -83,7 +83,7 @@ namespace DeepCopy.Internal
             }
 
             var memberType = value.Type;
-            Expression body = null;
+            Expression body;
             if (memberType.IsArray)
             {
                 body = ArrayCloner.Instance.Build(

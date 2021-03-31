@@ -144,6 +144,15 @@ namespace DeepCopy
             CloneArrayExpressionGenerator<T, T[,,,,]>.Cleanup();
         }
 
+        #region Obsolete
+
+        [Obsolete("This method is obsolete. Use Clone instead.", false)]
+        public static T[] CloneArray<T>(T[] source, bool preserveObjectReferences = false) =>
+            Clone(source, preserveObjectReferences);
+
+        #endregion Obsolete
+
+
         private static T _Clone<T>(T source, ObjectReferencesCache cache)
         {
             if (source == null) return default;

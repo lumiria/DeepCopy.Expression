@@ -21,7 +21,7 @@ namespace DeepCopy.Internal
             _delegate = null;
 
         public static Action<T, T, ObjectReferencesCache> CreateDelegate() =>
-            _delegate ?? (_delegate = Create().Compile());
+            _delegate ??= Create().Compile();
 
         private static Expression<Action<T, T, ObjectReferencesCache>> Create()
         {
@@ -74,7 +74,7 @@ namespace DeepCopy.Internal
             }
 
             var memberType = value.Type;
-            Expression body = null;
+            Expression body;
             if (memberType.IsArray)
             {
                 body = ArrayCloner.Instance.Build(

@@ -12,7 +12,6 @@ namespace DeepCopy
 
         public CopyPolicy CopyPolicy { get; set; }
 
-        public static CopyMemberAttribute Default { get; } =
-            new CopyMemberAttribute();
+        public static CopyMemberAttribute Default { get; } = new();
     }
 }
