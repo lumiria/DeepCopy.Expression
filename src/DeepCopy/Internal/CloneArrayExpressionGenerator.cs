@@ -3,30 +3,30 @@ using System.Linq.Expressions;
 
 namespace DeepCopy.Internal
 {
-    internal static class CloneArrayExpressionGenerator<T>
+    internal static class CloneArrayExpressionGenerator<T, TArray>
     {
         private static readonly Type _type;
-        private static Func<T[], ObjectReferencesCache, T[]> _delegate;
+        private static Func<TArray, ObjectReferencesCache, TArray> _delegate;
 
         static CloneArrayExpressionGenerator()
         {
-            _type = typeof(T[]);
+            _type = typeof(TArray);
         }
 
-        public static void Clearnup() =>
+        public static void Cleanup() =>
             _delegate = null;
 
-        public static Func<T[], ObjectReferencesCache, T[]> CreateDelegate() =>
-            _delegate ?? (_delegate = Create().Compile());
+        public static Func<TArray, ObjectReferencesCache, TArray> CreateDelegate() =>
+            _delegate ??= Create().Compile();
 
-        private static Expression<Func<T[], ObjectReferencesCache, T[]>> Create()
+        private static Expression<Func<TArray, ObjectReferencesCache, TArray>> Create()
         {
             var sourceParameter = Expression.Parameter(_type, "source");
             var cacheParameter = Expression.Parameter(typeof(ObjectReferencesCache), "cache");
 
             var body = CreateCloneExpression(sourceParameter, cacheParameter);
 
-            return Expression.Lambda<Func<T[], ObjectReferencesCache, T[]>>(
+            return Expression.Lambda<Func<TArray, ObjectReferencesCache, TArray>>(
                 body,
                 sourceParameter, cacheParameter);
         }
@@ -38,7 +38,7 @@ namespace DeepCopy.Internal
             return Expression.Block(
                 new[] { destination },
                 ArrayCloner.Instance.Build(
-                    typeof(T),//_type,
+                    _type,
                     source,
                     destination,
                     cache),

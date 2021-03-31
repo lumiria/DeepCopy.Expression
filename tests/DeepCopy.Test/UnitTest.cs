@@ -170,14 +170,117 @@ namespace DeepCopy.Test
             cloned.B.IsSameReferenceAs(cloned.A.B);
         }
 
-        //[Fact]
-        //public void DirectArrayTest()
-        //{
-        //    var array = new int[] { 1, 2, 3, 4, 5 };
+        [Fact]
+        public void DirectArrayTest()
+        {
+            var array1 = new int[] { 1, 2, 3, 4, 5 };
+            var cloned1 = ObjectCloner.Clone(array1);
+            cloned1.IsStructuralEqual(array1);
+            cloned1.IsNotSameReferenceAs(array1);
+            IsElementNotSameReference(array1, cloned1);
 
-        //    var cloned = ObjectCloner.Clone(array);
+            var array2 = new int[][]
+            {
+                new [] { 1, 2, 3, 4, 5},
+                new [] { 6, 7, 8, 9 },
+                new [] { 10, 11, 12}
+            };
+            var cloned2 = ObjectCloner.Clone(array2);
+            cloned2.IsStructuralEqual(array2);
+            cloned2.IsNotSameReferenceAs(array2);
+            IsElementNotSameReference(array2, cloned2);
 
-        //    cloned.IsStructuralEqual(array);
-        //}
+            var array3 = new int[2, 3]
+            {
+                { 1, 2, 3 },
+                { 4, 5, 6 }
+            };
+            var cloned3 = ObjectCloner.Clone(array3);
+            cloned3.IsStructuralEqual(array3);
+            cloned3.IsNotSameReferenceAs(array3);
+            IsElementNotSameReference(array3, cloned3);
+
+            var array4 = new int[2, 3, 4]
+            {
+                { {1, 2, 3, 4 }, {2, 3, 4, 5 }, {3, 4, 5, 6 } },
+                { {4, 5, 6, 7 }, {5, 6, 7, 8 }, {6, 7, 8, 9 } }
+            };
+            var cloned4 = ObjectCloner.Clone(array4);
+            cloned4.IsStructuralEqual(array4);
+            cloned4.IsNotSameReferenceAs(array4);
+            IsElementNotSameReference(array4, cloned4);
+
+            var arrayA = new[] { new TestObject(), new TestObject() };
+            var clonedA = ObjectCloner.Clone(arrayA);
+            clonedA.IsStructuralEqual(arrayA);
+            clonedA.IsNotSameReferenceAs(arrayA);
+            IsElementNotSameReference(arrayA, clonedA);
+
+            var arrayB = new TestObject[][]
+            {
+                new [] { new TestObject(), new TestObject(), new TestObject() },
+                new [] { new TestObject(), new TestObject() },
+                new [] { new TestObject(), new TestObject(), new TestObject() },
+            };
+            var clonedB = ObjectCloner.Clone(arrayB);
+            clonedB.IsStructuralEqual(arrayB);
+            clonedB.IsNotSameReferenceAs(arrayB);
+            IsElementNotSameReference(arrayB, clonedB);
+
+            var arrayC = new TestObject[2, 3]
+            {
+                { new TestObject(), new TestObject(), new TestObject() },
+                { new TestObject(), new TestObject(), new TestObject() }
+            };
+            var clonedC = ObjectCloner.Clone(arrayC);
+            clonedC.IsStructuralEqual(arrayC);
+            clonedC.IsNotSameReferenceAs(arrayC);
+            IsElementNotSameReference(arrayC, clonedC);
+
+            var arrayD = new TestObject[2, 3, 2]
+            {
+                { {new TestObject(), new TestObject() }, {new TestObject(), new TestObject() }, {new TestObject(), new TestObject() } },
+                { {new TestObject(), new TestObject() }, {new TestObject(), new TestObject() }, {new TestObject(), new TestObject() } }
+            };
+            var clonedD = ObjectCloner.Clone(arrayD);
+            clonedD.IsStructuralEqual(arrayD);
+            clonedD.IsNotSameReferenceAs(arrayD);
+            IsElementNotSameReference(arrayD, clonedD);
+
+        }
+
+
+        private static void IsElementNotSameReference<T>(T[] source, T[] cloned)
+        {
+            for (int i = 0; i < cloned.Length; ++i)
+            {
+                cloned[i].IsNotSameReferenceAs(source[i]);
+            }
+        }
+
+        private static void IsElementNotSameReference<T>(T[,] source, T[,] cloned)
+        {
+            for (int i = 0; i < cloned.GetLength(0); ++i)
+            {
+                for (int j = 0; j < cloned.GetLength(1); ++j)
+                {
+                    cloned[i, j].IsNotSameReferenceAs(source[i, j]);
+                }
+            }
+        }
+
+        private static void IsElementNotSameReference<T>(T[,,] source, T[,,] cloned)
+        {
+            for (int i = 0; i < cloned.GetLength(0); ++i)
+            {
+                for (int j = 0; j < cloned.GetLength(1); ++j)
+                {
+                    for (int k = 0; k < cloned.GetLength(2); ++k)
+                    {
+                        cloned[i, j, k].IsNotSameReferenceAs(source[i, j, k]);
+                    }
+                }
+            }
+        }
     }
 }

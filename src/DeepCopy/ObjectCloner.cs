@@ -63,9 +63,72 @@ namespace DeepCopy
                 preserveObjectReferences ? ObjectReferencesCache.Create() : ObjectReferencesCache.Empty());
         }
 
-        public static T[] CloneArray<T>(T[] source, bool preserveObjectReferences = false)
+        /// <summary>
+        /// Creates a new array thas is copy of the specified array.
+        /// </summary>
+        /// <typeparam name="T">The element type of array.</typeparam>
+        /// <param name="source">A source array.</param>
+        /// <param name="preserveObjectReferences">A value that specifies whether to preserve object reference data.</param>
+        /// <returns>A new array that is copy of the specified array.</returns>
+        public static T[] Clone<T>(T[] source, bool preserveObjectReferences = false)
         {
-            var cloner = CloneArrayExpressionGenerator<T>.CreateDelegate();
+            var cloner = CloneArrayExpressionGenerator<T, T[]>.CreateDelegate();
+            return cloner(source,
+                preserveObjectReferences ? ObjectReferencesCache.Create() : ObjectReferencesCache.Empty());
+        }
+
+        /// <summary>
+        /// Creates a new array thas is copy of the specified array.
+        /// </summary>
+        /// <typeparam name="T">The element type of array.</typeparam>
+        /// <param name="source">A source array.</param>
+        /// <param name="preserveObjectReferences">A value that specifies whether to preserve object reference data.</param>
+        /// <returns>A new array that is copy of the specified array.</returns>
+        public static T[,] Clone<T>(T[,] source, bool preserveObjectReferences = false)
+        {
+            var cloner = CloneArrayExpressionGenerator<T, T[,]>.CreateDelegate();
+            return cloner(source,
+                preserveObjectReferences ? ObjectReferencesCache.Create() : ObjectReferencesCache.Empty());
+        }
+
+        /// <summary>
+        /// Creates a new array thas is copy of the specified array.
+        /// </summary>
+        /// <typeparam name="T">The element type of array.</typeparam>
+        /// <param name="source">A source array.</param>
+        /// <param name="preserveObjectReferences">A value that specifies whether to preserve object reference data.</param>
+        /// <returns>A new array that is copy of the specified array.</returns>
+        public static T[,,] Clone<T>(T[,,] source, bool preserveObjectReferences = false)
+        {
+            var cloner = CloneArrayExpressionGenerator<T, T[,,]>.CreateDelegate();
+            return cloner(source,
+                preserveObjectReferences ? ObjectReferencesCache.Create() : ObjectReferencesCache.Empty());
+        }
+
+        /// <summary>
+        /// Creates a new array thas is copy of the specified array.
+        /// </summary>
+        /// <typeparam name="T">The element type of array.</typeparam>
+        /// <param name="source">A source array.</param>
+        /// <param name="preserveObjectReferences">A value that specifies whether to preserve object reference data.</param>
+        /// <returns>A new array that is copy of the specified array.</returns>
+        public static T[,,,] Clone<T>(T[,,,] source, bool preserveObjectReferences = false)
+        {
+            var cloner = CloneArrayExpressionGenerator<T, T[,,,]>.CreateDelegate();
+            return cloner(source,
+                preserveObjectReferences ? ObjectReferencesCache.Create() : ObjectReferencesCache.Empty());
+        }
+
+        /// <summary>
+        /// Creates a new array thas is copy of the specified array.
+        /// </summary>
+        /// <typeparam name="T">The element type of array.</typeparam>
+        /// <param name="source">A source array.</param>
+        /// <param name="preserveObjectReferences">A value that specifies whether to preserve object reference data.</param>
+        /// <returns>A new array that is copy of the specified array.</returns>
+        public static T[,,,,] Clone<T>(T[,,,,] source, bool preserveObjectReferences = false)
+        {
+            var cloner = CloneArrayExpressionGenerator<T, T[,,,,]>.CreateDelegate();
             return cloner(source,
                 preserveObjectReferences ? ObjectReferencesCache.Create() : ObjectReferencesCache.Empty());
         }
@@ -74,7 +137,11 @@ namespace DeepCopy
         public static void Cleanup<T>()
         {
             CloneExpressionGenerator<T>.Clearnup();
-            CloneArrayExpressionGenerator<T>.Clearnup();
+            CloneArrayExpressionGenerator<T, T[]>.Cleanup();
+            CloneArrayExpressionGenerator<T, T[,]>.Cleanup();
+            CloneArrayExpressionGenerator<T, T[,,]>.Cleanup();
+            CloneArrayExpressionGenerator<T, T[,,,]>.Cleanup();
+            CloneArrayExpressionGenerator<T, T[,,,,]>.Cleanup();
         }
 
         private static T _Clone<T>(T source, ObjectReferencesCache cache)

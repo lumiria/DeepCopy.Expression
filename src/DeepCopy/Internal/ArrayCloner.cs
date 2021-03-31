@@ -115,21 +115,28 @@ namespace DeepCopy.Internal
             Expression destination,
             Expression cache)
         {
-            //var elementType = type.GetElementType();
+            var elementType = type.GetElementType();
+            if (TypeUtils.IsValueType(elementType))
+            {
+                return CreateShallowCopyArrayExpression(
+                    type,
+                    source,
+                    destination);
+            }
 
-            //if (type.GetArrayRank() > 1)
-            //{
-            //    return CreateDeepCopyRectangulerArrayExpression(
-            //        type, elementType, source, destination);
-            //}
+            if (type.GetArrayRank() > 1)
+            {
+                return CreateDeepCopyRectangulerArrayExpression(
+                    type, elementType, source, destination, cache);
+            }
 
             var length = Expression.ArrayLength(source);
             var arrayAssign = Expression.Assign(
                 destination,
-                Expression.NewArrayBounds(type, length));
+                Expression.NewArrayBounds(elementType, length));
 
             return CreateDeepCopyArrayExpression(
-                type,
+                elementType,
                 source,
                 destination,
                 length,
