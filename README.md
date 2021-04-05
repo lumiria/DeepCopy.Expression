@@ -110,7 +110,7 @@ Except for the first time, it is almost the same speed as the code specially imp
 
 ## Limitations
 * Does not copy delegate.
-* Not supported direct array specification.
+* ~Not supported direct array specification.~ (Supported in ver1.3.0)
 
 ## License
 This library is under the MIT License.
