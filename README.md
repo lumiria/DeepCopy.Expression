@@ -1,12 +1,16 @@
 # DeepCopy.Expression
-The library for deep copying objects made with expression trees.
+DeepCopy.Expression is a library that allows you to create deep copies of objects using expression trees. A deep copy is a copy that duplicates not only the object itself, but also the objects it references. Expression trees are data structures that represent code as a tree expressions.
 
 ## Install
+To install the library, you can use the following command in the Package Manager Console
+
 ~~~
 PM > Install-Package DeepCopy.Expression
 ~~~
 
 ## Quick start
+To use the library, you can create a class that represents your object and call the ObjectCloner.Clone method to create a deep copy of it. For example:
+
 ```csharp
 class MyObject
 {
@@ -35,7 +39,8 @@ class Program
 }
 ```
 
-Supports anonymous types
+The library also supports anonymous types, which are types that are inferred from the data you assign to them. For example:
+
 ```csharp
 class Program
 {
@@ -53,7 +58,8 @@ class Program
 }
 ```
 
-Classes can be marked using the [Cloneable] to customize copy behavior. In this case, target fields or properties mark [CopyMember].
+You can customize the copy behavior of your classes by using the [Cloneable] attribute and the [CopyMember] attribute. The [Cloneable] attribute marks a class as cloneable and the [CopyMember] attribute marks a field or a property as a member to be copied. You can also specify a copy policy for each member, which determines how the member is copied. For example:
+
 ```csharp
 [Cloneable]
 class MyObject
@@ -86,8 +92,12 @@ class Program
 ```
 
 ## Copy policy
-Row is the specified copy policy.
-Column is the type of target object.
+ The available copy policies are:
+
+- Default: The default policy for the type of the member. For value types, it performs an assignment, For reference tytpes, it performs a deep copy. For arrays, it performs a clone. For delegates, it performs an assignment.
+- DeepCopy: Performs a deep copy of the member regardless of its type.
+- ShallowCopy: Performs a shallow copy of the member regardless of its type. Shallow copy is a copy that duplicates only object itself, but not the objects it references.
+- Assign: Performs an assignment to the member regardless of its type.
 
 |                |  ValueType |           Class | Array(ValueType) | Array(Class) | Delegate |
 |----------------|:----------:|:---------------:|:----------------:|:------------:|:--------:|
@@ -98,7 +108,7 @@ Column is the type of target object.
 
 ## Performance
 This is a benchmark of [TestObject](https://github.com/lumiria/DeepCopy.Expression/blob/master/tests/DeepCopy.Test/TestObject.cs)'s deep clone.
-Except for the first time, it is almost the same speed as the code specially impremented.
+The performance of the library is comparable to the code that is specially implemented for deep copying. The library uses caching to avoid generating expression trees every time. The first time you clone an object, it may take longer than subsequent times.
 
 |                           Method |        Mean |      Error |     StdDev | Ratio |    Gen 0 |
 |--------------------------------- |------------:|-----------:|-----------:|------:|---------:|
@@ -109,8 +119,10 @@ Except for the first time, it is almost the same speed as the code specially imp
 
 
 ## Limitations
-* Does not copy delegate.
-* Not supported direct array specification.
+The library has some limitations:
+
+* It does not copy delegates.
+* It does not support direct array specification. (Supported in ver1.3.0)
 
 ## License
 This library is under the MIT License.
