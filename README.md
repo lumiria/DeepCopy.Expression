@@ -122,7 +122,7 @@ The performance of the library is comparable to the code that is specially imple
 The library has some limitations:
 
 * It does not copy delegates.
-* It does not support direct array specification. (Supported in ver1.3.0)
+* ~~It does not support direct array specification.~~ (Supported in ver1.3.0)
 
 ## License
 This library is under the MIT License.
