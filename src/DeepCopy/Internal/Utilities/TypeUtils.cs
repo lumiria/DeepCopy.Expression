@@ -21,6 +21,9 @@ namespace DeepCopy.Internal.Utilities
         public static bool IsObjectOrValueType(Type type) =>
             type == typeof(object) || IsValueType(type);
 
+        public static bool IsNullable(Type type) =>
+             Nullable.GetUnderlyingType(type) != null;
+
         public static IEnumerable<FieldInfo> GetFields(Type type, BindingFlags bindingFlags)
         {
             var baseType = type.BaseType;
