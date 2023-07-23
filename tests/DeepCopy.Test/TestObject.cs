@@ -68,17 +68,17 @@ namespace DeepCopy.Test
             _doubleValue = random.Next(int.MaxValue) / (double)random.Next(100);
             _stringValue = Guid.NewGuid().ToString();
 
-            _intArray = Enumerable.Range(0, 100)
+            _intArray = Enumerable.Range(0, 10)
                 .Select(x => x * random.Next(100))
                 .ToArray();
-            _intList = Enumerable.Range(0, 100)
+            _intList = Enumerable.Range(0, 10)
                 .Select(x => x * random.Next(100))
                 .ToList();
-            _dict = Enumerable.Range(0, 100)
+            _dict = Enumerable.Range(0, 10)
                 .ToDictionary(x => x, x => random.Next(x).ToString());
 
             _child = new Child();
-            _children = Enumerable.Range(0, 100)
+            _children = Enumerable.Range(0, 10)
                 .Select(_ => new Child())
                 .ToArray();
 

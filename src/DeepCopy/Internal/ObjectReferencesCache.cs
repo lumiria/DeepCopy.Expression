@@ -4,18 +4,20 @@ namespace DeepCopy.Internal
 {
     internal sealed class ObjectReferencesCache
     {
-        private readonly bool _isEmpty;
+        private readonly bool _canCacheAnything;
         private readonly ConcurrentDictionary<object, object> _cache;
 
-        private ObjectReferencesCache(bool isEmpty = false)
+        private ObjectReferencesCache(object self, bool canCacheAnything = true)
         {
-            _isEmpty = isEmpty;
-            _cache = new ConcurrentDictionary<object, object>();
+            _canCacheAnything = canCacheAnything;
+            _cache = self != null
+                ? new() { [self] = self }
+                : new();
         }
 
-        public bool Get<T>(T source, out T referenceObject)
+        public bool Get<T>(in T source, out T referenceObject)
         {
-            if (!_isEmpty && _cache.TryGetValue(source, out var instance))
+            if (_cache.TryGetValue(source, out var instance))
             {
                 referenceObject = (T)instance;
                 return true;
@@ -25,18 +27,25 @@ namespace DeepCopy.Internal
             return false;
         }
 
-        public void Add<T>(T source, T clonedObject)
+        public void CacheSelf<T>(T obj)
         {
-            if (_isEmpty) return;
-
-            _cache[source] = clonedObject;
+            _cache[obj] = obj;
         }
 
+        public void RemoveCache<T>(T obj)
+        {
+            _cache.TryRemove(obj, out _);
+        }
 
-        public static ObjectReferencesCache Create() =>
-            new(false);
+        public bool Add<T>(T source, T clonedObject)
+        {
+            if (!_canCacheAnything) return false;
 
-        public static ObjectReferencesCache Empty() =>
-            new(true);
+            _cache[source] = clonedObject;
+            return true;
+        }
+
+        public static ObjectReferencesCache Create(object self, bool canCacheAnything) =>
+            new(self, canCacheAnything);
     }
 }

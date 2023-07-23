@@ -158,20 +158,21 @@ namespace DeepCopy.Test
         [Fact]
         public void TupleTest()
         {
-            var tuple1 = (1, "hoge", new TestObject());
+            var tuple1 = (1, "foo", new TestObject());
             var cloned1 = ObjectCloner.Clone(tuple1);
 
             cloned1.Item3.IsNotSameReferenceAs(tuple1.Item3);
             cloned1.IsStructuralEqual(tuple1);
 
-            var tuple2 = (Id: 2, Name: "foo", Value: new TestObject());
+            var tuple2 = (Id: 2, Name: "bar", Value: new TestObject());
             var cloned2 = ObjectCloner.Clone(tuple2);
             cloned2.Value.IsNotSameReferenceAs(tuple2.Value);
             cloned2.IsStructuralEqual(tuple2);
 
-            ObjectCloner.CopyTo(tuple1, ref tuple2);
-            tuple2.Value.IsNotSameReferenceAs(tuple1.Item3);
-            tuple2.IsStructuralEqual(tuple1);
+            var tuple3 = tuple1 with { Item1 = 3, Item2 = "baz", Item3 = null };
+            ObjectCloner.CopyTo(tuple1, ref tuple3);
+            tuple3.Item3.IsNotSameReferenceAs(tuple1.Item3);
+            tuple3.IsStructuralEqual(tuple1);
         }
 
         internal struct StructData

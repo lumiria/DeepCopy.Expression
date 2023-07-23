@@ -52,6 +52,7 @@ namespace DeepCopy.Internal
             CopyPolicy copyPolicy)
         {
             var value = MemberAccessorGenerator.CreateGetter(source, member);
+            //Console.WriteLine($" * {member.Name} : {value.Type} : {copyPolicy}");
 
             if (copyPolicy == CopyPolicy.Assign)
             {

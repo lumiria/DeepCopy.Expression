@@ -38,26 +38,29 @@ namespace DeepCopy
         /// <param name="source">The object to be copied.</param>
         /// <param name="preserveObjectReferences">A flag indicating whether to preserve object references.</param>
         /// <returns>A deep copy of the specified object.</returns>
-        public static T Clone<T>(T source, bool preserveObjectReferences=false)
+        public static T Clone<T>(T source, bool preserveObjectReferences = false)
         {
+            //Console.WriteLine($"[{typeof(T).Name}]");
             if (source == null) return default;
 
+            var type = source.GetType();
             var instance = (T)FormatterServices.GetUninitializedObject(
-                source.GetType());
+                type);
 
-            if (typeof(T).IsValueType)
+            if (type.IsValueType)
             {
-                _CopyValueType(source, ref instance,
-                    preserveObjectReferences ? ObjectReferencesCache.Create() : ObjectReferencesCache.Empty());
+                _CopyValueType(type, source, ref instance,
+                    CreateObjectReferenceCache(preserveObjectReferences));
             }
             else
             {
-                _CopyTo(source, instance,
-                    preserveObjectReferences ? ObjectReferencesCache.Create() : ObjectReferencesCache.Empty());
+                _CopyTo(type, source, instance,
+                    CreateObjectReferenceCache(preserveObjectReferences, source));
             }
 
             return instance;
         }
+
 
 
         /// <summary>
@@ -76,7 +79,7 @@ namespace DeepCopy
                 typeof(T?));
 
             _CopyNullableValueType(source, ref instance,
-                preserveObjectReferences ? ObjectReferencesCache.Create() : ObjectReferencesCache.Empty());
+                CreateObjectReferenceCache(preserveObjectReferences));
 
             return instance;
         }
@@ -90,8 +93,8 @@ namespace DeepCopy
         /// <param name="preserveObjectReferences">A value that specifies whether to preserve object reference data.</param>
         public static void CopyTo<T>(T source, T destination, bool preserveObjectReferences = false)
         {
-            _CopyTo(source, destination,
-                preserveObjectReferences ? ObjectReferencesCache.Create() : ObjectReferencesCache.Empty());
+            _CopyTo(source.GetType(), source, destination,
+                CreateObjectReferenceCache(preserveObjectReferences, source));
         }
 
         /// <summary>
@@ -104,8 +107,8 @@ namespace DeepCopy
         public static void CopyTo<T>(T source, ref T destination, bool preserveObjectReferences = false)
             where T : struct
         {
-            _CopyValueType(source, ref destination,
-                preserveObjectReferences ? ObjectReferencesCache.Create() : ObjectReferencesCache.Empty());
+            _CopyValueType(typeof(T), source, ref destination,
+                    CreateObjectReferenceCache(preserveObjectReferences));
         }
 
         /// <summary>
@@ -119,7 +122,7 @@ namespace DeepCopy
             where T : struct
         {
             _CopyNullableValueType(source, ref destination,
-                preserveObjectReferences ? ObjectReferencesCache.Create() : ObjectReferencesCache.Empty());
+                CreateObjectReferenceCache(preserveObjectReferences));
         }
 
         /// <summary>
@@ -133,7 +136,7 @@ namespace DeepCopy
         {
             var cloner = CloneArrayExpressionGenerator<T, T[]>.CreateDelegate();
             return cloner(source,
-                preserveObjectReferences ? ObjectReferencesCache.Create() : ObjectReferencesCache.Empty());
+                CreateObjectReferenceCache(preserveObjectReferences));
         }
 
         /// <summary>
@@ -147,7 +150,7 @@ namespace DeepCopy
         {
             var cloner = CloneArrayExpressionGenerator<T, T[,]>.CreateDelegate();
             return cloner(source,
-                preserveObjectReferences ? ObjectReferencesCache.Create() : ObjectReferencesCache.Empty());
+                CreateObjectReferenceCache(preserveObjectReferences));
         }
 
         /// <summary>
@@ -161,7 +164,7 @@ namespace DeepCopy
         {
             var cloner = CloneArrayExpressionGenerator<T, T[,,]>.CreateDelegate();
             return cloner(source,
-                preserveObjectReferences ? ObjectReferencesCache.Create() : ObjectReferencesCache.Empty());
+                CreateObjectReferenceCache(preserveObjectReferences));
         }
 
         /// <summary>
@@ -175,7 +178,7 @@ namespace DeepCopy
         {
             var cloner = CloneArrayExpressionGenerator<T, T[,,,]>.CreateDelegate();
             return cloner(source,
-                preserveObjectReferences ? ObjectReferencesCache.Create() : ObjectReferencesCache.Empty());
+                CreateObjectReferenceCache(preserveObjectReferences));
         }
 
         /// <summary>
@@ -189,10 +192,10 @@ namespace DeepCopy
         {
             var cloner = CloneArrayExpressionGenerator<T, T[,,,,]>.CreateDelegate();
             return cloner(source,
-                preserveObjectReferences ? ObjectReferencesCache.Create() : ObjectReferencesCache.Empty());
+                CreateObjectReferenceCache(preserveObjectReferences));
         }
 
-        
+
         public static void Cleanup<T>()
         {
             ReferenceTypeCloneDelegateGenerator<T>.Clearnup();
@@ -203,6 +206,9 @@ namespace DeepCopy
             CloneArrayExpressionGenerator<T, T[,,,]>.Cleanup();
             CloneArrayExpressionGenerator<T, T[,,,,]>.Cleanup();
         }
+
+        private static ObjectReferencesCache CreateObjectReferenceCache(bool preserveObjectReferences, object self = null) =>
+            ObjectReferencesCache.Create(self, preserveObjectReferences);
 
         #region Obsolete
 
@@ -215,43 +221,64 @@ namespace DeepCopy
 
         private static T _Clone<T>(T source, ObjectReferencesCache cache)
         {
+            //Console.WriteLine($"[{typeof(T).Name}]");
             if (source == null) return default;
 
             if (cache.Get(source, out var obj)) return obj;
 
+            var type = source.GetType();
             var instance = (T)FormatterServices.GetUninitializedObject(
-                source.GetType());
-            cache.Add(source, instance);
+                type);
 
-            _CopyTo(source, instance, cache);
+            if (!type.IsValueType)
+            {
+                bool isSelfCached = false;
+                if (!cache.Add(source, instance))
+                {
+                    cache.CacheSelf(source);
+                    isSelfCached = true;
+                }
+
+                _CopyTo(type, source, instance, cache);
+
+                if (isSelfCached)
+                {
+                    cache.RemoveCache(source);
+                }
+            }
+            else
+            {
+                _CopyValueType(type, source, ref instance, cache);
+            }
+
 
             return instance;
         }
 
-        private static void _CopyTo<T>(T source, T destination, ObjectReferencesCache cache)
+        private static void _CopyTo<T>(in Type type, T source, T destination, ObjectReferencesCache cache)
         {
-            if (source.GetType() == typeof(T))
+            if (type == typeof(T))
             {
                 var cloner = ReferenceTypeCloneDelegateGenerator<T>.CreateDelegate();
                 cloner(source, destination, cache);
             }
             else
             {
-                var cloner = ReferenceTypeCloneDelegateGenerator.CreateDelegate(source.GetType());
+                var cloner = ReferenceTypeCloneDelegateGenerator.CreateDelegate(type);
                 cloner(source, (T)destination, cache);
             }
         }
 
-        private static void _CopyValueType<T>(T source, ref T destination, ObjectReferencesCache cache)
+        private static void _CopyValueType<T>(in Type type, T source, ref T destination, ObjectReferencesCache cache)
         {
-            if (source.GetType() == typeof(T))
+            if (type == typeof(T))
             {
                 var cloner = ValueTypeCloneExpressionGenerator<T>.CreateDelegate();
                 cloner(source, ref destination, cache);
             }
             else
             {
-                var cloner = ReferenceTypeCloneDelegateGenerator.CreateDelegate(source.GetType());
+                var cloner = ReferenceTypeCloneDelegateGenerator.CreateDelegate(type);
                 cloner(source, destination, cache);
             }
         }

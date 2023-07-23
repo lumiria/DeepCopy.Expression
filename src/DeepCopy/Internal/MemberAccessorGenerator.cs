@@ -19,7 +19,7 @@ namespace DeepCopy.Internal
                 return Expression.Call(
                     Expression.Constant(field),
                     ReflectionUtils.SetValue,
-                    target,
+                    Expression.Convert(target, typeof(object)),
                     Expression.Convert(value, typeof(object)));
             }
             return Expression.Assign(
