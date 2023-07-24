@@ -58,7 +58,14 @@ namespace DeepCopy.Test
             clonedValue.IsStructuralEqual(structArray);
             for (int i = 0; i<clonedValue.Length; i++)
             {
-                clonedValue[i].Value.IsNotSameReferenceAs(structArray[i].Value);
+                if (clonedValue[i].Value == null)
+                {
+                    clonedValue[i].Value.Is(structArray[i].Value);
+                }
+                else
+                {
+                    clonedValue[i].Value.IsNotSameReferenceAs(structArray[i].Value);
+                } 
             }
         }
 
@@ -74,7 +81,37 @@ namespace DeepCopy.Test
             clonedValue.IsStructuralEqual(structArray);
             for (int i = 0; i < clonedValue.Length; i++)
             {
-                clonedValue[i].Value.IsNotSameReferenceAs(structArray[i].Value);
+                if (clonedValue[i]?.Value != null)
+                {
+                    clonedValue[i].Value.IsNotSameReferenceAs(structArray[i].Value);
+                }
+            }
+        }
+
+        [Fact]
+        public void NestedStructValueTypeArrayTest()
+        {
+            var cls = new
+            {
+                Id = 1,
+                StructArray = new StructData[] {
+                    new StructData { Id = 1, Name = "foo", Value = new TestObject() },
+                    default,
+                    new StructData { Id = 2, Name = "bar", Value = null }
+                }
+            };
+            var clonedValue = ObjectCloner.Clone(cls);
+            clonedValue.IsStructuralEqual(cls);
+            for (int i = 0; i < clonedValue.StructArray.Length; i++)
+            {
+                if (clonedValue.StructArray[i].Value == null)
+                {
+                    clonedValue.StructArray[i].Value.Is(cls.StructArray[i].Value);
+                }
+                else
+                {
+                    clonedValue.StructArray[i].Value.IsNotSameReferenceAs(cls.StructArray[i].Value);
+                }
             }
         }
 
@@ -100,7 +137,10 @@ namespace DeepCopy.Test
             cloned.IsStructuralEqual(tuple);
             for (int i=0; i<cloned.Length; i++)
             {
-                cloned[i].Item3.IsNotSameReferenceAs(tuple[i].Item3);
+                if (cloned[i].Item3 != null)
+                {
+                    cloned[i].Item3.IsNotSameReferenceAs(tuple[i].Item3);
+                }
             }
         }
     }

@@ -90,7 +90,10 @@ namespace DeepCopy.Internal
                     cache);
             }
 
-            return ExpressionUtils.NullCheck(value, body);
+            //return ExpressionUtils.NullCheck(value, body);
+            return TypeUtils.IsNullable(memberType)
+                ? ExpressionUtils.NullCheck(value, body)
+                : body;
         }
     }
 }

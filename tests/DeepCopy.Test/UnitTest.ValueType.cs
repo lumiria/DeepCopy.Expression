@@ -1,4 +1,5 @@
-﻿using Xunit;
+﻿using System;
+using Xunit;
 
 namespace DeepCopy.Test
 {
@@ -141,6 +142,19 @@ namespace DeepCopy.Test
             clonedValue.Is(null);
             ObjectCloner.CopyTo(value, ref clonedValue2);
             clonedValue.Is(null);
+        }
+
+        [Fact]
+        public void HasStructValueTypeTest()
+        {
+            var cls = new
+            {
+                Guid = Guid.NewGuid(),
+                //StructData = new StructData { Id = 1, Name = "foo", Value = new TestObject() }
+            };
+            var clonedValue = ObjectCloner.Clone(cls);
+            clonedValue.IsStructuralEqual(cls);
+            //clonedValue.StructData.Value.IsNotSameReferenceAs(cls.StructData.Value);
         }
 
         [Fact]

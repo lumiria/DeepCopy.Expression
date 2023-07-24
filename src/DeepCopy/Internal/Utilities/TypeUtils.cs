@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 
 namespace DeepCopy.Internal.Utilities
@@ -22,7 +23,12 @@ namespace DeepCopy.Internal.Utilities
             type == typeof(object) || IsValueType(type);
 
         public static bool IsNullable(Type type) =>
-             Nullable.GetUnderlyingType(type) != null;
+             !IsValueType(type) || Nullable.GetUnderlyingType(type) != null;
+
+        public static bool IsAssignableType(Type type) =>
+            //type.IsPrimitive || type.IsEnum || type == typeof(decimal) || type == typeof(string) || Nullable.GetUnderlyingType(type) != null;
+            type.IsPrimitive || type.IsEnum || type == typeof(decimal) || type == typeof(string) || Nullable.GetUnderlyingType(type) != null
+            || IsFullyAssignableType(type);
 
         public static IEnumerable<FieldInfo> GetFields(Type type, BindingFlags bindingFlags)
         {
@@ -38,5 +44,12 @@ namespace DeepCopy.Internal.Utilities
             foreach (var t in type.GetFields(bindingFlags))
                 if (!IsEvent(type, t.Name)) yield return t;
         }
+
+        private static bool IsFullyAssignableType(Type type) =>
+            type.IsValueType &&
+            GetFields(type, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly)
+            .Select(field => field.FieldType)
+            .Concat(type.GetProperties(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly).Select(prop => prop.PropertyType))
+            .All(IsAssignableType);
     }
 }

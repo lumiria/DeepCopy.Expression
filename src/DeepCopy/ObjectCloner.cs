@@ -269,7 +269,7 @@ namespace DeepCopy
             }
         }
 
-        private static void _CopyValueType<T>(in Type type, T source, ref T destination, ObjectReferencesCache cache)
+        private static void _CopyValueType<T>(in Type type, in T source, ref T destination, ObjectReferencesCache cache)
         {
             if (type == typeof(T))
             {
@@ -283,7 +283,7 @@ namespace DeepCopy
             }
         }
 
-        private static void _CopyNullableValueType<T>(T? source, ref T? destination, ObjectReferencesCache cache)
+        private static void _CopyNullableValueType<T>(in T? source, ref T? destination, ObjectReferencesCache cache)
             where T : struct
         {
             var cloner = ValueTypeCloneExpressionGenerator<T?>.CreateDelegate();
