@@ -55,7 +55,7 @@ namespace DeepCopy
             else
             {
                 _CopyTo(type, source, instance,
-                    CreateObjectReferenceCache(preserveObjectReferences, source));
+                    CreateObjectReferenceCache(preserveObjectReferences, source, instance));
             }
 
             return instance;
@@ -94,7 +94,7 @@ namespace DeepCopy
         public static void CopyTo<T>(T source, T destination, bool preserveObjectReferences = false)
         {
             _CopyTo(source.GetType(), source, destination,
-                CreateObjectReferenceCache(preserveObjectReferences, source));
+                CreateObjectReferenceCache(preserveObjectReferences, source, destination));
         }
 
         /// <summary>
@@ -207,8 +207,8 @@ namespace DeepCopy
             CloneArrayExpressionGenerator<T, T[,,,,]>.Cleanup();
         }
 
-        private static ObjectReferencesCache CreateObjectReferenceCache(bool preserveObjectReferences, object self = null) =>
-            ObjectReferencesCache.Create(self, preserveObjectReferences);
+        private static ObjectReferencesCache CreateObjectReferenceCache(bool preserveObjectReferences, object self = null, object cloned = null) =>
+            ObjectReferencesCache.Create(self, cloned, preserveObjectReferences);
 
         #region Obsolete
 
@@ -230,27 +230,27 @@ namespace DeepCopy
             var instance = (T)FormatterServices.GetUninitializedObject(
                 type);
 
-            if (!type.IsValueType)
-            {
-                bool isSelfCached = false;
-                if (!cache.Add(source, instance))
-                {
-                    cache.CacheSelf(source);
-                    isSelfCached = true;
-                }
+            cache.Add(source, instance);
 
-                _CopyTo(type, source, instance, cache);
+            _CopyTo(type, source, instance, cache);
 
-                if (isSelfCached)
-                {
-                    cache.RemoveCache(source);
-                }
-            }
-            else
-            {
-                _CopyValueType(type, source, ref instance, cache);
-            }
+            cache.RemoveSelfCache(source);
 
+            return instance;
+        }
+
+        private static T _CloneValue<T>(T source, ObjectReferencesCache cache)
+            where T : struct
+        {
+            //Console.WriteLine($"[{typeof(T).Name}]");
+
+            if (cache.Get(source, out var obj)) return obj;
+
+            var type = source.GetType();
+            var instance = (T)FormatterServices.GetUninitializedObject(
+                type);
+
+            _CopyValueType(type, source, ref instance, cache);
 
             return instance;
         }
