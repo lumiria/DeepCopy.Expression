@@ -255,6 +255,34 @@ namespace DeepCopy
             return instance;
         }
 
+        private static T _CloneInterface<T>(T source, ObjectReferencesCache cache)
+        {
+            //Console.WriteLine($"[{typeof(T).Name}]");
+            if (source == null) return default;
+
+            if (cache.Get(source, out var obj)) return obj;
+
+            var type = source.GetType();
+            var instance = (T)FormatterServices.GetUninitializedObject(
+                type);
+
+            if (type.IsValueType)
+            {
+                _CopyValueType(type, source, ref instance, cache);
+            }
+            else
+            {
+                cache.Add(source, instance);
+                _CopyTo(type, source, instance, cache);
+                cache.RemoveSelfCache(source);
+            }
+
+
+            return instance;
+        }
+
+
+
         private static void _CopyTo<T>(in Type type, T source, T destination, ObjectReferencesCache cache)
         {
             if (type == typeof(T))
@@ -278,8 +306,9 @@ namespace DeepCopy
             }
             else
             {
-                var cloner = ReferenceTypeCloneDelegateGenerator.CreateDelegate(type);
-                cloner(source, destination, cache);
+                var cloner = ValueTypeCloneDelegateGenerator.CreateDelegate(type);
+                cloner(source, out var obj, cache);
+                destination = (T)obj;
             }
         }
 

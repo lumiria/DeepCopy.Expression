@@ -158,6 +158,28 @@ namespace DeepCopy.Test
         }
 
         [Fact]
+        public void IStructValueTypeTest()
+        {
+            IStructData value = new StructData { Id = 1, Name = "foo", Value = new TestObject() };
+            var clonedValue = ObjectCloner.Clone(value);
+            clonedValue.IsStructuralEqual(value);
+            ((StructData)clonedValue).Value.IsNotSameReferenceAs(((StructData)value).Value);
+
+            StructData clonedValue2 = default;
+            ObjectCloner.CopyTo((StructData)value, ref clonedValue2);
+            clonedValue2.IsStructuralEqual(value);
+            ((StructData)clonedValue2).Value.IsNotSameReferenceAs(((StructData)value).Value);
+
+            var cls = new
+            {
+                Data = (IStructData)(new StructData { Id = 1, Name = "foo", Value = new TestObject() })
+            };
+            var clonedValue3 = ObjectCloner.Clone(cls);
+            clonedValue3.IsStructuralEqual(cls);
+
+        }
+
+        [Fact]
         public void EnumValueTypeTest()
         {
             var value = EnumData.C;
@@ -189,7 +211,12 @@ namespace DeepCopy.Test
             tuple3.IsStructuralEqual(tuple1);
         }
 
-        internal struct StructData
+        interface IStructData
+        {
+            string Write() => "This is SttructData";
+        }
+
+        internal struct StructData : IStructData
         {
             public int? Id;
             public string Name;
