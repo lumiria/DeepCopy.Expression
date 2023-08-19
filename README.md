@@ -99,7 +99,7 @@ class Program
 - ShallowCopy: Performs a shallow copy of the member regardless of its type. Shallow copy is a copy that duplicates only object itself, but not the objects it references.
 - Assign: Performs an assignment to the member regardless of its type.
 
-|                |  ValueType |           Class | Array(ValueType) | Array(Class) | Delegate |
+|                |  ValueType | Class /<br>Struct with reference| Array(ValueType) | Array(Class) | Delegate |
 |----------------|:----------:|:---------------:|:----------------:|:------------:|:--------:|
 |     **Default**|     Assign |        DeepCopy |            Clone |     DeepCopy |   Assgin |
 |    **DeepCopy**|     Assign |        DeepCopy |         DeepCopy |     DeepCopy |   Assgin |
