@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -7,66 +8,67 @@ using DeepCopy.Internal.Utilities;
 
 namespace DeepCopy.Internal
 {
-    internal static class CloneExpressionGenerator<T>
+    internal static class CoreCloneExpressionGenerator
     {
-        private static readonly Type _type;
-        private static Action<T, T, ObjectReferencesCache> _delegate;
-
-        static CloneExpressionGenerator()
-        {
-            _type = typeof(T);
-        }
-
-        public static void Clearnup() =>
-            _delegate = null;
-
-        public static Action<T, T, ObjectReferencesCache> CreateDelegate() =>
-            _delegate ??= Create().Compile();
-
-        private static Expression<Action<T, T, ObjectReferencesCache>> Create()
-        {
-            var sourceParameter = Expression.Parameter(_type, "source");
-            var destinationParameter = Expression.Parameter(_type, "destination");
-            var cacheParameter = Expression.Parameter(typeof(ObjectReferencesCache), "cache");
-
-            var body = CreateCloneExpression(
-                sourceParameter, destinationParameter, cacheParameter);
-
-            return Expression.Lambda<Action<T, T, ObjectReferencesCache>>(
-                body,
-                sourceParameter, destinationParameter, cacheParameter);
-        }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static Expression CreateCloneExpression(
+        public static Expression CreateCloneExpression<T>(
             ParameterExpression source, ParameterExpression destination, ParameterExpression cache)
         {
             var targets = CopyMemberExtractor.Extract<T>();
 
             var expressions = new ReadOnlyCollectionBuilder<Expression>(
                 CreateExpressions(targets, source, destination, cache));
-            //var expressions = CreateExpressions(targets, source, destination);
 
             return Expression.Block(expressions);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Expression CreateCloneExpression(Type type,
+            Expression source, Expression destination, Expression cache)
+        {
+            var targets = CopyMemberExtractor.Extract(type);
+
+            var expressions = new ReadOnlyCollectionBuilder<Expression>(
+                CreateExpressions(targets, source, destination, cache));
+            return expressions.Any()
+                ? Expression.Block(expressions)
+                : Expression.Empty();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Expression CreateCloneExpression(Type type,
+            Expression source, Expression destination, ParameterExpression variable, Expression cache)
+        {
+            var targets = CopyMemberExtractor.Extract(type);
+
+            var expressions = new ReadOnlyCollectionBuilder<Expression>(
+                CreateExpressions(targets, source, variable, cache))
+            {
+                Expression.Assign(destination, Expression.Convert(variable, typeof(object)))
+            };
+            return expressions.Any()
+                ? Expression.Block(new[] { variable }, expressions)
+                : Expression.Empty();
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static IEnumerable<Expression> CreateExpressions(
             IEnumerable<(MemberInfo, CopyPolicy)> targets,
-            ParameterExpression source, ParameterExpression destination, ParameterExpression cache)
+            Expression source, Expression destination, Expression cache)
         {
             foreach (var target in targets)
                 yield return CreateCloneMemberExpression(source, destination, cache, target.Item1, target.Item2);
         }
 
         private static Expression CreateCloneMemberExpression(
-            ParameterExpression source,
-            ParameterExpression destination,
-            ParameterExpression cache,
+            Expression source,
+            Expression destination,
+            Expression cache,
             MemberInfo member,
             CopyPolicy copyPolicy)
         {
             var value = MemberAccessorGenerator.CreateGetter(source, member);
+            //Console.WriteLine($" * {member.Name} : {value.Type} : {copyPolicy}");
 
             if (copyPolicy == CopyPolicy.Assign)
             {
@@ -104,7 +106,10 @@ namespace DeepCopy.Internal
                     cache);
             }
 
-            return ExpressionUtils.NullCheck(value, body);
+            //return ExpressionUtils.NullCheck(value, body);
+            return TypeUtils.IsNullable(memberType)
+                ? ExpressionUtils.NullCheck(value, body)
+                : body;
         }
     }
 }

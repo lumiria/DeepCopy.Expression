@@ -73,7 +73,7 @@ namespace DeepCopy.Internal
 
         private static CopyPolicy Seal(Type type, CopyMemberAttribute attribute)
         {
-            if (TypeUtils.IsValueType(type) || TypeUtils.IsDelegate(type))
+            if (TypeUtils.IsAssignableType(type) || TypeUtils.IsDelegate(type))
             {
                 return CopyPolicy.Assign;
             }
@@ -94,7 +94,7 @@ namespace DeepCopy.Internal
 
             return attribute.CopyPolicy != CopyPolicy.Default
                 ? attribute.CopyPolicy
-                : type.IsArray && TypeUtils.IsValueType(type.GetElementType())
+                : type.IsArray && TypeUtils.IsAssignableType(type.GetElementType())
                     ? CopyPolicy.ShallowCopy
                     : CopyPolicy.DeepCopy;
         }

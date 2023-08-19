@@ -4,7 +4,7 @@ using Xunit;
 
 namespace DeepCopy.Test
 {
-    public class UnitTest
+    public partial class UnitTest
     {
         [Fact]
         public void ValueTypeTest()
@@ -248,6 +248,8 @@ namespace DeepCopy.Test
             IsElementNotSameReference(arrayD, clonedD);
 
         }
+
+
 
 
         private static void IsElementNotSameReference<T>(T[] source, T[] cloned)

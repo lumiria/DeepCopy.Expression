@@ -115,7 +115,7 @@ namespace DeepCopy.Internal
             Expression cache)
         {
             var elementType = type.GetElementType();
-            if (TypeUtils.IsValueType(elementType))
+            if (TypeUtils.IsAssignableType(elementType))
             {
                 return CreateShallowCopyArrayExpression(
                     type,
@@ -163,7 +163,7 @@ namespace DeepCopy.Internal
 
             var elementAssign = elementType.IsArray
                 ? Build(
-                    TypeUtils.IsValueType(elementType.GetElementType())
+                    TypeUtils.IsAssignableType(elementType.GetElementType())
                         ? CopyPolicy.ShallowCopy : CopyPolicy.DeepCopy,
                     elementType,
                     Expression.ArrayIndex(source, i),
@@ -211,7 +211,7 @@ namespace DeepCopy.Internal
 
             var elementAssign = elementType.IsArray
                 ? Build(
-                    TypeUtils.IsValueType(elementType.GetElementType())
+                    TypeUtils.IsAssignableType(elementType.GetElementType())
                         ? CopyPolicy.ShallowCopy : CopyPolicy.DeepCopy,
                     elementType,
                     Expression.ArrayIndex(source, indexes),
