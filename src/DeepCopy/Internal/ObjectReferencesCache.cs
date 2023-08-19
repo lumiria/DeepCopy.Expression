@@ -27,7 +27,11 @@ namespace DeepCopy.Internal
                     : new ObjectCacheDictionary();
         }
 
+#if NETSTANDARD2_0
+        public bool Get<T>(in T source, out T? referenceObject)
+#else
         public bool Get<T>(in T source, [NotNullWhen(true)] out T? referenceObject)
+#endif
             where T : notnull
         {
             if (_cache.TryGetValue(source, out var instance))
@@ -113,7 +117,11 @@ namespace DeepCopy.Internal
             public bool Remove(object key)
             {
                 int index = -1;
+#if NETSTANDARD2_0
+                foreach (var item in _list)
+#else
                 foreach (ref var item in CollectionsMarshal.AsSpan(_list))
+#endif
                 {
                     index++;
                     if (item.Key == key)
@@ -130,9 +138,16 @@ namespace DeepCopy.Internal
                 return Remove(item.Key);
             }
 
+#if NETSTANDARD2_0
+            public bool TryGetValue(object key, out object value)
+            {
+                foreach (var item in _list)
+
+#else
             public bool TryGetValue(object key, [MaybeNullWhen(false)] out object value)
             {
                 foreach (ref var item in CollectionsMarshal.AsSpan(_list))
+#endif
                 {
                     if (item.Key == key)
                     {
