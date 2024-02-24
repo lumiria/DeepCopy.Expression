@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using DeepCopy.Internal;
 
@@ -44,8 +45,11 @@ namespace DeepCopy
             if (source == null) return default;
 
             var type = source.GetType();
-            var instance = (T)FormatterServices.GetUninitializedObject(
-                type);
+#if NETSTANDARD2_0
+            var instance = (T)FormatterServices.GetUninitializedObject(type);
+#else
+            var instance = (T)RuntimeHelpers.GetUninitializedObject(type);
+#endif
 
             if (type.IsValueType)
             {
@@ -66,7 +70,7 @@ namespace DeepCopy
         /// <summary>
         /// Returns a deep copy of the nullable specified value types object.
         /// </summary>
-        /// <typeparam name="T">The type of the oject to be copied.</typeparam>
+        /// <typeparam name="T">The type of the object to be copied.</typeparam>
         /// <param name="source">The object to be copied.</param>
         /// <param name="preserveObjectReferences">A flag indicating whether to preserve object references.</param>
         /// <returns>A deep copy of the specified object.</returns>
@@ -75,8 +79,11 @@ namespace DeepCopy
         {
             if (source == null) return default;
 
-            var instance = (T?)FormatterServices.GetUninitializedObject(
-                typeof(T?));
+#if NETSTANDARD2_0
+            var instance = (T?)FormatterServices.GetUninitializedObject(typeof(T?));
+#else
+            var instance = (T?)RuntimeHelpers.GetUninitializedObject(typeof(T?));
+#endif
 
             _CopyNullableValueType(source, ref instance,
                 CreateObjectReferenceCache(preserveObjectReferences));
@@ -89,7 +96,7 @@ namespace DeepCopy
         /// </summary>
         /// <typeparam name="T">The type of object.</typeparam>
         /// <param name="source">A source object.</param>
-        /// <param name="destination">The object that is desitination of the copy.</param>
+        /// <param name="destination">The object that is destination of the copy.</param>
         /// <param name="preserveObjectReferences">A value that specifies whether to preserve object reference data.</param>
         public static void CopyTo<T>(T source, T destination, bool preserveObjectReferences = false)
         {
@@ -227,8 +234,11 @@ namespace DeepCopy
             if (cache.Get(source, out var obj)) return obj;
 
             var type = source.GetType();
-            var instance = (T)FormatterServices.GetUninitializedObject(
-                type);
+#if NETSTANDARD2_0
+            var instance = (T)FormatterServices.GetUninitializedObject(type);
+#else
+            var instance = (T)RuntimeHelpers.GetUninitializedObject(type);
+#endif
 
             cache.Add(source, instance);
 
@@ -247,8 +257,11 @@ namespace DeepCopy
             if (cache.Get(source, out var obj)) return obj;
 
             var type = source.GetType();
-            var instance = (T)FormatterServices.GetUninitializedObject(
-                type);
+#if NETSTANDARD2_0
+            var instance = (T)FormatterServices.GetUninitializedObject(type);
+#else
+            var instance = (T)RuntimeHelpers.GetUninitializedObject(type);
+#endif
 
             _CopyValueType(type, source, ref instance, cache);
 
@@ -263,8 +276,11 @@ namespace DeepCopy
             if (cache.Get(source, out var obj)) return obj;
 
             var type = source.GetType();
-            var instance = (T)FormatterServices.GetUninitializedObject(
-                type);
+#if NETSTANDARD2_0
+            var instance = (T)FormatterServices.GetUninitializedObject(type);
+#else
+            var instance = (T)RuntimeHelpers.GetUninitializedObject(type);
+#endif
 
             if (type.IsValueType)
             {
