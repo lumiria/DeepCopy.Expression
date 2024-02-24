@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using DeepCopy.Test.Inners;
 
@@ -98,7 +99,7 @@ namespace DeepCopy.Test
 
         public TestObject DeepCopy()
         {
-            var instance = (TestObject)FormatterServices.GetUninitializedObject(typeof(TestObject));
+            var instance = (TestObject)RuntimeHelpers.GetUninitializedObject(typeof(TestObject));
 
             instance._boolValue = _boolValue;
             instance._sbyteValue = _sbyteValue;

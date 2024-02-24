@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using DeepCopy.Test.Inners;
 
@@ -31,7 +32,7 @@ namespace DeepCopy.Test
 
         public Child DeepCopy()
         {
-            var instance = (Child)FormatterServices.GetUninitializedObject(typeof(Child));
+            var instance = (Child)RuntimeHelpers.GetUninitializedObject(typeof(Child));
             ReflectionUtils.SetReadonlyField(instance, nameof(_id), _id);
             instance._intValue = _intValue;
             instance._intArray = new int[_intArray.Length];
