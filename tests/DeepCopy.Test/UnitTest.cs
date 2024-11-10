@@ -20,7 +20,7 @@ namespace DeepCopy.Test
         }
 
         [Fact]
-        public void AnoymousTypesTest()
+        public void AnonymousTypesTest()
         {
             var obj = new
             {

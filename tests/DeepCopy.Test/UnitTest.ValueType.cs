@@ -105,7 +105,7 @@ namespace DeepCopy.Test
         [Fact]
         public void StructValueTypeTest()
         {
-            var value = new StructData { Id = 1, Name = "foo", Value = new TestObject()};
+            var value = new StructData { Id = 1, Name = "foo", Value = new TestObject() };
             var clonedValue = ObjectCloner.Clone(value);
             clonedValue.IsStructuralEqual(value);
             clonedValue.Value.IsNotSameReferenceAs(value.Value);
@@ -211,9 +211,19 @@ namespace DeepCopy.Test
             tuple3.IsStructuralEqual(tuple1);
         }
 
+        [Fact]
+        public void DateTimeTest()
+        {
+            var obj = new { DateTime = DateTime.Now };
+            var cloned = ObjectCloner.Clone(obj);
+
+            cloned.IsNotSameReferenceAs(obj);
+            cloned.IsStructuralEqual(obj);
+        }
+
         interface IStructData
         {
-            string Write() => "This is SttructData";
+            string Write() => "This is StructData";
         }
 
         internal struct StructData : IStructData
