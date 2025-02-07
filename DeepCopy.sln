@@ -14,6 +14,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		README.md = README.md
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "benchmark", "benchmark", "{1E97E8CE-BDD2-4C10-9DD0-B6E6E5D52C94}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DeepCopy.Benchmark", "benchmark\DeepCopy.Benchmark\DeepCopy.Benchmark.csproj", "{3D403903-273E-468A-B6A5-93523B207203}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -38,12 +42,21 @@ Global
 		{33F8F9DC-3D3E-4821-9E04-94C5F1B0B3AB}.Release|Any CPU.Build.0 = Release|x64
 		{33F8F9DC-3D3E-4821-9E04-94C5F1B0B3AB}.Release|x64.ActiveCfg = Release|x64
 		{33F8F9DC-3D3E-4821-9E04-94C5F1B0B3AB}.Release|x64.Build.0 = Release|x64
+		{3D403903-273E-468A-B6A5-93523B207203}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3D403903-273E-468A-B6A5-93523B207203}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3D403903-273E-468A-B6A5-93523B207203}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{3D403903-273E-468A-B6A5-93523B207203}.Debug|x64.Build.0 = Debug|Any CPU
+		{3D403903-273E-468A-B6A5-93523B207203}.Release|Any CPU.ActiveCfg = Release|x64
+		{3D403903-273E-468A-B6A5-93523B207203}.Release|Any CPU.Build.0 = Release|x64
+		{3D403903-273E-468A-B6A5-93523B207203}.Release|x64.ActiveCfg = Release|x64
+		{3D403903-273E-468A-B6A5-93523B207203}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{33F8F9DC-3D3E-4821-9E04-94C5F1B0B3AB} = {00000000-0000-0000-0000-000000000000}
+		{33F8F9DC-3D3E-4821-9E04-94C5F1B0B3AB} = {1A7EF92D-B1BC-4685-A9A5-72DBF1507778}
+		{3D403903-273E-468A-B6A5-93523B207203} = {1E97E8CE-BDD2-4C10-9DD0-B6E6E5D52C94}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {73B14296-20DA-4A48-A52C-0571F0C21318}
