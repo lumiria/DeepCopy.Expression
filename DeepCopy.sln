@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.28010.2050
+# Visual Studio Version 17
+VisualStudioVersion = 17.12.35707.178
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DeepCopy", "src\DeepCopy\DeepCopy.csproj", "{4A7DB10F-4EA0-4150-853D-89AF6C025591}"
 EndProject
@@ -28,14 +28,14 @@ Global
 		{4A7DB10F-4EA0-4150-853D-89AF6C025591}.Debug|x64.Build.0 = Debug|Any CPU
 		{4A7DB10F-4EA0-4150-853D-89AF6C025591}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4A7DB10F-4EA0-4150-853D-89AF6C025591}.Release|Any CPU.Build.0 = Release|Any CPU
-		{4A7DB10F-4EA0-4150-853D-89AF6C025591}.Release|x64.ActiveCfg = Release|x64
-		{4A7DB10F-4EA0-4150-853D-89AF6C025591}.Release|x64.Build.0 = Release|x64
+		{4A7DB10F-4EA0-4150-853D-89AF6C025591}.Release|x64.ActiveCfg = Release|Any CPU
+		{4A7DB10F-4EA0-4150-853D-89AF6C025591}.Release|x64.Build.0 = Release|Any CPU
 		{33F8F9DC-3D3E-4821-9E04-94C5F1B0B3AB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{33F8F9DC-3D3E-4821-9E04-94C5F1B0B3AB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{33F8F9DC-3D3E-4821-9E04-94C5F1B0B3AB}.Debug|x64.ActiveCfg = Debug|Any CPU
 		{33F8F9DC-3D3E-4821-9E04-94C5F1B0B3AB}.Debug|x64.Build.0 = Debug|Any CPU
-		{33F8F9DC-3D3E-4821-9E04-94C5F1B0B3AB}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{33F8F9DC-3D3E-4821-9E04-94C5F1B0B3AB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{33F8F9DC-3D3E-4821-9E04-94C5F1B0B3AB}.Release|Any CPU.ActiveCfg = Release|x64
+		{33F8F9DC-3D3E-4821-9E04-94C5F1B0B3AB}.Release|Any CPU.Build.0 = Release|x64
 		{33F8F9DC-3D3E-4821-9E04-94C5F1B0B3AB}.Release|x64.ActiveCfg = Release|x64
 		{33F8F9DC-3D3E-4821-9E04-94C5F1B0B3AB}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
@@ -43,7 +43,7 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{33F8F9DC-3D3E-4821-9E04-94C5F1B0B3AB} = {1A7EF92D-B1BC-4685-A9A5-72DBF1507778}
+		{33F8F9DC-3D3E-4821-9E04-94C5F1B0B3AB} = {00000000-0000-0000-0000-000000000000}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {73B14296-20DA-4A48-A52C-0571F0C21318}
