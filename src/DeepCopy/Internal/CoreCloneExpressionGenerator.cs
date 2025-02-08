@@ -68,7 +68,9 @@ namespace DeepCopy.Internal
             CopyPolicy copyPolicy)
         {
             var value = MemberAccessorGenerator.CreateGetter(source, member);
-            //Console.WriteLine($" * {member.Name} : {value.Type} : {copyPolicy}");
+#if DEBUGLOG
+            Console.WriteLine($" * {member.Name} : {value.Type} : {copyPolicy}");
+#endif
 
             if (copyPolicy == CopyPolicy.Assign)
             {
@@ -106,7 +108,6 @@ namespace DeepCopy.Internal
                     cache);
             }
 
-            //return ExpressionUtils.NullCheck(value, body);
             return TypeUtils.IsNullable(memberType)
                 ? ExpressionUtils.NullCheck(value, body)
                 : body;

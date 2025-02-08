@@ -41,7 +41,9 @@ namespace DeepCopy
         /// <returns>A deep copy of the specified object.</returns>
         public static T Clone<T>(T source, bool preserveObjectReferences = false)
         {
-            //Console.WriteLine($"[{typeof(T).Name}]");
+#if DEBUGLOG
+            Console.WriteLine($"[{typeof(T).Name}]");
+#endif
             if (source == null) return default;
 
             var type = source.GetType();
@@ -228,7 +230,9 @@ namespace DeepCopy
 
         private static T _Clone<T>(T source, ObjectReferencesCache cache)
         {
-            //Console.WriteLine($"[{typeof(T).Name}]");
+#if DEBUGLOG
+            Console.WriteLine($"[{typeof(T).Name}]");
+#endif
             if (source == null) return default;
 
             if (cache.Get(source, out var obj)) return obj;
@@ -244,17 +248,17 @@ namespace DeepCopy
 
             _CopyTo(type, source, instance, cache);
 
-            cache.RemoveSelfCache(source);
+            cache.RemoveLatest();
 
             return instance;
         }
 
-        private static T _CloneValue<T>(T source, ObjectReferencesCache cache)
+        private static T _CloneValue<T>(in T source, ObjectReferencesCache cache)
             where T : struct
         {
-            //Console.WriteLine($"[{typeof(T).Name}]");
-
-            if (cache.Get(source, out var obj)) return obj;
+#if DEBUGLOG
+            Console.WriteLine($"[{typeof(T).Name}]");
+#endif
 
             var type = source.GetType();
 #if NETSTANDARD2_0
@@ -270,12 +274,14 @@ namespace DeepCopy
 
         private static T _CloneInterface<T>(T source, ObjectReferencesCache cache)
         {
-            //Console.WriteLine($"[{typeof(T).Name}]");
+#if DEBUGLOG
+            Console.WriteLine($"[{typeof(T).Name}]");
+#endif
             if (source == null) return default;
 
-            if (cache.Get(source, out var obj)) return obj;
-
             var type = source.GetType();
+            if (!type.IsValueType && cache.Get(source, out var obj)) return obj;
+
 #if NETSTANDARD2_0
             var instance = (T)FormatterServices.GetUninitializedObject(type);
 #else
@@ -290,13 +296,11 @@ namespace DeepCopy
             {
                 cache.Add(source, instance);
                 _CopyTo(type, source, instance, cache);
-                cache.RemoveSelfCache(source);
+                cache.RemoveLatest();
             }
-
 
             return instance;
         }
-
 
 
         private static void _CopyTo<T>(in Type type, T source, T destination, ObjectReferencesCache cache)
