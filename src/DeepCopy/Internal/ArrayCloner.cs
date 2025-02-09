@@ -91,7 +91,8 @@ namespace DeepCopy.Internal
                 return CreateShallowCopyArrayExpression(
                     type,
                     source,
-                    MemberAccessorGenerator.CreateGetter(destination, member));
+                    destination,
+                    member);
             }
 
             throw new InvalidOperationException();
@@ -137,6 +138,14 @@ namespace DeepCopy.Internal
                 Expression source,
                 Expression destination) =>
             Expression.Assign(destination,
+                Expression.Convert(Expression.Call(source, ReflectionUtils.CloneArray), type));
+
+        private Expression CreateShallowCopyArrayExpression(
+            Type type,
+            Expression source,
+            Expression destination,
+            MemberInfo member) =>
+        MemberAccessorGenerator.CreateSetter(destination, member,
                 Expression.Convert(Expression.Call(source, ReflectionUtils.CloneArray), type));
 
         private Expression CreateDeepCopyArrayExpression(

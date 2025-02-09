@@ -7,14 +7,14 @@ namespace DeepCopy.Internal
     internal static class MemberAccessorGenerator
     {
         public static Expression CreateGetter(Expression target, MemberInfo member) =>
+            //Expression.MakeMemberAccess(target, member)
             member is FieldInfo fieldInfo
                 ? Expression.Field(target, fieldInfo)
                 : Expression.Property(target, (PropertyInfo)member);
 
         public static Expression CreateSetter(Expression target, MemberInfo member, Expression value)
         {
-            if (member is FieldInfo field
-                && field.IsInitOnly)
+            if (member is FieldInfo { IsInitOnly: true } field)
             {
                 return Expression.Call(
                     Expression.Constant(field),
