@@ -28,6 +28,12 @@ namespace DeepCopy.Internal.Utilities
                 Expression.NotEqual(value, Null),
                 body);
 
+        public static Expression NullTernaryCheck(Expression value, Expression body) =>
+            Expression.Condition(
+                Expression.NotEqual(value, Null),
+                body,
+                Null);
+
         private static Expression Null { get; } =
             Expression.Constant(null, typeof(object));
     }

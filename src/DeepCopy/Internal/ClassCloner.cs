@@ -24,12 +24,15 @@ namespace DeepCopy.Internal
                 return Expression.Assign(destination, cloneExpression);
             }
 
+            var memberwiseCloneExpression = ExpressionUtils.MemberwiseClone(type, source);
             return Expression.Assign(
                 destination,
-                Expression.Condition(
-                    ExpressionUtils.IsObjectOrValueType(source),
-                    ExpressionUtils.MemberwiseClone(type, source),
-                    cloneExpression));
+                ExpressionUtils.NullTernaryCheck(
+                    source,
+                    Expression.Condition(
+                        ExpressionUtils.IsObjectOrValueType(source),
+                        ExpressionUtils.MemberwiseClone(type, source),
+                        cloneExpression)));
         }
 
         public Expression Build(
