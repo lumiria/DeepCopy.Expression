@@ -17,14 +17,13 @@ namespace DeepCopy.Internal
                 Expression destination,
                 Expression cache)
         {
-            var cloneExpression = ClonerCache.Instance.Get(type, source, cache);
 
             if (type != typeof(object))
             {
+                var cloneExpression = ClonerCache.Instance.Get(type, source, cache);
                 return Expression.Assign(destination, cloneExpression);
             }
 
-            var memberwiseCloneExpression = ExpressionUtils.MemberwiseClone(type, source);
             return Expression.Assign(
                 destination,
                 ExpressionUtils.NullTernaryCheck(
@@ -32,7 +31,7 @@ namespace DeepCopy.Internal
                     Expression.Condition(
                         ExpressionUtils.IsObjectOrValueType(source),
                         ExpressionUtils.MemberwiseClone(type, source),
-                        cloneExpression)));
+                        ExpressionUtils.CloneObjectType(source, cache))));
         }
 
         public Expression Build(
@@ -42,10 +41,9 @@ namespace DeepCopy.Internal
                 MemberInfo member,
                 Expression cache)
         {
-            var cloneExpression = ClonerCache.Instance.Get(type, source, cache);
-
             if (type != typeof(object))
             {
+                var cloneExpression = ClonerCache.Instance.Get(type, source, cache);
                 return MemberAccessorGenerator.CreateSetter(
                     destination, member, cloneExpression);
             }
@@ -56,7 +54,7 @@ namespace DeepCopy.Internal
                 Expression.Condition(
                     ExpressionUtils.IsObjectOrValueType(source),
                     ExpressionUtils.MemberwiseClone(type, source),
-                    cloneExpression));
+                    ExpressionUtils.CloneObjectType(source, cache)));
         }
 
         private sealed class ClonerCache

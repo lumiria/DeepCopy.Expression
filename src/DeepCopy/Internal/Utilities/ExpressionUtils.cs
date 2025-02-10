@@ -23,6 +23,9 @@ namespace DeepCopy.Internal.Utilities
             Expression.Call(ReflectionUtils.IsObjectOrValueType,
                 Expression.Call(instance, ReflectionUtils.GetObjectType));
 
+        public static Expression CloneObjectType(Expression source, Expression cache) =>
+            Expression.Call(ReflectionUtils.ObjectTypeClone, source, cache);
+
         public static Expression NullCheck(Expression value, Expression body) =>
             Expression.IfThen(
                 Expression.NotEqual(value, Null),
