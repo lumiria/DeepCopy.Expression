@@ -230,7 +230,7 @@ namespace DeepCopy.Test
         {
             public int? Id;
             public string Name;
-            public object Value;
+            public object? Value;
         }
 
         internal enum EnumData

@@ -14,26 +14,31 @@ namespace DeepCopy.Internal
         static ValueTypeCloneExpressionGenerator()
         {
             _type = typeof(T);
+            _delegate = ValueTypeCloneExpressionGeneratorHelper.Create<T>(_type).Compile();
         }
 
         public static void Clearnup() =>
             _delegate = null;
 
         public static ValueTypeCloneDelegate CreateDelegate() =>
-            _delegate ??= Create().Compile();
+            _delegate ??= ValueTypeCloneExpressionGeneratorHelper.Create<T>(_type).Compile();
+    }
 
-        private static Expression<ValueTypeCloneDelegate> Create()
+    file static class ValueTypeCloneExpressionGeneratorHelper
+    {
+        public static Expression<ValueTypeCloneExpressionGenerator<T>.ValueTypeCloneDelegate> Create<T>(Type type)
         {
-            var sourceParameter = Expression.Parameter(_type.MakeByRefType(), "source");
-            var destinationParameter = Expression.Parameter(_type.MakeByRefType(), "destination");
+            var refType = type.MakeByRefType();
+            var sourceParameter = Expression.Parameter(refType, "source");
+            var destinationParameter = Expression.Parameter(refType, "destination");
             var cacheParameter = Expression.Parameter(typeof(ObjectReferencesCache), "cache");
 
-            var body = TypeUtils.IsAssignableType(_type)
+            var body = TypeUtils.IsAssignableType(type)
                 ? Expression.Assign(destinationParameter, sourceParameter)
                 : CoreCloneExpressionGenerator.CreateCloneExpression<T>(
                     sourceParameter, destinationParameter, cacheParameter);
 
-            return Expression.Lambda<ValueTypeCloneDelegate>(
+            return Expression.Lambda<ValueTypeCloneExpressionGenerator<T>.ValueTypeCloneDelegate> (
                 body,
                 sourceParameter, destinationParameter, cacheParameter);
         }

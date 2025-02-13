@@ -14,6 +14,9 @@ namespace DeepCopy.Internal
         public static Expression CreateCloneExpression<T>(
             ParameterExpression source, ParameterExpression destination, ParameterExpression cache)
         {
+            if (FixedCloner.TryGetBuilder(typeof(T), out var builder))
+                return builder(source, destination, cache);
+
             var targets = CopyMemberExtractor.Extract<T>();
 
             var expressions = new ReadOnlyCollectionBuilder<Expression>(
@@ -26,6 +29,9 @@ namespace DeepCopy.Internal
         public static Expression CreateCloneExpression(Type type,
             Expression source, Expression destination, Expression cache)
         {
+            if (FixedCloner.TryGetBuilder(type, out var builder))
+                return builder(source, destination, cache);
+
             var targets = CopyMemberExtractor.Extract(type);
 
             var expressions = new ReadOnlyCollectionBuilder<Expression>(
@@ -68,7 +74,9 @@ namespace DeepCopy.Internal
             CopyPolicy copyPolicy)
         {
             var value = MemberAccessorGenerator.CreateGetter(source, member);
-            //Console.WriteLine($" * {member.Name} : {value.Type} : {copyPolicy}");
+#if DEBUGLOG
+            Console.WriteLine($" * {member.Name} : {value.Type} : {copyPolicy}");
+#endif
 
             if (copyPolicy == CopyPolicy.Assign)
             {
@@ -106,7 +114,6 @@ namespace DeepCopy.Internal
                     cache);
             }
 
-            //return ExpressionUtils.NullCheck(value, body);
             return TypeUtils.IsNullable(memberType)
                 ? ExpressionUtils.NullCheck(value, body)
                 : body;
