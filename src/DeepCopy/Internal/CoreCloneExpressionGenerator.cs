@@ -14,6 +14,9 @@ namespace DeepCopy.Internal
         public static Expression CreateCloneExpression<T>(
             ParameterExpression source, ParameterExpression destination, ParameterExpression cache)
         {
+            if (FixedCloner.TryGetBuilder(typeof(T), out var builder))
+                return builder(source, destination, cache);
+
             var targets = CopyMemberExtractor.Extract<T>();
 
             var expressions = new ReadOnlyCollectionBuilder<Expression>(
@@ -26,6 +29,9 @@ namespace DeepCopy.Internal
         public static Expression CreateCloneExpression(Type type,
             Expression source, Expression destination, Expression cache)
         {
+            if (FixedCloner.TryGetBuilder(type, out var builder))
+                return builder(source, destination, cache);
+
             var targets = CopyMemberExtractor.Extract(type);
 
             var expressions = new ReadOnlyCollectionBuilder<Expression>(

@@ -122,13 +122,21 @@ namespace DeepCopy.Test
             var cloned = ObjectCloner.Clone(tuple);
 
             cloned.IsStructuralEqual(tuple);
-            for (int i=0; i<cloned.Length; i++)
+            for (int i = 0; i < cloned.Length; i++)
             {
                 if (cloned[i].Item3 != null)
                 {
                     cloned[i].Item3.IsNotSameReferenceAs(tuple[i].Item3);
                 }
             }
+        }
+
+        [Fact]
+        public void DirectArrayAsObjectTest()
+        {
+            object obj = new object[] { new(), new(), new() };
+            // Since the actual type should be known, please cast explicitly.
+            _ = ValidateCloneArray((object[])obj);
         }
 
         [Fact]
@@ -174,8 +182,8 @@ namespace DeepCopy.Test
             {
                 objectArray = new object[] { new(), new(), new() },
                 nullableObjectArray = new object?[] { new(), null, new() },
-                objectBaseArray = new object[] {1, 21.3, new TestObject()},
-                nullableObjectBaseArray = new object?[] {1, null, new TestObject()},
+                objectBaseArray = new object[] { 1, 21.3, new TestObject() },
+                nullableObjectBaseArray = new object?[] { 1, null, new TestObject() },
                 classArray = new TestObject[] { new(), new(), new() },
                 nullableClassArray = new TestObject?[] { new(), null, new() },
             };
@@ -207,6 +215,28 @@ namespace DeepCopy.Test
             {
                 ValidateValue(cls.StructArray[i].Value, cloned.StructArray[i].Value);
             }
+        }
+
+        [Fact]
+        public void ReadonlyArrayAsObjectTest()
+        {
+            var cls = new
+            {
+                obj1 = (object)(new object[] { new(), new(), new() }),
+                obj2 = (object)(new object?[] { new(), null, new() }),
+                obj3 = (object)(new object[] { 1, 21.3, new TestObject() }),
+                obj4 = (object)(new object?[] { 1, null, new TestObject() }),
+                obj5 = (object)(new TestObject[] { new(), new(), new() }),
+                obj6 = (object)(new TestObject?[] { new(), null, new() }),
+            };
+            var cloned = ValidateCloneObject(cls);
+
+            cloned.obj1.IsNotSameReferenceAs(cls.obj1);
+            cloned.obj2.IsNotSameReferenceAs(cls.obj2);
+            cloned.obj3.IsNotSameReferenceAs(cls.obj3);
+            cloned.obj4.IsNotSameReferenceAs(cls.obj4);
+            cloned.obj5.IsNotSameReferenceAs(cls.obj5);
+            cloned.obj6.IsNotSameReferenceAs(cls.obj6);
         }
 
         private T ValidateCloneObject<T>(in T @object)
