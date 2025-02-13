@@ -28,11 +28,6 @@ namespace DeepCopy.Internal
                         type, elementType, source, destination, cache);
                 }
 
-                //return Expression.Assign(
-                //    destination,
-                //    ClonerCache.Instance.Get(elementType, source));
-
-
                 var length = Expression.ArrayLength(source);
                 var arrayAssign = Expression.Assign(
                     destination,
@@ -76,12 +71,6 @@ namespace DeepCopy.Internal
                         type, elementType, source, MemberAccessorGenerator.CreateGetter(destination, member), cache);
                 }
 
-                //return MemberAccessorGenerator.CreateSetter(
-                //    destination,
-                //    member,
-                //    ClonerCache.Instance.Get(elementType, source));
-
-
                 var length = Expression.ArrayLength(source);
                 var arrayAssign = MemberAccessorGenerator.CreateSetter(
                     destination,
@@ -102,7 +91,8 @@ namespace DeepCopy.Internal
                 return CreateShallowCopyArrayExpression(
                     type,
                     source,
-                    MemberAccessorGenerator.CreateGetter(destination, member));
+                    destination,
+                    member);
             }
 
             throw new InvalidOperationException();
@@ -150,6 +140,14 @@ namespace DeepCopy.Internal
             Expression.Assign(destination,
                 Expression.Convert(Expression.Call(source, ReflectionUtils.CloneArray), type));
 
+        private Expression CreateShallowCopyArrayExpression(
+            Type type,
+            Expression source,
+            Expression destination,
+            MemberInfo member) =>
+        MemberAccessorGenerator.CreateSetter(destination, member,
+                Expression.Convert(Expression.Call(source, ReflectionUtils.CloneArray), type));
+
         private Expression CreateDeepCopyArrayExpression(
             Type elementType,
             Expression source,
@@ -176,7 +174,7 @@ namespace DeepCopy.Internal
                     cache);
 
             return Expression.Block(
-                new[] { i },
+                [i],
                 Expression.Assign(i, ExpressionUtils.Zero),
                 arrayAssign,
                 Expression.Loop(
@@ -241,29 +239,9 @@ namespace DeepCopy.Internal
             return Expression.Block(
                 indexes,
                 indexes.Select(i => Expression.Assign(i, ExpressionUtils.Zero))
-                    .Concat(new[] { arrayAssign, Loop(0) }));
+                    .Concat([arrayAssign, Loop(0)]));
         }
 
 
-        //private sealed class ClonerCache
-        //{
-        //    private readonly ConcurrentDictionary<Type, MethodInfo> _cache;
-
-        //    private ClonerCache()
-        //    {
-        //        _cache = new ConcurrentDictionary<Type, MethodInfo>();
-        //    }
-
-        //    public static ClonerCache Instance { get; } =
-        //        new ClonerCache();
-
-        //    public MethodCallExpression Get(Type type, Expression source)
-        //    {
-        //        var genericMethod = _cache.GetOrAdd(type, t =>
-        //                ReflectionUtils.ArrayClone.MakeGenericMethod(t));
-
-        //        return Expression.Call(genericMethod, source);
-        //    }
-        //}
     }
 }

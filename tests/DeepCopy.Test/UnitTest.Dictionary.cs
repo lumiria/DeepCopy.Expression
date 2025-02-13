@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
 using DeepCopy.Test.Inners;
 using Xunit;
 
@@ -94,6 +96,65 @@ namespace DeepCopy.Test
             cloned.Dict.IsNotSameReferenceAs(cls.Dict);
         }
 
+        [Fact]
+        public void ObjectKeyDictionaryTest()
+        {
+            var dict = new Dictionary<TestKey, TestValue>()
+            {
+                [new TestKey() { Id = 0, Value = "A" }] = new TestValue() { Value = "Foo" },
+                [new TestKey() { Id = 1, Value = "B" }] = new TestValue() { Value = "Bar" },
+            };
+            var _keys = dict.Keys; // Create inner KeyCollection
+            var _values = dict.Values; // Create inner ValueCollection
 
+            var cloned = ObjectCloner.Clone(dict);
+
+            ValidateObjectKeyDictionary(dict, cloned);
+        }
+
+        [Fact]
+        public void ObjectKeyConcurrentDictionaryTest()
+        {
+            var dict = new ConcurrentDictionary<TestKey, TestValue>()
+            {
+                [new TestKey() { Id = 0, Value = "A" }] = new TestValue() { Value = "Foo" },
+                [new TestKey() { Id = 1, Value = "B" }] = new TestValue() { Value = "Bar" },
+            };
+            //var _keys = dict.Keys; // Create inner KeyCollection
+            //var _values = dict.Values; // Create inner ValueCollection
+
+            var cloned = ObjectCloner.Clone(dict);
+
+            ValidateObjectKeyDictionary(dict, cloned);
+        }
+
+
+        private void ValidateObjectKeyDictionary<T>(T original, T cloned)
+            where T : IDictionary<TestKey, TestValue>
+        {
+            int index = 0;
+            foreach (var clonedKey in cloned.Keys)
+            {
+                var originalKey = original.Keys.Skip(index).First();
+                clonedKey.IsNotSameReferenceAs(originalKey);
+                clonedKey.Id.Is(originalKey.Id);
+                clonedKey.Value.Is(originalKey.Value);
+
+                var originalValue = original.Values.Skip(index++).First();
+                cloned[clonedKey].IsNotSameReferenceAs(originalValue);
+                cloned[clonedKey].Is(originalValue);
+            }
+        }
+
+        internal class TestKey
+        {
+            public int Id { get; set; }
+            public string Value { get; set; }
+        }
+
+        internal record class TestValue
+        {
+            public string Value { get; set; }
+        }
     }
 }

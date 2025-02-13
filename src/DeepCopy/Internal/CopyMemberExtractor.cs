@@ -8,7 +8,7 @@ namespace DeepCopy.Internal
 {
     internal static class CopyMemberExtractor
     {
-        private static BindingFlags bindingFlags =
+        private static readonly BindingFlags bindingFlags =
             BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly;
 
         public static IEnumerable<(MemberInfo, CopyPolicy)> Extract<T>() =>
@@ -35,30 +35,8 @@ namespace DeepCopy.Internal
 
         }
 
-        //private static IEnumerable<(MemberInfo, Type, CopyMemberAttribute)> GetFields(Type type)
-        //{
-        //    var events = new HashSet<string>(type.GetEvents().Select(x => x.Name));
-
-        //    foreach (var field in TypeUtils.GetFields(type, bindingFlags))
-        //    {
-        //        if (!events.Contains(field.Name))
-        //            yield return (field, field.FieldType, CopyMemberAttribute.Default);
-        //    }
-        //}
-
         private static IEnumerable<FieldInfo> GetFields(Type type) =>
             TypeUtils.GetFields(type, bindingFlags);
-
-        //private static IEnumerable<(MemberInfo, Type, CopyMemberAttribute)> GetFields(Type type)
-        //{
-        //    foreach (var field in TypeUtils.GetFields(type, bindingFlags))
-        //    {
-        //        if (!TypeUtils.IsEvent(type, field.Name))
-        //        {
-        //            yield return (field, field.FieldType, CopyMemberAttribute.Default);
-        //        }
-        //    }
-        //}
 
         private static IEnumerable<(MemberInfo, Type, CopyMemberAttribute)> GetFieldsWithAttribute(Type type) =>
             TypeUtils.GetFields(type, bindingFlags)
@@ -77,20 +55,6 @@ namespace DeepCopy.Internal
             {
                 return CopyPolicy.Assign;
             }
-
-            //if (type.IsArray)
-            //{
-            //    if (attribute.CopyPolicy != CopyPolicy.Default)
-            //        return attribute.CopyPolicy;
-
-            //    return (TypeUtils.IsValueType(type.GetElementType())
-            //            ? CopyPolicy.ShallowCopy
-            //            : CopyPolicy.DeepCopy);
-            //}
-
-            //return attribute.CopyPolicy != CopyPolicy.Default
-            //    ? attribute.CopyPolicy
-            //    : CopyPolicy.DeepCopy;
 
             return attribute.CopyPolicy != CopyPolicy.Default
                 ? attribute.CopyPolicy

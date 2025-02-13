@@ -36,7 +36,7 @@ namespace DeepCopy.Internal
             var destination = Expression.Parameter(_type, "destination");
 
             return Expression.Block(
-                new[] { destination },
+                [destination],
                 ArrayCloner.Instance.Build(
                     _type,
                     source,

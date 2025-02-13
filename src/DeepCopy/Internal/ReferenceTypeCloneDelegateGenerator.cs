@@ -11,18 +11,22 @@ namespace DeepCopy.Internal
         static ReferenceTypeCloneDelegateGenerator()
         {
             _type = typeof(T);
+            _delegate = ReferenceTypeCloneDelegateGeneratorHelper.Create<T>(_type).Compile();
         }
 
         public static void Clearnup() =>
-            _delegate = null;
+           _delegate = null;
 
         public static Action<T, T, ObjectReferencesCache> CreateDelegate() =>
-            _delegate ??= Create().Compile();
+            _delegate ??= ReferenceTypeCloneDelegateGeneratorHelper.Create<T>(_type).Compile();
+    }
 
-        private static Expression<Action<T, T, ObjectReferencesCache>> Create()
+    file static class ReferenceTypeCloneDelegateGeneratorHelper
+    {
+        public static Expression<Action<T, T, ObjectReferencesCache>> Create<T>(Type type)
         {
-            var sourceParameter = Expression.Parameter(_type, "source");
-            var destinationParameter = Expression.Parameter(_type, "destination");
+            var sourceParameter = Expression.Parameter(type, "source");
+            var destinationParameter = Expression.Parameter(type, "destination");
             var cacheParameter = Expression.Parameter(typeof(ObjectReferencesCache), "cache");
 
             var body = CoreCloneExpressionGenerator.CreateCloneExpression<T>(
