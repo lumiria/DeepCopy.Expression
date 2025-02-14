@@ -146,9 +146,13 @@ namespace DeepCopy.Internal.FixedCloners
             }
 
             return Expression.Condition(
-                ExpressionUtils.IsObjectOrValueType(field),
-                field,
-                cloneExpression
+                ExpressionUtils.IsObject(field),
+                Expression.Constant(new object()),
+                Expression.Condition(
+                    ExpressionUtils.IsObjectOrValueType(field),
+                    field,
+                    cloneExpression
+                )
             );
         }
 

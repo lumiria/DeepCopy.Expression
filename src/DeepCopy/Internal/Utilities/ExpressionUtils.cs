@@ -19,6 +19,9 @@ namespace DeepCopy.Internal.Utilities
         public static Expression GetArrayLength(Expression array, int dimention) =>
             Expression.Call(array, ReflectionUtils.GetArrayLength, Expression.Constant(dimention));
 
+        public static Expression IsObject(Expression instance) =>
+            Expression.TypeEqual(instance, typeof(object));
+
         public static Expression IsObjectOrValueType(Expression instance) =>
             Expression.Call(ReflectionUtils.IsObjectOrValueType,
                 Expression.Call(instance, ReflectionUtils.GetObjectType));
