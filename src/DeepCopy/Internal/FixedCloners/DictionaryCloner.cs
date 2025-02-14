@@ -115,17 +115,12 @@ namespace DeepCopy.Internal.FixedCloners
             if (type.IsArray)
             {
                 var array = Expression.Parameter(type, "array");
-                var length = Expression.ArrayLength(array);
-                var arrayAssign = Expression.Assign(
-                    array,
-                    Expression.NewArrayBounds(array.Type.GetElementType()!, length)
-                );
-
                 return ExpressionUtils.NullTernaryCheck(
+                    type,
                     field,
                     Expression.Block(
+                        type,
                         [array],
-                        arrayAssign,
                         ArrayCloner.Instance.Build(
                              TypeUtils.IsAssignableType(type.GetElementType())
                                  ? CopyPolicy.ShallowCopy

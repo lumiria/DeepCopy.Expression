@@ -20,7 +20,7 @@ namespace DeepCopy.Test
 
             var cloned = ObjectCloner.Clone(dict);
 
-            cloned.StructuralEquals(dict);
+            ValidateDictionary(dict, cloned);
         }
 
         [Fact]
@@ -29,13 +29,60 @@ namespace DeepCopy.Test
             var dict = new Dictionary<object, object>()
             {
                 [1] = new TestObject(),
-                [2] = new TestObject()
+                [2] = new TestObject(),
+                [new object()] = new object(),
             };
             var keys = dict.Keys; // access ...
 
             var cloned = ObjectCloner.Clone(dict);
 
-            cloned.StructuralEquals(dict);
+            ValidateDictionary(dict, cloned);
+        }
+
+        [Fact]
+        public void ObjectDictionaryTest()
+        {
+            var dict = new Dictionary<object, object>()
+            {
+                [1] = 12.3,
+                [new TestKey() { Id = 1, Value = "A" }] = new TestValue(),
+                [new object()] = new object(),
+            };
+            var keys = dict.Keys; // access ...
+
+            var cloned = ObjectCloner.Clone(dict);
+
+            ValidateDictionary(dict, cloned);
+        }
+
+        [Fact]
+        public void ValueTypeArrayDictionaryTest()
+        {
+            var dict = new Dictionary<int[], int[]>()
+            {
+                [[1,2,3]] = [4,5,6],
+                [[2,4,6]] = [1,2,4]
+            };
+            var keys = dict.Keys; // access ...
+
+            var cloned = ObjectCloner.Clone(dict);
+
+            ValidateDictionary(dict, cloned);
+        }
+
+        [Fact]
+        public void ReferenceTypeArrayDictionaryTest()
+        {
+            var dict = new Dictionary<TestKey[], TestValue[]>()
+            {
+                [[new (), new ()]] = [new (), new ()],
+                [[new ()]] = [new ()],
+            };
+            var keys = dict.Keys; // access ...
+
+            var cloned = ObjectCloner.Clone(dict);
+
+            ValidateDictionary(dict, cloned);
         }
 
         [Fact]
@@ -67,7 +114,35 @@ namespace DeepCopy.Test
         }
 
         [Fact]
-        public void HasDictionaryTest()
+        public void ObjectKeyDictionaryTest()
+        {
+            var dict = new Dictionary<TestKey, TestValue>()
+            {
+                [new TestKey() { Id = -1, Value = "A" }] = new TestValue() { Value = "Foo" },
+                [new TestKey() { Id = 0, Value = "B" }] = new TestValue() { Value = "Bar" },
+            };
+
+            var cloned = ObjectCloner.Clone(dict);
+
+            ValidateObjectKeyDictionary(dict, cloned);
+        }
+
+        [Fact]
+        public void ObjectKeyConcurrentDictionaryTest()
+        {
+            var dict = new ConcurrentDictionary<TestKey, TestValue>()
+            {
+                [new TestKey() { Id = -1, Value = "A" }] = new TestValue() { Value = "Foo" },
+                [new TestKey() { Id = 0, Value = "B" }] = new TestValue() { Value = "Bar" },
+            };
+
+            var cloned = ObjectCloner.Clone(dict);
+
+            ValidateObjectKeyDictionary(dict, cloned);
+        }
+
+        [Fact]
+        public void InnerDictionaryTest()
         {
             var cls = new
             {
@@ -96,36 +171,26 @@ namespace DeepCopy.Test
             cloned.Dict.IsNotSameReferenceAs(cls.Dict);
         }
 
-        [Fact]
-        public void ObjectKeyDictionaryTest()
+
+
+        private void ValidateDictionary<TKey, TValue>(Dictionary<TKey, TValue> original, Dictionary<TKey, TValue> cloned)
+            where TKey: notnull
         {
-            var dict = new Dictionary<TestKey, TestValue>()
+            cloned.StructuralEquals(original);
+
+            int index = 0;
+            foreach (var clonedKey in cloned.Keys)
             {
-                [new TestKey() { Id = 0, Value = "A" }] = new TestValue() { Value = "Foo" },
-                [new TestKey() { Id = 1, Value = "B" }] = new TestValue() { Value = "Bar" },
-            };
-            var _keys = dict.Keys; // Create inner KeyCollection
-            var _values = dict.Values; // Create inner ValueCollection
+                var originalKey = original.Keys.Skip(index).First();
+                if (!originalKey.GetType().IsValueType && originalKey.GetType() != typeof(string))
+                    clonedKey.IsNotSameReferenceAs(originalKey);
+                clonedKey.IsStructuralEqual(originalKey);
 
-            var cloned = ObjectCloner.Clone(dict);
-
-            ValidateObjectKeyDictionary(dict, cloned);
-        }
-
-        [Fact]
-        public void ObjectKeyConcurrentDictionaryTest()
-        {
-            var dict = new ConcurrentDictionary<TestKey, TestValue>()
-            {
-                [new TestKey() { Id = 0, Value = "A" }] = new TestValue() { Value = "Foo" },
-                [new TestKey() { Id = 1, Value = "B" }] = new TestValue() { Value = "Bar" },
-            };
-            //var _keys = dict.Keys; // Create inner KeyCollection
-            //var _values = dict.Values; // Create inner ValueCollection
-
-            var cloned = ObjectCloner.Clone(dict);
-
-            ValidateObjectKeyDictionary(dict, cloned);
+                var originalValue = original.Values.Skip(index++).First();
+                if (!(originalValue?.GetType()?.IsValueType ?? false) && originalValue?.GetType() != typeof(string))
+                    cloned[clonedKey].IsNotSameReferenceAs(originalValue);
+                cloned[clonedKey].IsStructuralEqual(originalValue);
+            }
         }
 
 
@@ -149,12 +214,12 @@ namespace DeepCopy.Test
         internal class TestKey
         {
             public int Id { get; set; }
-            public string Value { get; set; }
+            public string? Value { get; set; }
         }
 
         internal record class TestValue
         {
-            public string Value { get; set; }
+            public string? Value { get; set; }
         }
     }
 }
