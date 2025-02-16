@@ -99,7 +99,11 @@ namespace DeepCopy.Test
 
         public TestObject DeepCopy()
         {
+#if NET8_0_OR_GREATER
             var instance = (TestObject)RuntimeHelpers.GetUninitializedObject(typeof(TestObject));
+#else
+            var instance = (TestObject)FormatterServices.GetUninitializedObject(typeof(TestObject));
+#endif
 
             instance._boolValue = _boolValue;
             instance._sbyteValue = _sbyteValue;

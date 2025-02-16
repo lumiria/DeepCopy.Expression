@@ -60,8 +60,8 @@ namespace DeepCopy.Test
         {
             var dict = new Dictionary<int[], int[]>()
             {
-                [[1,2,3]] = [4,5,6],
-                [[2,4,6]] = [1,2,4]
+                [new int[] { 1, 2, 3 }] = new int[] { 4, 5, 6 },
+                [new int[] { 2, 4, 6 }] = new int[] { 1, 2, 4 }
             };
             var keys = dict.Keys; // access ...
 
@@ -75,8 +75,8 @@ namespace DeepCopy.Test
         {
             var dict = new Dictionary<TestKey[], TestValue[]>()
             {
-                [[new (), new ()]] = [new (), new ()],
-                [[new ()]] = [new ()],
+                [new TestKey[] { new TestKey(), new TestKey() }] = new TestValue[] { new TestValue(), new TestValue() },
+                [new TestKey[] { new TestKey()}] = new TestValue[] { new TestValue() },
             };
             var keys = dict.Keys; // access ...
 
@@ -174,7 +174,10 @@ namespace DeepCopy.Test
 
 
         private void ValidateDictionary<TKey, TValue>(Dictionary<TKey, TValue> original, Dictionary<TKey, TValue> cloned)
+#if NET8_0_OR_GREATER
+
             where TKey: notnull
+#endif
         {
             cloned.StructuralEquals(original);
 
@@ -207,19 +210,38 @@ namespace DeepCopy.Test
 
                 var originalValue = original.Values.Skip(index++).First();
                 cloned[clonedKey].IsNotSameReferenceAs(originalValue);
-                cloned[clonedKey].Is(originalValue);
+                cloned[clonedKey].IsStructuralEqual(originalValue);
             }
         }
 
         internal class TestKey
         {
             public int Id { get; set; }
+#if NET8_0_OR_GREATER
             public string? Value { get; set; }
+#else
+            public string Value { get; set; }
+#endif
         }
 
+
+#if NET8_0_OR_GREATER
         internal record class TestValue
         {
             public string? Value { get; set; }
         }
+#else
+        internal class TestValue
+        {
+            public TestValue() : this(null) {}
+
+            public TestValue(string value)
+            {
+                Value = value;
+            }
+
+            public string Value { get; set; }
+        }
+#endif
     }
 }

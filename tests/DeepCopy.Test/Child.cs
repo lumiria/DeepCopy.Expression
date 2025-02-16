@@ -32,7 +32,11 @@ namespace DeepCopy.Test
 
         public Child DeepCopy()
         {
+#if NET8_0_OR_GREATER
             var instance = (Child)RuntimeHelpers.GetUninitializedObject(typeof(Child));
+#else
+            var instance = (Child)FormatterServices.GetUninitializedObject(typeof(Child));
+#endif
             ReflectionUtils.SetReadonlyField(instance, nameof(_id), _id);
             instance._intValue = _intValue;
             instance._intArray = new int[_intArray.Length];

@@ -63,7 +63,11 @@ namespace DeepCopy.Internal
 
             private ClonerCache()
             {
+#if NETSTANDARD2_0
+                _cache = new ConcurrentDictionary<Type, MethodInfo>(Environment.ProcessorCount, 10);
+#else
                 _cache = new ConcurrentDictionary<Type, MethodInfo>(-1, 10);
+#endif
             }
 
             public static ClonerCache Instance { get; } =
