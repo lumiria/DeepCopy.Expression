@@ -205,7 +205,11 @@ namespace DeepCopy.Test
             cloned2.Value.IsNotSameReferenceAs(tuple2.Value);
             cloned2.IsStructuralEqual(tuple2);
 
+#if NET8_0_OR_GREATER
             var tuple3 = tuple1 with { Item1 = 3, Item2 = "baz", Item3 = null };
+#else
+            var tuple3 = (3, "baz", (TestObject)null);
+#endif
             ObjectCloner.CopyTo(tuple1, ref tuple3);
             tuple3.Item3.IsNotSameReferenceAs(tuple1.Item3);
             tuple3.IsStructuralEqual(tuple1);
@@ -223,14 +227,25 @@ namespace DeepCopy.Test
 
         interface IStructData
         {
+#if NET8_0_OR_GREATER
             string Write() => "This is StructData";
+#else
+            string Write();
+#endif
         }
 
         internal struct StructData : IStructData
         {
             public int? Id;
             public string Name;
+#if NET8_0_OR_GREATER
             public object? Value;
+#else
+            public object Value;
+
+            public string Write() =>  "This is StructData";
+#endif
+            
         }
 
         internal enum EnumData

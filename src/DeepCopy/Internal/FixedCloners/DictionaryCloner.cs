@@ -16,6 +16,15 @@ namespace DeepCopy.Internal.FixedCloners
             Expression destination,
             Expression cache)
         {
+#if NETSTANDARD2_0
+            var entries = Expression.MakeMemberAccess(
+                source,
+                source.Type.GetField("entries", privateBindingFlags)!);
+            var length = Expression.Field(source, source.Type.GetField("count", privateBindingFlags)!);
+            var comparer = Expression.MakeMemberAccess(
+                source,
+                source.Type.GetField("comparer", privateBindingFlags)!);
+#else
             var entries = Expression.MakeMemberAccess(
                 source,
                 source.Type.GetField("_entries", privateBindingFlags)!);
@@ -23,6 +32,7 @@ namespace DeepCopy.Internal.FixedCloners
             var comparer = Expression.MakeMemberAccess(
                 source,
                 source.Type.GetField("_comparer", privateBindingFlags)!);
+#endif
 
             var i = Expression.Parameter(typeof(int), "i");
             var endLoop = Expression.Label("EndLoop");
@@ -55,9 +65,15 @@ namespace DeepCopy.Internal.FixedCloners
 
         private static BinaryExpression AssignClonedComparer(Expression destination, MemberExpression comparer, Expression cache)
         {
+#if NETSTANDARD2_0
+            var destinationComparer = Expression.MakeMemberAccess(
+                destination,
+                destination.Type.GetField("comparer", privateBindingFlags)!);
+#else
             var destinationComparer = Expression.MakeMemberAccess(
                 destination,
                 destination.Type.GetField("_comparer", privateBindingFlags)!);
+#endif
             var equalityComparerType = typeof(EqualityComparer<>).MakeGenericType(comparer.Type.GetGenericArguments()[0]);
             var defaultComparer = Expression.Convert(
                 Expression.Property(
@@ -115,17 +131,12 @@ namespace DeepCopy.Internal.FixedCloners
             if (type.IsArray)
             {
                 var array = Expression.Parameter(type, "array");
-                var length = Expression.ArrayLength(array);
-                var arrayAssign = Expression.Assign(
-                    array,
-                    Expression.NewArrayBounds(array.Type.GetElementType()!, length)
-                );
-
                 return ExpressionUtils.NullTernaryCheck(
+                    type,
                     field,
                     Expression.Block(
+                        type,
                         [array],
-                        arrayAssign,
                         ArrayCloner.Instance.Build(
                              TypeUtils.IsAssignableType(type.GetElementType())
                                  ? CopyPolicy.ShallowCopy
@@ -151,9 +162,13 @@ namespace DeepCopy.Internal.FixedCloners
             }
 
             return Expression.Condition(
-                ExpressionUtils.IsObjectOrValueType(field),
-                field,
-                cloneExpression
+                ExpressionUtils.IsObject(field),
+                Expression.Constant(new object()),
+                Expression.Condition(
+                    ExpressionUtils.IsObjectOrValueType(field),
+                    field,
+                    cloneExpression
+                )
             );
         }
 

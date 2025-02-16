@@ -19,6 +19,9 @@ namespace DeepCopy.Internal.Utilities
         public static Expression GetArrayLength(Expression array, int dimention) =>
             Expression.Call(array, ReflectionUtils.GetArrayLength, Expression.Constant(dimention));
 
+        public static Expression IsObject(Expression instance) =>
+            Expression.TypeEqual(instance, typeof(object));
+
         public static Expression IsObjectOrValueType(Expression instance) =>
             Expression.Call(ReflectionUtils.IsObjectOrValueType,
                 Expression.Call(instance, ReflectionUtils.GetObjectType));
@@ -36,6 +39,12 @@ namespace DeepCopy.Internal.Utilities
                 Expression.NotEqual(value, Null),
                 body,
                 Null);
+
+        public static Expression NullTernaryCheck(Type type, Expression value, Expression body) =>
+            Expression.Condition(
+                Expression.NotEqual(value, Expression.Constant(null, type)),
+                body,
+            Expression.Constant(null, type));
 
         private static Expression Null { get; } =
             Expression.Constant(null, typeof(object));
