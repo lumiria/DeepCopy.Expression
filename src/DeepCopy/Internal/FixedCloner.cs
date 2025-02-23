@@ -18,7 +18,8 @@ namespace DeepCopy.Internal
         {
             _bag = new ()
             {
-                [typeof(Dictionary<,>)] = DictionaryCloner.Build
+                [typeof(Dictionary<,>)] = DictionaryCloner.Build,
+                [typeof(HashSet<>)] = HashSetCloner.Build
             };
         }
 
