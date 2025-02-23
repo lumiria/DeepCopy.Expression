@@ -29,6 +29,31 @@ namespace DeepCopy.Internal.Utilities
         public static Expression CloneObjectType(Expression source, Expression cache) =>
             Expression.Call(ReflectionUtils.ObjectTypeClone, source, cache);
 
+        public static BlockExpression Loop(Expression array, Expression length, Func<Expression, Expression> body, params Expression[] initializeExpressions)
+        {
+            var i = Expression.Parameter(typeof(int), "i");
+            var endLoop = Expression.Label("EndLoop");
+
+            var item = Expression.ArrayIndex(array, i);
+
+            return Expression.Block(
+                [i],
+                [.. initializeExpressions,
+                    Expression.Loop(
+                        Expression.Block(
+                            Expression.IfThen(
+                                Expression.GreaterThanOrEqual(i, length),
+                                Expression.Break(endLoop)
+                            ),
+                            body(item),
+                            Expression.PreIncrementAssign(i)
+                        ),
+                        endLoop
+                    )
+                ]
+            );
+        }
+
         public static Expression NullCheck(Expression value, Expression body) =>
             Expression.IfThen(
                 Expression.NotEqual(value, Null),
