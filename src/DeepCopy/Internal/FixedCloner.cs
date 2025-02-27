@@ -1,6 +1,7 @@
 ﻿#nullable enable
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
@@ -19,7 +20,8 @@ namespace DeepCopy.Internal
             _bag = new ()
             {
                 [typeof(Dictionary<,>)] = DictionaryCloner.Build,
-                [typeof(HashSet<>)] = HashSetCloner.Build
+                [typeof(HashSet<>)] = HashSetCloner.Build,
+                [typeof(ConcurrentDictionary<,>)] = ConcurrentDictionaryCloner.Build
             };
         }
 

@@ -134,6 +134,7 @@ namespace DeepCopy.Test
             {
                 [new TestKey() { Id = -1, Value = "A" }] = new TestValue() { Value = "Foo" },
                 [new TestKey() { Id = 0, Value = "B" }] = new TestValue() { Value = "Bar" },
+                [new TestKey() { Id = 1, Value = "C" }] = new TestValue() { Value = "Baz" },
             };
 
             var cloned = ObjectCloner.Clone(dict);
@@ -203,12 +204,14 @@ namespace DeepCopy.Test
             int index = 0;
             foreach (var clonedKey in cloned.Keys)
             {
-                var originalKey = original.Keys.Skip(index).First();
+                var originalKey = original.Keys.FirstOrDefault(
+                    key => key.Id == clonedKey.Id && key.Value == clonedKey.Value);
                 clonedKey.IsNotSameReferenceAs(originalKey);
-                clonedKey.Id.Is(originalKey.Id);
-                clonedKey.Value.Is(originalKey.Value);
+                clonedKey.IsStructuralEqual(originalKey);
+                //clonedKey.Id.Is(originalKey.Id);
+                //clonedKey.Value.Is(originalKey.Value);
 
-                var originalValue = original.Values.Skip(index++).First();
+                var originalValue = original[originalKey];
                 cloned[clonedKey].IsNotSameReferenceAs(originalValue);
                 cloned[clonedKey].IsStructuralEqual(originalValue);
             }

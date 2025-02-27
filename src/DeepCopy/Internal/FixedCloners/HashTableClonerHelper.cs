@@ -27,7 +27,9 @@ namespace DeepCopy.Internal.FixedCloners
             var entries = Expression.MakeMemberAccess(
                 source,
                 source.Type.GetField(entriesFieldName, privateBindingFlags)!);
-            var length = Expression.Field(source, source.Type.GetField(countFieldName, privateBindingFlags)!);
+            var length = Expression.Field(
+                source,
+                source.Type.GetField(countFieldName, privateBindingFlags)!);
             var comparer = Expression.MakeMemberAccess(
                 source,
                 comparerFieldInfo);

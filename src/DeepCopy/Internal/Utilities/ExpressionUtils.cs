@@ -26,6 +26,10 @@ namespace DeepCopy.Internal.Utilities
             Expression.Call(ReflectionUtils.IsObjectOrValueType,
                 Expression.Call(instance, ReflectionUtils.GetObjectType));
 
+        public static Expression IsValueType(Expression instance) =>
+            Expression.Call(ReflectionUtils.IsValueType,
+                Expression.Call(instance, ReflectionUtils.GetObjectType));
+
         public static Expression CloneObjectType(Expression source, Expression cache) =>
             Expression.Call(ReflectionUtils.ObjectTypeClone, source, cache);
 
@@ -69,7 +73,7 @@ namespace DeepCopy.Internal.Utilities
             Expression.Condition(
                 Expression.NotEqual(value, Expression.Constant(null, type)),
                 body,
-            Expression.Constant(null, type));
+                Expression.Constant(null, type));
 
         private static Expression Null { get; } =
             Expression.Constant(null, typeof(object));

@@ -91,7 +91,7 @@ namespace DeepCopy.Internal.FixedCloners
                 ExpressionUtils.IsObject(field),
                 Expression.Constant(new object()),
                 Expression.Condition(
-                    ExpressionUtils.IsObjectOrValueType(field),
+                    ExpressionUtils.IsValueType(field),
                     field,
                     cloneExpression
                 )

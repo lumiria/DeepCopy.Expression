@@ -4,6 +4,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Runtime.CompilerServices;
+using DeepCopy.Internal.MemberCloners;
 using DeepCopy.Internal.Utilities;
 
 namespace DeepCopy.Internal
@@ -104,6 +105,15 @@ namespace DeepCopy.Internal
                         Expression.Call(value, ReflectionUtils.MemberwizeClone),
                         memberType));
             }
+            else if (TryGetSpecialMemberCloneBuilder(memberType, out var builder))
+            {
+                body = builder(
+                    memberType,
+                    value,
+                    destination,
+                    member,
+                    cache);
+            }
             else
             {
                 body = ClassCloner.Instance.Build(
@@ -117,6 +127,13 @@ namespace DeepCopy.Internal
             return TypeUtils.IsNullable(memberType)
                 ? ExpressionUtils.NullCheck(value, body)
                 : body;
+        }
+
+        private static bool TryGetSpecialMemberCloneBuilder(
+            Type memberType,
+            out Func<Type, Expression, Expression, MemberInfo, Expression, Expression> builder)
+        {
+            return EqualComparerMemberCloner.TryGetBuilder(memberType, out builder);
         }
     }
 }
