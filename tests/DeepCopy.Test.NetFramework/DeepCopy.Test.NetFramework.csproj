@@ -92,6 +92,9 @@
     <Compile Include="..\DeepCopy.Test\UnitTest.HashSet.cs">
       <Link>UnitTest.HashSet.cs</Link>
     </Compile>
+    <Compile Include="..\DeepCopy.Test\UnitTest.SpecialMember.cs">
+      <Link>UnitTest.SpecialMember.cs</Link>
+    </Compile>
     <Compile Include="..\DeepCopy.Test\UnitTest.ValueType.cs">
       <Link>UnitTest.ValueType.cs</Link>
     </Compile>
