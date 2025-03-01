@@ -272,6 +272,26 @@ namespace DeepCopy
             return instance;
         }
 
+        private static T? _CloneNullableValue<T>(in T? source, ObjectReferencesCache cache)
+            where T : struct
+        {
+#if DEBUGLOG
+            Console.WriteLine($"[{typeof(T).Name}]");
+#endif
+            if (source == null) return default;
+
+            var type = source.GetType();
+#if NETSTANDARD2_0
+            var instance = (T?)FormatterServices.GetUninitializedObject(type);
+#else
+            var instance = (T?)RuntimeHelpers.GetUninitializedObject(type);
+#endif
+
+            _CopyNullableValueType(source, ref instance, cache);
+
+            return instance;
+        }
+
         private static T _CloneInterface<T>(T source, ObjectReferencesCache cache)
         {
 #if DEBUGLOG

@@ -107,7 +107,8 @@ namespace DeepCopy.Test
 
             for (int i = 0; i < cloned.Length; i++)
             {
-                cloned[i].IsNotSameReferenceAs(structArray[i]);
+                if (structArray[i] != null)
+                    cloned[i].IsNotSameReferenceAs(structArray[i]);
                 ValidateValue(structArray[i]?.Value, cloned[i]?.Value);
             }
         }
