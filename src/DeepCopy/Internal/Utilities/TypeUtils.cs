@@ -42,9 +42,13 @@ namespace DeepCopy.Internal.Utilities
             foreach (var t in type.GetFields(bindingFlags))
                 if (!IsEvent(type, t.Name)) yield return t;
         }
+
         private static bool IsAssignableType(Type type, HashSet<Type> cache) =>
-            type.IsPrimitive || type.IsEnum || type == typeof(decimal) || type == typeof(string) || Nullable.GetUnderlyingType(type) != null
-            || IsFullyAssignableType(type, cache);
+            type is not null
+            && (
+                type.IsPrimitive || type.IsEnum || type == typeof(decimal) || type == typeof(string)
+                || IsFullyAssignableType(type, cache)
+            );
 
 
         private static bool IsFullyAssignableType(Type type, HashSet<Type> cache) =>

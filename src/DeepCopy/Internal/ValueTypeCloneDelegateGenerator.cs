@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq.Expressions;
+using System.Reflection;
 using DeepCopy.Internal.Utilities;
 
 namespace DeepCopy.Internal
@@ -35,8 +36,25 @@ namespace DeepCopy.Internal
 
             var body = TypeUtils.IsAssignableType(type)
                 ? Expression.Assign(destinationParameter, sourceParameter)
-                : CoreCloneExpressionGenerator.CreateCloneExpression<T>(
-                    sourceParameter, destinationParameter, cacheParameter);
+                : Nullable.GetUnderlyingType(type) is Type underlyingType
+                    ? Expression.Assign(
+                        destinationParameter,
+                        ExpressionUtils.NullTernaryCheck(
+                            type,
+                            sourceParameter,
+                            Expression.TypeAs(
+                                Expression.Call(
+                                    ReflectionUtils.ValueClone.MakeGenericMethod(underlyingType),
+                                    Expression.MakeMemberAccess(
+                                        sourceParameter,
+                                        sourceParameter.Type.GetField("value", BindingFlags.Instance | BindingFlags.NonPublic)),
+                                    cacheParameter),
+                                type
+                            )
+                        )
+                    )
+                    : CoreCloneExpressionGenerator.CreateCloneExpression<T>(
+                        sourceParameter, destinationParameter, cacheParameter);
 
             return Expression.Lambda<ValueTypeCloneExpressionGenerator<T>.ValueTypeCloneDelegate> (
                 body,
