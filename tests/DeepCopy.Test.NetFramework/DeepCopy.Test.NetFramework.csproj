@@ -98,6 +98,9 @@
     <Compile Include="..\DeepCopy.Test\UnitTest.ValueType.cs">
       <Link>UnitTest.ValueType.cs</Link>
     </Compile>
+    <Compile Include="..\DeepCopy.Test\UnitType.Nullable.cs">
+      <Link>UnitType.Nullable.cs</Link>
+    </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

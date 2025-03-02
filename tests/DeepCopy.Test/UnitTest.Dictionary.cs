@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using DeepCopy.Test.Inners;
 using Xunit;
@@ -26,11 +27,11 @@ namespace DeepCopy.Test
         [Fact]
         public void ReferenceTypeDictionaryTest()
         {
-            var dict = new Dictionary<object, object>()
+            var dict = new Dictionary<TestKey, TestValue>()
             {
-                [1] = new TestObject(),
-                [2] = new TestObject(),
-                [new object()] = new object(),
+                [new TestKey() {  Id = 1 }] = new TestValue() { Value = "Foo" },
+                [new TestKey() {  Id = 2 }] = new TestValue() { Value = "Bar" },
+                [new TestKey() {  Id = 3 }] = new TestValue() { Value = "Baz" },
             };
             var keys = dict.Keys; // access ...
 
@@ -172,6 +173,53 @@ namespace DeepCopy.Test
             cloned.Dict.IsNotSameReferenceAs(cls.Dict);
         }
 
+        [Fact]
+        public void ObjectAsDictionaryTest()
+        {
+            object obj = new Dictionary<TestKey, TestValue>()
+            {
+                [new TestKey() { Id = 1 }] = new TestValue() { Value = "Foo" },
+                [new TestKey() { Id = 2 }] = new TestValue() { Value = "Bar" },
+                [new TestKey() { Id = 3 }] = new TestValue() { Value = "Baz" },
+            };
+
+            var cloned = ObjectCloner.Clone(obj);
+
+            ValidateDictionary((Dictionary<TestKey, TestValue>)obj, (Dictionary<TestKey, TestValue>)cloned);
+        }
+
+        [Fact]
+        public void ValueTypeReadOnlyDictionaryTest()
+        {
+            var dict = new ReadOnlyDictionary<int,string>(
+                new Dictionary<int, string>()
+                {
+                    [0] = "foo",
+                    [1] = "bar"
+                });
+            var keys = dict.Keys; // access ...
+
+            var cloned = ObjectCloner.Clone(dict);
+
+            ValidateDictionary(dict, cloned);
+        }
+
+        [Fact]
+        public void ReferenceTypeReadOnlyDictionaryTest()
+        {
+            var dict = new ReadOnlyDictionary<TestKey, TestValue>(
+                new Dictionary<TestKey, TestValue>()
+                {
+                    [new TestKey() { Id = 1 }] = new TestValue() { Value = "Foo" },
+                    [new TestKey() { Id = 2 }] = new TestValue() { Value = "Bar" },
+                    [new TestKey() { Id = 3 }] = new TestValue() { Value = "Baz" },
+                });
+            var keys = dict.Keys; // access ...
+
+            var cloned = ObjectCloner.Clone(dict);
+
+            ValidateDictionary(dict, cloned);
+        }
 
 
         private void ValidateDictionary<TKey, TValue>(Dictionary<TKey, TValue> original, Dictionary<TKey, TValue> cloned)
@@ -208,11 +256,31 @@ namespace DeepCopy.Test
                     key => key.Id == clonedKey.Id && key.Value == clonedKey.Value);
                 clonedKey.IsNotSameReferenceAs(originalKey);
                 clonedKey.IsStructuralEqual(originalKey);
-                //clonedKey.Id.Is(originalKey.Id);
-                //clonedKey.Value.Is(originalKey.Value);
 
                 var originalValue = original[originalKey];
                 cloned[clonedKey].IsNotSameReferenceAs(originalValue);
+                cloned[clonedKey].IsStructuralEqual(originalValue);
+            }
+        }
+
+        private void ValidateDictionary<TKey, TValue>(IDictionary<TKey, TValue> original, IDictionary<TKey, TValue> cloned)
+#if NET8_0_OR_GREATER
+
+    where TKey : notnull
+#endif
+        {
+            int index = 0;
+            foreach (var clonedKey in cloned.Keys)
+            {
+                var originalKey = original.Keys.Skip(index).First();
+                if (!originalKey.GetType().IsValueType && originalKey.GetType() != typeof(string))
+                    clonedKey.IsNotSameReferenceAs(originalKey);
+                clonedKey.IsStructuralEqual(originalKey);
+
+                var originalValue = original.Values.Skip(index++).First();
+                var valueType = originalValue?.GetType();
+                if (!(valueType?.IsValueType ?? false) && valueType != typeof(string) && valueType != typeof(object))
+                    cloned[clonedKey].IsNotSameReferenceAs(originalValue);
                 cloned[clonedKey].IsStructuralEqual(originalValue);
             }
         }

@@ -3,6 +3,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq.Expressions;
 using DeepCopy.Internal.FixedCloners;
@@ -21,7 +22,8 @@ namespace DeepCopy.Internal
             {
                 [typeof(Dictionary<,>)] = DictionaryCloner.Build,
                 [typeof(HashSet<>)] = HashSetCloner.Build,
-                [typeof(ConcurrentDictionary<,>)] = ConcurrentDictionaryCloner.Build
+                [typeof(ConcurrentDictionary<,>)] = ConcurrentDictionaryCloner.Build,
+                [typeof(ReadOnlyDictionary<,>)] = ReadOnlyDictionaryCloner.Build
             };
         }
 

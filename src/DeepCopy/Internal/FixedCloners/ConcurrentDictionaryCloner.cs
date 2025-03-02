@@ -1,6 +1,5 @@
 ﻿#nullable enable
 
-using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -41,24 +40,8 @@ namespace DeepCopy.Internal.FixedCloners
             ];
 #endif
 
-            return Expression.Block(
-                fields.Select(field =>
-                    AssignClonedField(
-                        destination,
-                        source,
-                        source.Type.GetField(field, privateBindingFlags)!,
-                        cache
-                    )
-                )
-            );
-        }
-
-        private static Expression AssignClonedField(Expression destination, Expression source, FieldInfo fieldInfo, Expression cache)
-        {
-            return MemberAccessorGenerator.CreateSetter(
-                destination,
-                fieldInfo,
-                FixedClonerHelper.GetClonedField(fieldInfo, source, cache));
+            return FixedClonerHelper.AssignClonedFields(
+                destination, fields, source, cache);
         }
 
         private static MethodCallExpression Clear(Expression destination)

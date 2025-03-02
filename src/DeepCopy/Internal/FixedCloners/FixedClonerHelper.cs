@@ -1,6 +1,8 @@
 ﻿#nullable enable
 
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using DeepCopy.Internal.Utilities;
@@ -9,6 +11,9 @@ namespace DeepCopy.Internal.FixedCloners
 {
     internal static class FixedClonerHelper
     {
+        private readonly static BindingFlags bindingFlags = 
+            BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly;
+
         public static BinaryExpression AssignField(Expression destination, FieldInfo fieldInfo, Expression value)
         {
             var field = Expression.MakeMemberAccess(
@@ -16,6 +21,28 @@ namespace DeepCopy.Internal.FixedCloners
                 fieldInfo);
 
             return Expression.Assign(field, value);
+        }
+
+        public static BlockExpression AssignClonedFields(Expression destination, string[] fieldNames, Expression source, Expression cache)
+        {
+            return Expression.Block(
+                fieldNames.Select(field =>
+                    AssignClonedField(
+                        destination,
+                        source,
+                        source.Type.GetField(field, bindingFlags)!,
+                        cache
+                    )
+                )
+            );
+        }
+
+        public static Expression AssignClonedField(Expression destination, Expression source, FieldInfo fieldInfo, Expression cache)
+        {
+            return MemberAccessorGenerator.CreateSetter(
+                destination,
+                fieldInfo,
+                GetClonedField(fieldInfo, source, cache));
         }
 
         public static BinaryExpression AssignClonedComparer(Expression destination, FieldInfo fieldInfo, MemberExpression comparer, Expression cache)
@@ -48,6 +75,14 @@ namespace DeepCopy.Internal.FixedCloners
         {
             var field = Expression.Field(source, fieldInfo);
             var type = field.Type;
+
+            if (type.IsGenericType && type.GetGenericTypeDefinition() is Type genericType)
+            {
+                if (genericType == typeof(IEqualityComparer<>))
+                    return GetClonedEqualityComparer(fieldInfo, source, cache);
+                if (genericType == typeof(IComparer<>))
+                    return GetClonedComparer(fieldInfo, source, cache);
+            }
 
             if (TypeUtils.IsAssignableType(type))
             {
@@ -94,6 +129,48 @@ namespace DeepCopy.Internal.FixedCloners
                     ExpressionUtils.IsValueType(field),
                     field,
                     cloneExpression
+                )
+            );
+        }
+
+        private static ConditionalExpression GetClonedEqualityComparer(
+            FieldInfo fieldInfo, Expression source, Expression cache)
+        {
+            var comparer = Expression.Field(source, fieldInfo);
+
+            var equalityComparerType = typeof(EqualityComparer<>).MakeGenericType(
+                fieldInfo.FieldType.GetGenericArguments()[0]);
+
+            return GetClonedComparerCore(equalityComparerType, comparer, cache);
+        }
+
+        private static ConditionalExpression GetClonedComparer(
+            FieldInfo fieldInfo, Expression source, Expression cache)
+        {
+            var comparer = Expression.Field(source, fieldInfo);
+
+            var equalityComparerType = typeof(Comparer<>).MakeGenericType(
+                fieldInfo.FieldType.GetGenericArguments()[0]);
+
+            return GetClonedComparerCore(equalityComparerType, comparer, cache);
+        }
+
+        private static ConditionalExpression GetClonedComparerCore(
+            Type comparerInstanceType, Expression comparer, Expression cache)
+        {
+            var defaultComparer = Expression.Convert(
+                Expression.Property(
+                    null,
+                    comparerInstanceType.GetProperty("Default", BindingFlags.Static | BindingFlags.Public)!),
+                comparer.Type);
+
+            return Expression.Condition(
+                Expression.Equal(comparer, defaultComparer),
+                defaultComparer,
+                Expression.Call(
+                    ReflectionUtils.ObjectClone.MakeGenericMethod(comparer.Type),
+                    comparer,
+                    cache
                 )
             );
         }

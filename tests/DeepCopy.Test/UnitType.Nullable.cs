@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text;
 using Xunit;
 
 namespace DeepCopy.Test
@@ -43,7 +39,7 @@ namespace DeepCopy.Test
             where T : struct
         {
             var cloned = ObjectCloner.Clone(value);
-            if (value is not null)
+            if (value != null)
                 cloned.IsNotSameReferenceAs(value);
             cloned.Is(value);
         }
