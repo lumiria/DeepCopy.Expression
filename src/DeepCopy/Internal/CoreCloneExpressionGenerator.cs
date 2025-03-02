@@ -15,8 +15,15 @@ namespace DeepCopy.Internal
         public static Expression CreateCloneExpression<T>(
             ParameterExpression source, ParameterExpression destination, ParameterExpression cache)
         {
-            if (FixedCloner.TryGetBuilder(typeof(T), out var builder))
-                return builder(source, destination, cache);
+            try
+            {
+                if (FixedCloner.TryGetBuilder(typeof(T), out var builder))
+                    return builder(source, destination, cache);
+            }
+            catch (Exception exception)
+            {
+                throw new InvalidCloneBuilderException(typeof(T), exception);
+            }
 
             return CreateCloneExpressionInner<T>(source, destination, cache);
         }
@@ -25,8 +32,15 @@ namespace DeepCopy.Internal
         public static Expression CreateCloneExpression(Type type,
             Expression source, Expression destination, Expression cache)
         {
-            if (FixedCloner.TryGetBuilder(type, out var builder))
-                return builder(source, destination, cache);
+            try
+            {
+                if (FixedCloner.TryGetBuilder(type, out var builder))
+                    return builder(source, destination, cache);
+            }
+            catch (Exception exception)
+            {
+                throw new InvalidCloneBuilderException(type, exception);
+            }
 
             return CreateCloneExpressionInner(type, source, destination, cache);
         }

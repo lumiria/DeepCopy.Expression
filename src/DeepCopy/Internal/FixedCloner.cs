@@ -5,16 +5,13 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq.Expressions;
 using DeepCopy.Internal.FixedCloners;
 
 namespace DeepCopy.Internal
 {
     internal static class FixedCloner
     {
-        public delegate BlockExpression ExpressionBuilder(Expression source, Expression desitination, Expression cache);
-
-        private readonly static Dictionary<Type, ExpressionBuilder> _bag;
+        private readonly static Dictionary<Type, CustomCloneBuilder> _bag;
 
         static FixedCloner()
         {
@@ -28,18 +25,20 @@ namespace DeepCopy.Internal
         }
 
 #if NETSTANDARD2_0
-        public static bool TryGetBuilder(Type type, out ExpressionBuilder? builder)
+        public static bool TryGetBuilder(Type type, out CustomCloneBuilder? builder)
 #else
-        public static bool TryGetBuilder(Type type, [MaybeNullWhen(false)] out ExpressionBuilder? builder)
+        public static bool TryGetBuilder(Type type, [MaybeNullWhen(false)] out CustomCloneBuilder? builder)
 #endif
         {
-            if (type.IsGenericType)
-            {
-                return _bag.TryGetValue(type.GetGenericTypeDefinition(), out builder);
-            }
+            if (type.IsGenericType && _bag.TryGetValue(type.GetGenericTypeDefinition(), out builder))
+                return true;
 
-            builder = null;
-            return false;
+            return _bag.TryGetValue(type, out builder);
+        }
+
+        public static void Add(Type type, CustomCloneBuilder builder)
+        {
+            _bag.Add(type, builder);
         }
     }
 }

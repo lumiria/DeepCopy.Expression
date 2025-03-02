@@ -86,6 +86,9 @@
     <Compile Include="..\DeepCopy.Test\UnitTest.cs">
       <Link>UnitTest.cs</Link>
     </Compile>
+    <Compile Include="..\DeepCopy.Test\UnitTest.CustomClone.cs">
+      <Link>UnitTest.CustomClone.cs</Link>
+    </Compile>
     <Compile Include="..\DeepCopy.Test\UnitTest.Dictionary.cs">
       <Link>UnitTest.Dictionary.cs</Link>
     </Compile>

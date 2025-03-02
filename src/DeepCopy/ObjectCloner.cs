@@ -216,6 +216,19 @@ namespace DeepCopy
             CloneArrayExpressionGenerator<T, T[,,,,]>.Cleanup();
         }
 
+        /// <summary>
+        /// Registers the builder for custom clone.
+        /// </summary>
+        /// <param name="targetType">The <see cref="Type"/> of the object to be custom cloned.</param>
+        /// <param name="builder">The <see cref="CustomCloneBuilder"/> that builds a custom clone expression.</param>
+        /// <remarks>
+        /// If the builder is invalid, an <see cref="InvalidCloneBuilderException"/> will be thrown during clone execution.
+        /// </remarks>
+        public static void RegisterCustomClone(Type targetType, CustomCloneBuilder builder)
+        {
+            FixedCloner.Add(targetType, builder);
+        }
+
         private static ObjectReferencesCache CreateObjectReferenceCache(bool preserveObjectReferences, object self = null, object cloned = null) =>
             ObjectReferencesCache.Create(self, cloned, preserveObjectReferences);
 
