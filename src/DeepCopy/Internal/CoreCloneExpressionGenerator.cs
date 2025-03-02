@@ -18,12 +18,7 @@ namespace DeepCopy.Internal
             if (FixedCloner.TryGetBuilder(typeof(T), out var builder))
                 return builder(source, destination, cache);
 
-            var targets = CopyMemberExtractor.Extract<T>();
-
-            var expressions = new ReadOnlyCollectionBuilder<Expression>(
-                CreateExpressions(targets, source, destination, cache));
-
-            return Expression.Block(expressions);
+            return CreateCloneExpressionInner<T>(source, destination, cache);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -33,7 +28,26 @@ namespace DeepCopy.Internal
             if (FixedCloner.TryGetBuilder(type, out var builder))
                 return builder(source, destination, cache);
 
-            var targets = CopyMemberExtractor.Extract(type);
+            return CreateCloneExpressionInner(type, source, destination, cache);
+        }
+
+        internal static Expression CreateCloneExpressionInner<T>(
+        ParameterExpression source, ParameterExpression destination, ParameterExpression cache,
+            params string[] ignoreFields)
+        {
+            var targets = CopyMemberExtractor.Extract<T>(ignoreFields);
+
+            var expressions = new ReadOnlyCollectionBuilder<Expression>(
+                CreateExpressions(targets, source, destination, cache));
+
+            return Expression.Block(expressions);
+        }
+
+        internal static Expression CreateCloneExpressionInner(Type type,
+            Expression source, Expression destination, Expression cache,
+            params string[] ignoreFields)
+        {
+            var targets = CopyMemberExtractor.Extract(type, ignoreFields);
 
             var expressions = new ReadOnlyCollectionBuilder<Expression>(
                 CreateExpressions(targets, source, destination, cache));

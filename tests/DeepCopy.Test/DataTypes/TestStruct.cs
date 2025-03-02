@@ -11,8 +11,8 @@
             Value = value;
         }
 
-        int Id { get; set; }
-        string Value { get; set;}
+        public int Id { get; set; }
+        public string Value { get; set;}
     }
 #endif
 }
