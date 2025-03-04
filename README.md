@@ -91,8 +91,49 @@ class Program
 }
 ```
 
+## Custom clone
+From Ver1.5.0, it is now possible to pre-register customized clone processing for each type using the `ObjectCloner.RegisterCustomClone` method.
+
+The following example ensures that the cloned object always have unique ID:
+
+```csharp
+ObjectCloner.RegisterCustomClone(
+    typeof(MyCustomizableObject),
+    (Expression source, Expression destination, Expression cache) =>
+    {
+        var fields = CustomCloneHelper.BuildCloneFieldsExpression(
+            source.Type, source, destination, cache, "_id");
+
+        return Expression.Block(
+            fields,
+            CustomCloneHelper.BuildFieldAssignment(
+                destination, "_id", Guid.NewGuid())
+        );
+    });
+
+var orignal = new MyCustomizableObject("Foo");
+var cloned = ObjectCloner.Clone(instance);
+
+Debug.Assert(clined.Id != orignal.Id);
+
+
+public sealed class MyCustomizableObject
+{
+    private Guid _id;
+
+    public MyCustomizableObject(string name)
+    {
+        _id = Guid.NewGuid();
+        Name = name;
+    }
+
+    public Guid Id => _id;
+    public string Name { get; }
+}
+```
+
 ## Copy policy
- The available copy policies are:
+The available copy policies are:
 
 - Default: The default policy for the type of the member. For value types, it performs an assignment, For reference tytpes, it performs a deep copy. For arrays, it performs a clone. For delegates, it performs an assignment.
 - DeepCopy: Performs a deep copy of the member regardless of its type.
