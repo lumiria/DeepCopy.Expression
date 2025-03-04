@@ -11,26 +11,23 @@ namespace DeepCopy.Internal
         private static readonly BindingFlags bindingFlags =
             BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly;
 
-        public static IEnumerable<(MemberInfo, CopyPolicy)> Extract<T>() =>
-            Extract(typeof(T));
+        public static IEnumerable<(MemberInfo, CopyPolicy)> Extract<T>(params string[] ignoreFields) =>
+            Extract(typeof(T), ignoreFields);
 
-        public static IEnumerable<(MemberInfo, CopyPolicy)> Extract(Type type)
+        public static IEnumerable<(MemberInfo, CopyPolicy)> Extract(Type type, params string[] ignoreFields)
         {
             if (type.GetCustomAttribute(typeof(CloneableAttribute)) == null)
             {
-                //return GetFields(type)
-                //    .Select(field => ((MemberInfo)field, Seal(field.FieldType, CopyMemberAttribute.Default)));
-                foreach (var fieldInfo in GetFields(type))
-                    yield return (fieldInfo, Seal(fieldInfo.FieldType, CopyMemberAttribute.Default));
+                return GetFields(type)
+                    .Where(field => !ignoreFields.Contains(field.Name))
+                    .Select(field => ((MemberInfo)field, Seal(field.FieldType, CopyMemberAttribute.Default)));
             }
             else
             {
-                var targets = GetFieldsWithAttribute(type)
+                return GetFieldsWithAttribute(type)
                     .Concat(GetPropertiesWithAttribute(type))
-                    .Where(t => t.Item3 != null);
-                //.Select(t => (t.Item1, Seal(t.Item2, t.Item3)));
-                foreach (var t in targets)
-                    yield return (t.Item1, Seal(t.Item2, t.Item3));
+                    .Where(t => t.Item3 != null)
+                    .Select(t => (t.Item1, Seal(t.Item2, t.Item3)));
             }
 
         }

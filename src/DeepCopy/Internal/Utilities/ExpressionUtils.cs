@@ -19,12 +19,44 @@ namespace DeepCopy.Internal.Utilities
         public static Expression GetArrayLength(Expression array, int dimention) =>
             Expression.Call(array, ReflectionUtils.GetArrayLength, Expression.Constant(dimention));
 
+        public static Expression IsObject(Expression instance) =>
+            Expression.TypeEqual(instance, typeof(object));
+
         public static Expression IsObjectOrValueType(Expression instance) =>
             Expression.Call(ReflectionUtils.IsObjectOrValueType,
                 Expression.Call(instance, ReflectionUtils.GetObjectType));
 
+        public static Expression IsValueType(Expression instance) =>
+            Expression.Call(ReflectionUtils.IsValueType,
+                Expression.Call(instance, ReflectionUtils.GetObjectType));
+
         public static Expression CloneObjectType(Expression source, Expression cache) =>
             Expression.Call(ReflectionUtils.ObjectTypeClone, source, cache);
+
+        public static BlockExpression Loop(Expression array, Expression length, Func<Expression, Expression> body, params Expression[] initializeExpressions)
+        {
+            var i = Expression.Parameter(typeof(int), "i");
+            var endLoop = Expression.Label("EndLoop");
+
+            var item = Expression.ArrayIndex(array, i);
+
+            return Expression.Block(
+                [i],
+                [.. initializeExpressions,
+                    Expression.Loop(
+                        Expression.Block(
+                            Expression.IfThen(
+                                Expression.GreaterThanOrEqual(i, length),
+                                Expression.Break(endLoop)
+                            ),
+                            body(item),
+                            Expression.PreIncrementAssign(i)
+                        ),
+                        endLoop
+                    )
+                ]
+            );
+        }
 
         public static Expression NullCheck(Expression value, Expression body) =>
             Expression.IfThen(
@@ -36,6 +68,12 @@ namespace DeepCopy.Internal.Utilities
                 Expression.NotEqual(value, Null),
                 body,
                 Null);
+
+        public static Expression NullTernaryCheck(Type type, Expression value, Expression body) =>
+            Expression.Condition(
+                Expression.NotEqual(value, Expression.Constant(null, type)),
+                body,
+                Expression.Constant(null, type));
 
         private static Expression Null { get; } =
             Expression.Constant(null, typeof(object));

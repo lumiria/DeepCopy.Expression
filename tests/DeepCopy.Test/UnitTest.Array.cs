@@ -7,73 +7,85 @@ namespace DeepCopy.Test
         [Fact]
         public void DirectPrimitiveValueTypeArrayTest()
         {
-            int[] intArray = [10, 20, 30];
+            int[] intArray = new int[] { 10, 20, 30 };
             _ = ValidateCloneArray(intArray);
 
-            double[] doubleArray = [123.45, 234.56, 345.67];
+            double[] doubleArray = new double[] { 123.45, 234.56, 345.67 };
             _ = ValidateCloneArray(doubleArray);
 
-            decimal[] decimalArray = [1000.999M, 2M, 3M];
+            decimal[] decimalArray = new decimal[] { 1000.999M, 2M, 3M };
             _ = ValidateCloneArray(decimalArray);
 
-            char[] charArray = ['a', 'b', 'c'];
+            char[] charArray = new char[] { 'a', 'b', 'c' };
             _ = ValidateCloneArray(charArray);
         }
 
         [Fact]
         public void DirectNullablePrimitiveValueTypeArrayTest()
         {
-            int?[] intArray = [9, null, 7];
+            int?[] intArray = new int?[] { 9, null, 7 };
             _ = ValidateCloneArray(intArray);
 
-            double?[] doubleArray = [122.45, null, 1.23];
+            double?[] doubleArray = new double?[] { 122.45, null, 1.23 };
             _ = ValidateCloneArray(doubleArray);
 
-            decimal?[] decimalArray = [999.999M, null, 3M];
+            decimal?[] decimalArray = new decimal?[] { 999.999M, null, 3M };
             _ = ValidateCloneArray(decimalArray);
 
-            char?[] charArray = ['a', null, 'c'];
+            char?[] charArray = new char?[] { 'a', null, 'c' };
             _ = ValidateCloneArray(charArray);
         }
 
         [Fact]
         public void DirectObjectArrayTest()
         {
-            object[] objectArray = [new object(), new object(), new object()];
+            object[] objectArray = new object[] { new object(), new object(), new object() };
             _ = ValidateCloneArray(objectArray);
 
-            object?[] nullableObjectArray = [new object(), null, new object()];
+#if NET8_0_OR_GREATER
+            object?[] nullableObjectArray = [new (), null, new ()];
+#else
+            object[] nullableObjectArray = new object[] { new object(), null, new object()};
+#endif
             _ = ValidateCloneArray(nullableObjectArray);
         }
 
         [Fact]
         public void DirectObjectBaseArrayTest()
         {
-            object[] objectArray = [1, 21.3, new TestObject()];
+            object[] objectArray = new object[] { 1, 21.3, new TestObject() };
             _ = ValidateCloneArray(objectArray);
 
+#if NET8_0_OR_GREATER
             object?[] nullableObjectArray = [1, null, new TestObject()];
+#else
+            object[] nullableObjectArray = new object[]{1, null, new TestObject()};
+#endif
             _ = ValidateCloneArray(nullableObjectArray);
         }
 
         [Fact]
         public void DirectClassArrayTest()
         {
-            TestObject[] objectArray = [new TestObject(), new TestObject(), new TestObject()];
+            TestObject[] objectArray = new TestObject[] { new TestObject(), new TestObject(), new TestObject() };
             _ = ValidateCloneArray(objectArray);
 
-            TestObject?[] nullableObjectArray = [new TestObject(), null, new TestObject()];
+#if NET8_0_OR_GREATER
+            TestObject?[] nullableObjectArray = [new (), null, new ()];
+#else
+            TestObject[] nullableObjectArray = new TestObject[]{new TestObject(), null, new TestObject()};
+#endif
             _ = ValidateCloneArray(nullableObjectArray);
         }
 
         [Fact]
         public void DirectStructValueTypeArrayTest()
         {
-            StructData[] structArray = [
+            StructData[] structArray = new StructData[] {
                 new StructData { Id = 1, Name = "foo", Value = new TestObject() },
                 default,
                 new StructData { Id = 2, Name = "bar", Value = null }
-            ];
+            };
             var cloned = ValidateCloneArray(structArray);
 
             for (int i = 0; i < cloned.Length; i++)
@@ -86,16 +98,17 @@ namespace DeepCopy.Test
         [Fact]
         public void DirectNullableStructValueTypArrayTest()
         {
-            StructData?[] structArray = [
+            StructData?[] structArray = new StructData?[] {
                 new StructData { Id = 1, Name = "foo", Value = new TestObject() },
                 default,
                 new StructData { Id = 2, Name = "bar", Value = null }
-            ];
+            };
             var cloned = ValidateCloneArray(structArray);
 
             for (int i = 0; i < cloned.Length; i++)
             {
-                cloned[i].IsNotSameReferenceAs(structArray[i]);
+                if (structArray[i] != null)
+                    cloned[i].IsNotSameReferenceAs(structArray[i]);
                 ValidateValue(structArray[i]?.Value, cloned[i]?.Value);
             }
         }
@@ -105,7 +118,7 @@ namespace DeepCopy.Test
         [Fact]
         public void DirectEnumValueTypeArrayTest()
         {
-            EnumData[] value = [EnumData.C, default, EnumData.A];
+            EnumData[] value = new EnumData[] { EnumData.C, default, EnumData.A };
             var clonedValue = ObjectCloner.Clone(value);
             clonedValue.Is(value);
         }
@@ -134,7 +147,7 @@ namespace DeepCopy.Test
         [Fact]
         public void DirectArrayAsObjectTest()
         {
-            object obj = new object[] { new(), new(), new() };
+            object obj = new object[] { new object(), new object(), new object() };
             // Since the actual type should be known, please cast explicitly.
             _ = ValidateCloneArray((object[])obj);
         }
@@ -180,12 +193,25 @@ namespace DeepCopy.Test
         {
             var cls = new
             {
-                objectArray = new object[] { new(), new(), new() },
+                objectArray = new object[] { new object(), new object(), new object() },
+#if NET8_0_OR_GREATER
+
                 nullableObjectArray = new object?[] { new(), null, new() },
+#else
+                nullableObjectArray = new object[] { new object(), null, new object() },
+#endif
                 objectBaseArray = new object[] { 1, 21.3, new TestObject() },
+#if NET8_0_OR_GREATER
                 nullableObjectBaseArray = new object?[] { 1, null, new TestObject() },
-                classArray = new TestObject[] { new(), new(), new() },
+#else
+                nullableObjectBaseArray = new object[] { 1, null, new TestObject() },
+#endif
+                classArray = new TestObject[] { new TestObject(), new TestObject(), new TestObject() },
+#if NET8_0_OR_GREATER
                 nullableClassArray = new TestObject?[] { new(), null, new() },
+#else
+                nullableClassArray = new TestObject[] { new TestObject(), null, new TestObject() },
+#endif
             };
             var cloned = ValidateCloneObject(cls);
 
@@ -204,9 +230,9 @@ namespace DeepCopy.Test
             {
                 Id = 1,
                 StructArray = new StructData[] {
-                    new() { Id = 1, Name = "foo", Value = new TestObject() },
+                    new StructData() { Id = 1, Name = "foo", Value = new TestObject() },
                     default,
-                    new() { Id = 2, Name = "bar", Value = null }
+                    new StructData() { Id = 2, Name = "bar", Value = null }
                 }
             };
             var cloned = ValidateCloneObject(cls);
@@ -222,12 +248,24 @@ namespace DeepCopy.Test
         {
             var cls = new
             {
-                obj1 = (object)(new object[] { new(), new(), new() }),
-                obj2 = (object)(new object?[] { new(), null, new() }),
+                obj1 = (object)(new object[] { new object(), new object(), new object() }),
+#if NET8_0_OR_GREATER
+                obj2 = (object)(new object?[] { new (), null, new () }),
+#else
+                obj2 = (object)(new object[] { new object(), null, new object() }),
+#endif
                 obj3 = (object)(new object[] { 1, 21.3, new TestObject() }),
+#if NET8_0_OR_GREATER
                 obj4 = (object)(new object?[] { 1, null, new TestObject() }),
-                obj5 = (object)(new TestObject[] { new(), new(), new() }),
-                obj6 = (object)(new TestObject?[] { new(), null, new() }),
+#else
+                obj4 = (object)(new object[] { 0, null, new TestObject() }),
+#endif
+                obj5 = (object)(new TestObject[] { new TestObject(), new TestObject(), new TestObject() }),
+#if NET8_0_OR_GREATER
+                obj6 = (object)(new TestObject?[] { new (), null, new() }),
+#else
+                obj6 = (object)(new TestObject[] { new TestObject(), null, new TestObject() }),
+#endif
             };
             var cloned = ValidateCloneObject(cls);
 
@@ -254,14 +292,24 @@ namespace DeepCopy.Test
             cloned.IsNotSameReferenceAs(array);
             cloned.IsStructuralEqual(array);
 
+            for (int i=0; i<array.Length; i++)
+            {
+                if (!(array[i]?.GetType().IsValueType ?? true) && array[i]?.GetType() != typeof(string))
+                cloned[i].IsNotSameReferenceAs(array[i]);
+            }
+
             return cloned;
         }
 
+#if NET8_0_OR_GREATER
         private void ValidateValue<T>(in T? value, in T? cloned)
+#else
+        private void ValidateValue<T>(in T value, in T cloned)
+#endif
         {
             cloned.IsStructuralEqual(value);
 
-            if (cloned is null) return;
+            if (cloned == null) return;
             cloned.IsNotSameReferenceAs(value);
         }
     }

@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using DeepCopy.Test.Inners;
 using Xunit;
@@ -20,22 +21,69 @@ namespace DeepCopy.Test
 
             var cloned = ObjectCloner.Clone(dict);
 
-            cloned.StructuralEquals(dict);
+            ValidateDictionary(dict, cloned);
         }
 
         [Fact]
         public void ReferenceTypeDictionaryTest()
         {
-            var dict = new Dictionary<object, object>()
+            var dict = new Dictionary<TestKey, TestValue>()
             {
-                [1] = new TestObject(),
-                [2] = new TestObject()
+                [new TestKey() {  Id = 1 }] = new TestValue() { Value = "Foo" },
+                [new TestKey() {  Id = 2 }] = new TestValue() { Value = "Bar" },
+                [new TestKey() {  Id = 3 }] = new TestValue() { Value = "Baz" },
             };
             var keys = dict.Keys; // access ...
 
             var cloned = ObjectCloner.Clone(dict);
 
-            cloned.StructuralEquals(dict);
+            ValidateDictionary(dict, cloned);
+        }
+
+        [Fact]
+        public void ObjectDictionaryTest()
+        {
+            var dict = new Dictionary<object, object>()
+            {
+                [1] = 12.3,
+                [new TestKey() { Id = 1, Value = "A" }] = new TestValue(),
+                [new object()] = new object(),
+            };
+            var keys = dict.Keys; // access ...
+
+            var cloned = ObjectCloner.Clone(dict);
+
+            ValidateDictionary(dict, cloned);
+        }
+
+        [Fact]
+        public void ValueTypeArrayDictionaryTest()
+        {
+            var dict = new Dictionary<int[], int[]>()
+            {
+                [new int[] { 1, 2, 3 }] = new int[] { 4, 5, 6 },
+                [new int[] { 2, 4, 6 }] = new int[] { 1, 2, 4 }
+            };
+            var keys = dict.Keys; // access ...
+
+            var cloned = ObjectCloner.Clone(dict);
+
+            ValidateDictionary(dict, cloned);
+        }
+
+        [Fact]
+        public void ReferenceTypeArrayDictionaryTest()
+        {
+            var dict = new Dictionary<TestKey[], TestValue[]>()
+            {
+                [new TestKey[] { new TestKey(), new TestKey() }] = new TestValue[] { new TestValue(), new TestValue() },
+                [new TestKey[] { new TestKey()}] = new TestValue[] { new TestValue() },
+            };
+            var keys = dict.Keys; // access ...
+
+            var cloned = ObjectCloner.Clone(dict);
+
+            ValidateDictionary(dict, cloned);
         }
 
         [Fact]
@@ -67,7 +115,36 @@ namespace DeepCopy.Test
         }
 
         [Fact]
-        public void HasDictionaryTest()
+        public void ObjectKeyDictionaryTest()
+        {
+            var dict = new Dictionary<TestKey, TestValue>()
+            {
+                [new TestKey() { Id = -1, Value = "A" }] = new TestValue() { Value = "Foo" },
+                [new TestKey() { Id = 0, Value = "B" }] = new TestValue() { Value = "Bar" },
+            };
+
+            var cloned = ObjectCloner.Clone(dict);
+
+            ValidateObjectKeyDictionary(dict, cloned);
+        }
+
+        [Fact]
+        public void ObjectKeyConcurrentDictionaryTest()
+        {
+            var dict = new ConcurrentDictionary<TestKey, TestValue>()
+            {
+                [new TestKey() { Id = -1, Value = "A" }] = new TestValue() { Value = "Foo" },
+                [new TestKey() { Id = 0, Value = "B" }] = new TestValue() { Value = "Bar" },
+                [new TestKey() { Id = 1, Value = "C" }] = new TestValue() { Value = "Baz" },
+            };
+
+            var cloned = ObjectCloner.Clone(dict);
+
+            ValidateObjectKeyDictionary(dict, cloned);
+        }
+
+        [Fact]
+        public void InnerDictionaryTest()
         {
             var cls = new
             {
@@ -97,35 +174,75 @@ namespace DeepCopy.Test
         }
 
         [Fact]
-        public void ObjectKeyDictionaryTest()
+        public void ObjectAsDictionaryTest()
         {
-            var dict = new Dictionary<TestKey, TestValue>()
+            object obj = new Dictionary<TestKey, TestValue>()
             {
-                [new TestKey() { Id = 0, Value = "A" }] = new TestValue() { Value = "Foo" },
-                [new TestKey() { Id = 1, Value = "B" }] = new TestValue() { Value = "Bar" },
+                [new TestKey() { Id = 1 }] = new TestValue() { Value = "Foo" },
+                [new TestKey() { Id = 2 }] = new TestValue() { Value = "Bar" },
+                [new TestKey() { Id = 3 }] = new TestValue() { Value = "Baz" },
             };
-            var _keys = dict.Keys; // Create inner KeyCollection
-            var _values = dict.Values; // Create inner ValueCollection
 
-            var cloned = ObjectCloner.Clone(dict);
+            var cloned = ObjectCloner.Clone(obj);
 
-            ValidateObjectKeyDictionary(dict, cloned);
+            ValidateDictionary((Dictionary<TestKey, TestValue>)obj, (Dictionary<TestKey, TestValue>)cloned);
         }
 
         [Fact]
-        public void ObjectKeyConcurrentDictionaryTest()
+        public void ValueTypeReadOnlyDictionaryTest()
         {
-            var dict = new ConcurrentDictionary<TestKey, TestValue>()
-            {
-                [new TestKey() { Id = 0, Value = "A" }] = new TestValue() { Value = "Foo" },
-                [new TestKey() { Id = 1, Value = "B" }] = new TestValue() { Value = "Bar" },
-            };
-            //var _keys = dict.Keys; // Create inner KeyCollection
-            //var _values = dict.Values; // Create inner ValueCollection
+            var dict = new ReadOnlyDictionary<int,string>(
+                new Dictionary<int, string>()
+                {
+                    [0] = "foo",
+                    [1] = "bar"
+                });
+            var keys = dict.Keys; // access ...
 
             var cloned = ObjectCloner.Clone(dict);
 
-            ValidateObjectKeyDictionary(dict, cloned);
+            ValidateDictionary(dict, cloned);
+        }
+
+        [Fact]
+        public void ReferenceTypeReadOnlyDictionaryTest()
+        {
+            var dict = new ReadOnlyDictionary<TestKey, TestValue>(
+                new Dictionary<TestKey, TestValue>()
+                {
+                    [new TestKey() { Id = 1 }] = new TestValue() { Value = "Foo" },
+                    [new TestKey() { Id = 2 }] = new TestValue() { Value = "Bar" },
+                    [new TestKey() { Id = 3 }] = new TestValue() { Value = "Baz" },
+                });
+            var keys = dict.Keys; // access ...
+
+            var cloned = ObjectCloner.Clone(dict);
+
+            ValidateDictionary(dict, cloned);
+        }
+
+
+        private void ValidateDictionary<TKey, TValue>(Dictionary<TKey, TValue> original, Dictionary<TKey, TValue> cloned)
+#if NET8_0_OR_GREATER
+
+            where TKey: notnull
+#endif
+        {
+            cloned.StructuralEquals(original);
+
+            int index = 0;
+            foreach (var clonedKey in cloned.Keys)
+            {
+                var originalKey = original.Keys.Skip(index).First();
+                if (!originalKey.GetType().IsValueType && originalKey.GetType() != typeof(string))
+                    clonedKey.IsNotSameReferenceAs(originalKey);
+                clonedKey.IsStructuralEqual(originalKey);
+
+                var originalValue = original.Values.Skip(index++).First();
+                if (!(originalValue?.GetType()?.IsValueType ?? false) && originalValue?.GetType() != typeof(string))
+                    cloned[clonedKey].IsNotSameReferenceAs(originalValue);
+                cloned[clonedKey].IsStructuralEqual(originalValue);
+            }
         }
 
 
@@ -135,26 +252,67 @@ namespace DeepCopy.Test
             int index = 0;
             foreach (var clonedKey in cloned.Keys)
             {
-                var originalKey = original.Keys.Skip(index).First();
+                var originalKey = original.Keys.FirstOrDefault(
+                    key => key.Id == clonedKey.Id && key.Value == clonedKey.Value);
                 clonedKey.IsNotSameReferenceAs(originalKey);
-                clonedKey.Id.Is(originalKey.Id);
-                clonedKey.Value.Is(originalKey.Value);
+                clonedKey.IsStructuralEqual(originalKey);
+
+                var originalValue = original[originalKey];
+                cloned[clonedKey].IsNotSameReferenceAs(originalValue);
+                cloned[clonedKey].IsStructuralEqual(originalValue);
+            }
+        }
+
+        private void ValidateDictionary<TKey, TValue>(IDictionary<TKey, TValue> original, IDictionary<TKey, TValue> cloned)
+#if NET8_0_OR_GREATER
+
+    where TKey : notnull
+#endif
+        {
+            int index = 0;
+            foreach (var clonedKey in cloned.Keys)
+            {
+                var originalKey = original.Keys.Skip(index).First();
+                if (!originalKey.GetType().IsValueType && originalKey.GetType() != typeof(string))
+                    clonedKey.IsNotSameReferenceAs(originalKey);
+                clonedKey.IsStructuralEqual(originalKey);
 
                 var originalValue = original.Values.Skip(index++).First();
-                cloned[clonedKey].IsNotSameReferenceAs(originalValue);
-                cloned[clonedKey].Is(originalValue);
+                var valueType = originalValue?.GetType();
+                if (!(valueType?.IsValueType ?? false) && valueType != typeof(string) && valueType != typeof(object))
+                    cloned[clonedKey].IsNotSameReferenceAs(originalValue);
+                cloned[clonedKey].IsStructuralEqual(originalValue);
             }
         }
 
         internal class TestKey
         {
             public int Id { get; set; }
+#if NET8_0_OR_GREATER
+            public string? Value { get; set; }
+#else
             public string Value { get; set; }
+#endif
         }
 
+
+#if NET8_0_OR_GREATER
         internal record class TestValue
         {
+            public string? Value { get; set; }
+        }
+#else
+        internal class TestValue
+        {
+            public TestValue() : this(null) {}
+
+            public TestValue(string value)
+            {
+                Value = value;
+            }
+
             public string Value { get; set; }
         }
+#endif
     }
 }

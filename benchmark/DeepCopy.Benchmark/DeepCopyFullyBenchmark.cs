@@ -10,11 +10,11 @@ namespace DeepCopy.Benchmark
     [Config(typeof(BenchmarkConfig))]
     //[SimpleJob(RuntimeMoniker.Net80, baseline: true)]
     //[SimpleJob(RuntimeMoniker.Net90)]
-    public class DeepCopyBenchmark
+    public class DeepCopyFullyBenchmark
     {
-        private readonly LiteTestObject _object;
+        private readonly TestObject _object;
 
-        public DeepCopyBenchmark()
+        public DeepCopyFullyBenchmark()
         {
             _object = new ();
         }

@@ -155,4 +155,27 @@ namespace DeepCopy.Benchmark.Datas
             return ((IEquatable<TestObject>)this).Equals(obj as TestObject);
         }
     }
+
+    internal class TestKey
+    {
+        public int Id { get; set; }
+        public string? Value { get; set; }
+
+        public TestKey()
+        {
+            Random _random =
+                new(Environment.TickCount);
+            Id = _random.Next(0, 999);
+            Value = $"Key-{Id}";
+        }
+    }
+
+
+    internal record class TestValue
+    {
+        public string? Value { get; set; }
+
+        public static TestValue Create() =>
+            new() { Value = $"Value-{new Random(Environment.TickCount).Next(0, 999)}" };
+    }
 }

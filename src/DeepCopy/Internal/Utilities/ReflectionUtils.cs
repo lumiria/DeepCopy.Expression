@@ -26,11 +26,17 @@ namespace DeepCopy.Internal.Utilities
         public static MethodInfo IsObjectOrValueType { get; } =
             typeof(TypeUtils).GetMethod("IsObjectOrValueType", BindingFlags.Static | BindingFlags.Public);
 
+        public static MethodInfo IsValueType { get; } =
+            typeof(TypeUtils).GetMethod("IsValueType", BindingFlags.Static | BindingFlags.Public);
+
         public static MethodInfo ObjectClone { get; } =
             typeof(ObjectCloner).GetMethod("_Clone", BindingFlags.Static | BindingFlags.NonPublic);
 
         public static MethodInfo ValueClone { get;  } =
             typeof(ObjectCloner).GetMethod("_CloneValue", BindingFlags.Static | BindingFlags.NonPublic);
+
+        public static MethodInfo NullableValueClone { get;  } =
+            typeof(ObjectCloner).GetMethod("_CloneNullableValue", BindingFlags.Static | BindingFlags.NonPublic);
 
         public static MethodInfo InterfaceClone { get;  } =
             typeof(ObjectCloner).GetMethod("_CloneInterface", BindingFlags.Static | BindingFlags.NonPublic);

@@ -14,7 +14,7 @@ namespace DeepCopy.Internal
             _delegate = ReferenceTypeCloneDelegateGeneratorHelper.Create<T>(_type).Compile();
         }
 
-        public static void Clearnup() =>
+        public static void Cleanup() =>
            _delegate = null;
 
         public static Action<T, T, ObjectReferencesCache> CreateDelegate() =>

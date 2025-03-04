@@ -14,6 +14,9 @@ namespace DeepCopy.Internal
             _caches = new();
         }
 
+        public static void Cleanup() =>
+           _caches.Clear();
+
         public static Action<object, object, ObjectReferencesCache> CreateDelegate(Type type) =>
             _caches.GetOrAdd(type, t => Create(t).Compile());
 
@@ -44,6 +47,8 @@ namespace DeepCopy.Internal
         {
             _caches = new();
         }
+        public static void Cleanup() =>
+           _caches.Clear();
 
         public static ValueTypeCloneDelegate CreateDelegate(Type type) =>
             _caches.GetOrAdd(type, t => Create(t).Compile());
