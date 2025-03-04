@@ -207,13 +207,16 @@ namespace DeepCopy
 
         public static void Cleanup<T>()
         {
-            ReferenceTypeCloneDelegateGenerator<T>.Clearnup();
-            ValueTypeCloneExpressionGenerator<T>.Clearnup();
+            ReferenceTypeCloneDelegateGenerator<T>.Cleanup();
+            ValueTypeCloneExpressionGenerator<T>.Cleanup();
             CloneArrayExpressionGenerator<T, T[]>.Cleanup();
             CloneArrayExpressionGenerator<T, T[,]>.Cleanup();
             CloneArrayExpressionGenerator<T, T[,,]>.Cleanup();
             CloneArrayExpressionGenerator<T, T[,,,]>.Cleanup();
             CloneArrayExpressionGenerator<T, T[,,,,]>.Cleanup();
+
+            ReferenceTypeCloneDelegateGenerator.Cleanup();
+            ValueTypeCloneDelegateGenerator.Cleanup();
         }
 
         /// <summary>
