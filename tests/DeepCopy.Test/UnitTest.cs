@@ -11,7 +11,6 @@ namespace DeepCopy.Test
         {
             var source = new TestObject();
             var clone = ObjectCloner.Clone(source);
-
             clone.Is(source);
 
             clone.IntArray.IsNotSameReferenceAs(source.IntArray);
@@ -102,7 +101,8 @@ namespace DeepCopy.Test
             var cloned = ObjectCloner.Clone(obj);
 
             cloned.Obj.IsNotSameReferenceAs(obj.Obj);
-            cloned.Child.Is(obj.Child);
+            cloned.Child.IsNotSameReferenceAs(obj.Child);
+            cloned.Child.IsStructuralEqual(obj.Child);
             ((Child)cloned.Child).IntArray.IsNotSameReferenceAs(((Child)obj.Child).IntArray);
         }
 
@@ -160,14 +160,22 @@ namespace DeepCopy.Test
         public void CrossReferenceTest()
         {
             var obj = new CrossReferenceObject();
-            var cloned = ObjectCloner.Clone(obj, true);
+            var cloned = ObjectCloner.Clone(obj);
 
             cloned.IsNotSameReferenceAs(obj);
             cloned.A.IsNotSameReferenceAs(obj.A);
             cloned.B.IsNotSameReferenceAs(obj.B);
 
-            cloned.A.IsSameReferenceAs(cloned.B.A);
-            cloned.B.IsSameReferenceAs(cloned.A.B);
+            cloned.A.IsNotSameReferenceAs(cloned.B.A);
+            cloned.B.IsNotSameReferenceAs(cloned.A.B);
+
+            var clonedWithRefs = ObjectCloner.Clone(obj, true);
+            clonedWithRefs.IsNotSameReferenceAs(obj);
+            clonedWithRefs.A.IsNotSameReferenceAs(obj.A);
+            clonedWithRefs.B.IsNotSameReferenceAs(obj.B);
+
+            clonedWithRefs.A.IsSameReferenceAs(clonedWithRefs.B.A);
+            clonedWithRefs.B.IsSameReferenceAs(clonedWithRefs.A.B);
         }
 
         [Fact]

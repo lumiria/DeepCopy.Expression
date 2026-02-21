@@ -375,7 +375,7 @@ namespace DeepCopy
                 var castedArray = ((Array)source).Cast<object>().ToArray();
 
 #if NET9_0_OR_GREATER
-                var instance = Array.CreateInstanceFromArrayType(type.GetElementType(), castedArray.Length);
+                var instance = Array.CreateInstanceFromArrayType(type, castedArray.Length);
 #else
                 var instance = Array.CreateInstance(type.GetElementType(), castedArray.Length);
 #endif
