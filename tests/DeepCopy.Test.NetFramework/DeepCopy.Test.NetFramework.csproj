@@ -53,6 +53,9 @@
     <Compile Include="..\DeepCopy.Test\CrossReferenceObject.cs">
       <Link>CrossReferenceObject.cs</Link>
     </Compile>
+    <Compile Include="..\DeepCopy.Test\DataTypes\Sample.cs">
+      <Link>DataTypes\Sample.cs</Link>
+    </Compile>
     <Compile Include="..\DeepCopy.Test\DataTypes\TestStruct.cs">
       <Link>DataTypes\TestStruct.cs</Link>
     </Compile>
@@ -64,6 +67,9 @@
     </Compile>
     <Compile Include="..\DeepCopy.Test\Inners\ReflectionUtils.cs">
       <Link>Inners\ReflectionUtils.cs</Link>
+    </Compile>
+    <Compile Include="..\DeepCopy.Test\Inners\TypeUtils.cs">
+      <Link>Inners\TypeUtils.cs</Link>
     </Compile>
     <Compile Include="..\DeepCopy.Test\NullReferenceTestObject.cs">
       <Link>NullReferenceTestObject.cs</Link>

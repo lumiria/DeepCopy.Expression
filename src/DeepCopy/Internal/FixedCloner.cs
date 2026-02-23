@@ -5,6 +5,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
+using DeepCopy.Internal.BuiltIns;
 using DeepCopy.Internal.FixedCloners;
 
 namespace DeepCopy.Internal
@@ -17,7 +18,7 @@ namespace DeepCopy.Internal
         {
             _bag = new ()
             {
-                [typeof(Dictionary<,>)] = DictionaryCloner.Build,
+                [typeof(Dictionary<,>)] = FixedDictionaryCloner.Build,
                 [typeof(HashSet<>)] = HashSetCloner.Build,
                 [typeof(ConcurrentDictionary<,>)] = ConcurrentDictionaryCloner.Build,
                 [typeof(ReadOnlyDictionary<,>)] = ReadOnlyDictionaryCloner.Build

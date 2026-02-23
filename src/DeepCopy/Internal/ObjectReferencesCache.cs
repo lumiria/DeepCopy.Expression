@@ -26,6 +26,9 @@ namespace DeepCopy.Internal
                     : new ObjectCacheDictionary();
         }
 
+        public static ObjectReferencesCache Default { get; } =
+            new ObjectReferencesCache(null, null, false);
+
 #if NETSTANDARD2_0
         public bool Get<T>(in T source, out T? referenceObject)
 #else
@@ -61,7 +64,7 @@ namespace DeepCopy.Internal
 
         private sealed class ObjectCacheDictionary : IDictionary<object, object>
         {
-            private KeyValuePair<object, object>[] _items = new KeyValuePair<object, object>[4];
+            private KeyValuePair<object, object>[] _items = new KeyValuePair<object, object>[2];
             private int _lastIndex = -1;
 
             public object this[object key]
@@ -82,7 +85,7 @@ namespace DeepCopy.Internal
             {
                 if (++_lastIndex >= _items.Length)
                 {
-                    var items = new KeyValuePair<object, object>[_items.Length + 4];
+                    var items = new KeyValuePair<object, object>[_items.Length * 2];
                     _items.CopyTo(items, 0);
                     _items = items;
                 }
@@ -147,7 +150,7 @@ namespace DeepCopy.Internal
                 foreach (ref var item in _items.AsSpan(0, _lastIndex + 1))
                 {
 #endif
-                    if (item.Key == key)
+                    if (ReferenceEquals(item.Key, key))
                     {
                         value = item.Value;
                         return true;

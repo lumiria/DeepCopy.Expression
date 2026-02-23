@@ -33,6 +33,13 @@ namespace DeepCopy.Benchmark
             _ = ObjectCloner.Clone(_object);
         }
 
+
+        [Benchmark]
+        public void CloneWithDedicatedCode()
+        {
+            var _ = _object.DeepCopy();
+        }
+
         [Benchmark]
         public void CloneWithV121()
         {

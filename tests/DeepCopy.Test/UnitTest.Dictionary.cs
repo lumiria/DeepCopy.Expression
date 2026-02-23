@@ -1,7 +1,9 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
+using DeepCopy.Test.DataTypes;
 using DeepCopy.Test.Inners;
 using Xunit;
 
@@ -221,6 +223,463 @@ namespace DeepCopy.Test
             ValidateDictionary(dict, cloned);
         }
 
+        [Fact]
+        public void DictionaryValueSemanticsTest()
+        {
+            var dict = new Dictionary<int, Guid>
+                {
+                    [0] = Guid.NewGuid(),
+                    [1] = Guid.NewGuid(),
+                    [2] = Guid.NewGuid(),
+                };
+            TestDictionaryCore(dict);
+        }
+
+        [Fact]
+        public void DictionaryNullableValueSemanticsTest()
+        {
+            var dict = new Dictionary<int, Guid?>
+            {
+                [0] = Guid.NewGuid(),
+                [1] = null,
+                [2] = Guid.NewGuid(),
+            };
+            TestDictionaryCore(dict);
+        }
+
+        [Fact]
+        public void DictionaryValueSemanticsKeyTest()
+        {
+            var dict = new Dictionary<Guid, Uri>
+            {
+                [Guid.NewGuid()] = new Uri("https://example.com/value-01"),
+                [Guid.NewGuid()] = new Uri("https://example.com/value-02"),
+                [Guid.NewGuid()] = new Uri("https://example.com/value-03"),
+            };
+            TestDictionaryCore(dict);
+        }
+
+        [Fact]
+        public void DictionaryNullableValueSemanticsKeyTest()
+        {
+#if NET8_0_OR_GREATER
+            var dict = new Dictionary<Guid, Uri?>
+#else
+            var dict = new Dictionary<Guid, Uri>
+#endif
+            {
+                [Guid.NewGuid()] = new Uri("https://example.com/value-01"),
+                [Guid.NewGuid()] = null,
+                [Guid.NewGuid()] = new Uri("https://example.com/value-03"),
+            };
+            TestDictionaryCore(dict);
+        }
+
+        [Fact]
+        public void DictionaryValueSemanticsKeyAndDividedValueTest()
+        {
+            var dict = new Dictionary<int, BaseSample>
+            {
+                [0] = new SubSample(1, "name-1"),
+                [1] = new SubSample(2, "name-2"),
+                [2] = new SubSample(3, "name-3")
+            };
+            TestDictionaryCore(dict);
+        }
+
+        [Fact]
+        public void DictionaryNullableValueSemanticsKeyAndDividedValueTest()
+        {
+#if NET8_0_OR_GREATER
+            var dict = new Dictionary<int, BaseSample?>
+#else
+            var dict = new Dictionary<int, BaseSample>
+#endif
+            {
+                [0] = new SubSample(1, "name-1"),
+                [1] = null,
+                [2] = new SubSample(3, "name-3")
+            };
+            TestDictionaryCore(dict);
+        }
+
+        [Fact]
+        public void DictionaryValueSemanticsKeyAndObjectValueTest()
+        {
+            var dict = new Dictionary<DateTime, object>
+            {
+                [DateTime.Now] = 1,
+                [DateTime.Now] = new Uri("https://example.com/value-02"),
+                [DateTime.Now] = Guid.NewGuid(),
+                [DateTime.Now] = new object()
+            };
+            TestDictionaryCore(dict);
+        }
+
+        [Fact]
+        public void DictionaryNullableValueSemanticsKeyAndObjectValueTest()
+        {
+#if NET8_0_OR_GREATER
+            var dict = new Dictionary<DateTime, object?>
+#else
+            var dict = new Dictionary<DateTime, object>
+#endif
+            {
+                [DateTime.Now] = 1,
+                [DateTime.Now] = new Uri("https://example.com/value-02"),
+                [DateTime.Now] = Guid.NewGuid(),
+                [DateTime.Now] = null,
+                [DateTime.Now] = new object()
+            };
+            TestDictionaryCore(dict);
+        }
+
+        [Fact]
+        public void DictionaryValueSemanticsKeyAndArrayValueTest()
+        {
+            var dict = new Dictionary<int, string[]>
+            {
+                [0] = new string[] { "one", "two" },
+                [1] = new string[] { "three", "four" },
+                [2] = new string[] { "five", "six" },
+            };
+            TestDictionaryCore(dict);
+        }
+
+        [Fact]
+        public void DictionaryNullableValueSemanticsKeyAndArrayValueTest()
+        {
+#if NET8_0_OR_GREATER
+            var dict = new Dictionary<int, string[]?>
+#else
+            var dict = new Dictionary<int, string[]>
+#endif
+            {
+                [0] = new string[] { "one", "two" },
+                [1] = null,
+                [2] = new string[0],
+            };
+            TestDictionaryCore(dict);
+        }
+
+        [Fact]
+        public void DictionaryValueSemanticsKeyAndArrayRefValueTest()
+        {
+            var dict = new Dictionary<int, Uri[]>
+            {
+                [0] = new Uri[] { new Uri("https://example.com/value-01"), new Uri("https://example.com/value-02") },
+                [1] = new Uri[] { new Uri("https://example.com/value-03"), new Uri("https://example.com/value-04") },
+                [2] = new Uri[] { new Uri("https://example.com/value-05"), new Uri("https://example.com/value-06") },
+            };
+            TestDictionaryCore(dict);
+        }
+
+        [Fact]
+        public void DictionaryNullableValueSemanticsKeyAndArrayRefValueTest()
+        {
+#if NET8_0_OR_GREATER
+            var dict = new Dictionary<int, Uri[]?>
+#else
+            var dict = new Dictionary<int, Uri[]>
+#endif
+            {
+                [0] = new Uri[] { new Uri("https://example.com/value-01"), new Uri("https://example.com/value-02") },
+                [1] = null,
+                [2] = new Uri[0],
+            };
+            TestDictionaryCore(dict);
+        }
+
+
+
+        [Fact]
+        public void DictionaryValueSemanticsKeyAndObjectArrayValueTest()
+        {
+            var dict = new Dictionary<int, object[]>
+            {
+                [0] = new object[] { 0, 1 },
+                [1] = new object[] { new Uri("https://example.com/value-03"), new Uri("https://example.com/value-04") },
+                [2] = new object[] { "5", new Uri("https://example.com/value-06") },
+                [3] = new object[0],
+            };
+            TestDictionaryCore(dict);
+        }
+
+        [Fact]
+        public void DictionaryNullableValueSemanticsKeyAndObjectArrayValueTest()
+        {
+#if NET8_0_OR_GREATER
+            var dict = new Dictionary<int, object[]?>
+#else
+            var dict = new Dictionary<int, object[]>
+#endif
+            {
+                [0] = new object[] { 0, 1 },
+                [1] = new object[] { new Uri("https://example.com/value-03"), new Uri("https://example.com/value-04") },
+                [2] = new object[] { "5", new Uri("https://example.com/value-06") },
+                [3] = new object[0],
+                [4] = null,
+            };
+            TestDictionaryCore(dict);
+        }
+
+        [Fact]
+        public void DictionaryValueSemanticsValueTest()
+        {
+            var dict = new Dictionary<Uri, Guid>
+            {
+                [new Uri("https://example.com/value-01")] = Guid.NewGuid(),
+                [new Uri("https://example.com/value-02")] = Guid.NewGuid(),
+                [new Uri("https://example.com/value-03")] = Guid.NewGuid(),
+            };
+            TestDictionaryCore(dict);
+        }
+
+        [Fact]
+        public void DictionaryValueSemanticsValueAndDividedKeyTest()
+        {
+            var dict = new Dictionary<BaseSample, int>
+            {
+                [new SubSample(1, "name-1")] = 1,
+                [new SubSample(2, "name-2")] = 2,
+                [new SubSample(3, "name-3")] = 3,
+            };
+            TestDictionaryCore(dict);
+        }
+
+        [Fact]
+        public void DictionaryValueSemanticsValueAndObjectKeyTest()
+        {
+            var dict = new Dictionary<object, DateTime>
+            {
+                [1] = DateTime.Now,
+                [new Uri("https://example.com/value-02")] = DateTime.Now,
+                [Guid.NewGuid()] = DateTime.Now,
+                [new object()] = DateTime.Now,
+            };
+            TestDictionaryCore(dict);
+        }
+
+        [Fact]
+        public void DictionaryValueSemanticsValueAndArrayKeyTest()
+        {
+            var dict = new Dictionary<string[], int>
+            {
+                [new string[] { "one", "two" }] = 1,
+                [new string[] { "three", "four" }] = 2,
+                [new string[] { "five", "six" }] = 3,
+            };
+            TestDictionaryCore(dict);
+        }
+
+        [Fact]
+        public void DictionaryValueSemanticsValueAndArrayRefKeyTest()
+        {
+            var dict = new Dictionary<Uri[], int>
+            {
+                [new Uri[] { new Uri("https://example.com/value-01"), new Uri("https://example.com/value-02") }] = 1,
+                [new Uri[] { new Uri("https://example.com/value-03"), new Uri("https://example.com/value-04") }] = 2,
+                [new Uri[] { new Uri("https://example.com/value-05"), new Uri("https://example.com/value-06") }] = 3,
+            };
+            TestDictionaryCore(dict);
+        }
+
+        [Fact]
+        public void DictionaryValueSemanticsValueAndObjectArrayKeyTest()
+        {
+            var dict = new Dictionary<object[], int>
+            {
+                [new object[] { 0, 1 }] = 0,
+                [new object[] { new Uri("https://example.com/value-03"), new Uri("https://example.com/value-04") }] = 1,
+                [new object[] { "5", new Uri("https://example.com/value-06") }] = 2,
+                [new object[0]] = 3,
+            };
+            TestDictionaryCore(dict);
+        }
+
+        [Fact]
+        public void DictionaryObjectKeyTest()
+        {
+            var dict = new Dictionary<object, SubSample>
+            {
+                [1] = new SubSample(1, "name-1"),
+                [new Uri("https://example.com/value-02")] = new SubSample(2, "name-2"),
+                [Guid.NewGuid()] = new SubSample(3, "name-3"),
+                [new object()] = new SubSample(4, "name-4"),
+            };
+            TestDictionaryCore(dict);
+        }
+
+        [Fact]
+        public void DictionaryObjectKeyNullableTest()
+        {
+#if NET8_0_OR_GREATER
+            var dict = new Dictionary<object, BaseSample?>
+#else
+            var dict = new Dictionary<object, BaseSample>
+#endif
+            {
+                [1] = new SubSample(1, "name-1"),
+                [new Uri("https://example.com/value-02")] = new SubSample(2, "name-2"),
+                [Guid.NewGuid()] = new SubSample(3, "name-3"),
+                [new object()] = new SubSample(4, "name-4"),
+                ["key-5"] = null
+            };
+            TestDictionaryCore(dict);
+        }
+
+        [Fact]
+        public void DictionaryObjectKeyValueTest()
+        {
+            var dict = new Dictionary<object, object>
+            {
+                [1] = new object(),
+                [new Uri("https://example.com/value-02")] = Guid.NewGuid(),
+                [Guid.NewGuid()] = new Uri("https://example.com/value-02"),
+                [new object()] = 1,
+            };
+            TestDictionaryCore(dict);
+        }
+
+        [Fact]
+        public void DictionaryObjectKeyValueNullableTest()
+        {
+#if NET8_0_OR_GREATER
+            var dict = new Dictionary<object, object?>
+#else
+            var dict = new Dictionary<object, object>
+#endif
+            {
+                [1] = new object(),
+                [new Uri("https://example.com/value-02")] = Guid.NewGuid(),
+                [Guid.NewGuid()] = new Uri("https://example.com/value-02"),
+                [new object()] = 1,
+                ["key-5"] = null,
+            };
+            TestDictionaryCore(dict);
+        }
+
+        [Fact]
+        public void DictionaryObjectKeyAndArrayValueTest()
+        {
+            var dict = new Dictionary<object, BaseSample[]>
+            {
+                [1] = new SubSample[] { new SubSample(1, "name-1"), new SubSample(2, "name-2") },
+                [new Uri("https://example.com/value-02")] = new SubSample[] { new SubSample(3, "name-3"), new SubSample(4, "name-4") },
+                [Guid.NewGuid()] = new SubSample[] { new SubSample(5, "name-5"), new SubSample(6, "name-6") },
+                [new object()] = new SubSample[] { new SubSample(7, "name-7"), new SubSample(8, "name-8") },
+            };
+            TestDictionaryCore(dict);
+        }
+
+        [Fact]
+        public void DictionaryObjectKeyAndArrayValueNullableTest()
+        {
+#if NET8_0_OR_GREATER
+            var dict = new Dictionary<object, BaseSample[]?>
+#else
+            var dict = new Dictionary<object, BaseSample[]>
+#endif
+            {
+                [1] = new SubSample[] { new SubSample(1, "name-1"), new SubSample(2, "name-2") },
+                [new Uri("https://example.com/value-02")] = new SubSample[] { new SubSample(3, "name-3"), new SubSample(4, "name-4") },
+                [Guid.NewGuid()] = new SubSample[] { new SubSample(5, "name-5"), new SubSample(6, "name-6") },
+                [new object()] = new SubSample[] { new SubSample(7, "name-7"), new SubSample(8, "name-8") },
+                ["key-5"] = null,
+            };
+            TestDictionaryCore(dict);
+        }
+
+        [Fact]
+        public void DictionaryObjectArrayKeyTest()
+        {
+            var dict = new Dictionary<object[], SubSample>
+            {
+                [new object[] { 0, 1 }] = new SubSample(1, "name-1"),
+                [new object[] { new Uri("https://example.com/value-03"), new Uri("https://example.com/value-04") }] = new SubSample(2, "name-2"),
+                [new object[] { "5", new Uri("https://example.com/value-06") }] = new SubSample(3, "name-3"),
+                [new object[0]] = new SubSample(4, "name-4"),
+            };
+            TestDictionaryCore(dict);
+        }
+
+        [Fact]
+        public void DictionaryObjectArrayKeyNullableTest()
+        {
+#if NET8_0_OR_GREATER
+            var dict = new Dictionary<object[], SubSample?>
+#else
+            var dict = new Dictionary<object[], SubSample>
+#endif
+            {
+                [new object[] { 0, 1 }] = new SubSample(1, "name-1"),
+                [new object[] { new Uri("https://example.com/value-03"), new Uri("https://example.com/value-04") }] = new SubSample(2, "name-2"),
+                [new object[] { "5", new Uri("https://example.com/value-06") }] = new SubSample(3, "name-3"),
+                [new object[0]] = new SubSample(4, "name-4"),
+                [new object[] { 2, 3 }] = null,
+            };
+            TestDictionaryCore(dict);
+        }
+
+        [Fact]
+        public void DictionaryObjectArrayKeyValueTest()
+        {
+            var dict = new Dictionary<object[], object[]>
+            {
+                [new object[] { 0, 1 }] = new object[] { 2, 0 },
+                [new object[] { new Uri("https://example.com/value-03"), new Uri("https://example.com/value-04") }] = new object[] { new Uri("https://example.com/value-04"), new Uri("https://example.com/value-02") },
+                [new object[] { "5", new Uri("https://example.com/value-06") }] = new object[] { "6", new Uri("https://example.com/value-05") },
+                [new object[0]] = new object[0]
+            };
+            TestDictionaryCore(dict);
+        }
+
+        [Fact]
+        public void DictionaryObjectArrayKeyValueNullableTest()
+        {
+#if NET8_0_OR_GREATER
+            var dict = new Dictionary<object[], object[]?>
+#else
+            var dict = new Dictionary<object[], object[]>
+#endif
+            {
+                [new object[] { 0, 1 }] = new object[] { 2, 0 },
+                [new object[] { new Uri("https://example.com/value-03"), new Uri("https://example.com/value-04") }] = new object[] { new Uri("https://example.com/value-04"), new Uri("https://example.com/value-02") },
+                [new object[] { "5", new Uri("https://example.com/value-06") }] = new object[] { "6", new Uri("https://example.com/value-05") },
+                [new object[0]] = new object[0],
+                [new object[] { 2, 3 }] = null,
+            };
+            TestDictionaryCore(dict);
+        }
+
+        private void TestDictionaryCore<TKey, TValue>(Dictionary<TKey, TValue> dict)
+#if NET8_0_OR_GREATER
+            where TKey : notnull
+#endif
+        {
+            var clonedDict = ObjectCloner.Clone(dict);
+            ValidateDictionary(dict, clonedDict);
+
+            var obj = new
+            {
+                Dict = dict,
+            };
+            var clonedObj = ObjectCloner.Clone(obj);
+            clonedObj.IsNotSameReferenceAs(obj);
+            ValidateDictionary(obj.Dict, clonedObj.Dict);
+
+            var readonlyDict = new ReadOnlyDictionary<TKey, TValue>(dict);
+            var clonedReadonlyDict = ObjectCloner.Clone(readonlyDict);
+            ValidateDictionary(readonlyDict, clonedReadonlyDict);
+
+            var readonlyObj = new
+            {
+                Dict = readonlyDict
+            };
+            var clonedReadonlyObj = ObjectCloner.Clone(readonlyObj);
+            clonedReadonlyObj.IsNotSameReferenceAs(readonlyObj);
+            ValidateDictionary(readonlyObj.Dict, clonedReadonlyObj.Dict);
+        }
 
         private void ValidateDictionary<TKey, TValue>(Dictionary<TKey, TValue> original, Dictionary<TKey, TValue> cloned)
 #if NET8_0_OR_GREATER
@@ -239,10 +698,33 @@ namespace DeepCopy.Test
                 clonedKey.IsStructuralEqual(originalKey);
 
                 var originalValue = original.Values.Skip(index++).First();
-                if (!(originalValue?.GetType()?.IsValueType ?? false) && originalValue?.GetType() != typeof(string))
+                if (originalValue != null && !TypeUtils.IsUnmanagedType(originalValue.GetType()))
                     cloned[clonedKey].IsNotSameReferenceAs(originalValue);
-                cloned[clonedKey].IsStructuralEqual(originalValue);
+                if (originalValue?.GetType().IsArray == true)
+                {
+                    var array = (Array)(object)originalValue;
+#if NET8_0_OR_GREATER
+                    var arrayCloned = (Array)(object)cloned[clonedKey]!;
+#else
+                    var arrayCloned = (Array)(object)cloned[clonedKey];
+#endif
+                    for (int i = 0; i < array.Length; i++)
+                    {
+                        var orgValue = array.GetValue(i);
+                        var clonedValue = arrayCloned.GetValue(i);
+                        if (orgValue != null && !TypeUtils.IsUnmanagedType(orgValue.GetType()))
+                            orgValue.IsNotSameReferenceAs(clonedValue);
+
+                        orgValue.IsStructuralEqual(clonedValue);
+                    }
+                }
+                else
+                {
+                    cloned[clonedKey].IsStructuralEqual(originalValue);
+                }
             }
+
+            cloned.IsNotSameReferenceAs(original);
         }
 
 
@@ -279,9 +761,29 @@ namespace DeepCopy.Test
 
                 var originalValue = original.Values.Skip(index++).First();
                 var valueType = originalValue?.GetType();
-                if (!(valueType?.IsValueType ?? false) && valueType != typeof(string) && valueType != typeof(object))
+                if (valueType != null && !TypeUtils.IsUnmanagedType(valueType))
                     cloned[clonedKey].IsNotSameReferenceAs(originalValue);
-                cloned[clonedKey].IsStructuralEqual(originalValue);
+                if (originalValue != null && valueType?.IsArray == true)
+                {
+                    var array = (Array)(object)originalValue;
+#if NET8_0_OR_GREATER
+                    var arrayCloned = (Array)(object)cloned[clonedKey]!;
+#else
+                    var arrayCloned = (Array)(object)cloned[clonedKey];
+#endif
+                    for (int i = 0; i < array.Length; i++)
+                    {
+                        var orgValue = array.GetValue(i);
+                        var clonedValue = arrayCloned.GetValue(i);
+                        if (orgValue != null && !TypeUtils.IsUnmanagedType(orgValue.GetType()))
+                            orgValue.IsNotSameReferenceAs(clonedValue);
+                        orgValue.IsStructuralEqual(clonedValue);
+                    }
+                }
+                else
+                {
+                    cloned[clonedKey].IsStructuralEqual(originalValue);
+                }
             }
         }
 

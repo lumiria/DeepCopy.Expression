@@ -4,40 +4,15 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
-namespace DeepCopy.Internal.Utilities
+namespace DeepCopy.Test.Inners
 {
-    internal static class TypeUtils
+    internal class TypeUtils
     {
-        public static bool IsValueType(Type type) =>
-            type.IsValueType || type == typeof(string);
-
-        public static bool IsArrayType(Type type) =>
-            type.IsArray;
-
-        public static bool IsDelegate(Type type) =>
-            type.IsSubclassOf(typeof(Delegate)) || type.Equals(typeof(Delegate));
-
-        public static bool IsEvent(Type type, string fieldName) =>
-            type.GetEvent(fieldName) != null;
-
-        public static bool IsObjectOrValueType(Type type) =>
-            type == typeof(object) || IsValueType(type);
-
-        public static bool IsNullable(Type type) =>
-             !IsValueType(type) || Nullable.GetUnderlyingType(type) != null;
-
-        public static bool IsAssignableType(Type type) =>
-            IsAssignableType(type, [typeof(Type)]);
-
+#if NET8_0_OR_GREATER
         public static bool IsUnmanagedType<T>() => typeof(T) switch
         {
             Type t when t == typeof(string) || t == typeof(decimal) => true,
-#if NETSTANDARD2_0
-            Type t when t.IsPrimitive || t.IsEnum => true,
-            _ => IsAssignableType(typeof(T), [typeof(T)])
-#else
             _ => !RuntimeHelpers.IsReferenceOrContainsReferences<T>()
-#endif
         };
 
         public static bool IsUnmanagedType(Type t) => t switch
@@ -46,8 +21,28 @@ namespace DeepCopy.Internal.Utilities
             _ when t.IsPrimitive || t.IsEnum => true,
             _ => IsAssignableType(t, [t])
         };
+#else
+        public static bool IsUnmanagedType<T>() => IsUnmanagedType(typeof(T));
 
-        public static IEnumerable<FieldInfo> GetFields(Type type, BindingFlags bindingFlags)
+        public static bool IsUnmanagedType(Type type)
+        {
+            return type == typeof(string) || type == typeof(decimal)
+                || type.IsPrimitive || type.IsEnum
+                || IsAssignableType(type, new HashSet<Type> { type });
+        }
+#endif
+
+        private static bool IsEvent(Type type, string fieldName) =>
+            type.GetEvent(fieldName) != null;
+
+        private static bool IsAssignableType(Type type, HashSet<Type> cache) =>
+            type != null
+            && (
+                type.IsPrimitive || type.IsEnum || type == typeof(decimal) || type == typeof(string)
+                || IsFullyAssignableType(type, cache)
+            );
+
+        private static IEnumerable<FieldInfo> GetFields(Type type, BindingFlags bindingFlags)
         {
             var baseType = type.BaseType;
             while (baseType != null && !baseType.IsInterface)
@@ -61,13 +56,6 @@ namespace DeepCopy.Internal.Utilities
             foreach (var t in type.GetFields(bindingFlags))
                 if (!IsEvent(type, t.Name)) yield return t;
         }
-
-        private static bool IsAssignableType(Type type, HashSet<Type> cache) =>
-            type is not null
-            && (
-                type.IsPrimitive || type.IsEnum || type == typeof(decimal) || type == typeof(string)
-                || IsFullyAssignableType(type, cache)
-            );
 
 
         private static bool IsFullyAssignableType(Type type, HashSet<Type> cache) =>

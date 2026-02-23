@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
@@ -9,7 +10,7 @@ namespace DeepCopy
     /// <summary>
     /// Deep copying object.
     /// </summary>
-    public static class ObjectCloner
+    public static partial class ObjectCloner
     {
         /// <summary>
         /// Precompiles copy processing dynamic code.
@@ -43,7 +44,7 @@ namespace DeepCopy
         public static T Clone<T>(T source, bool preserveObjectReferences = false)
         {
 #if DEBUGLOG
-            Console.WriteLine($"[{typeof(T).Name}]");
+            Console.WriteLine($"[{typeof(T).Name}] | Source = [{source.GetType()}]");
 #endif
             if (source == null) return default;
 
@@ -88,8 +89,8 @@ namespace DeepCopy
             var instance = (T?)RuntimeHelpers.GetUninitializedObject(typeof(T?));
 #endif
 
-            _CopyNullableValueType(source, ref instance,
-                CreateObjectReferenceCache(preserveObjectReferences));
+            _CopyNullableValueType(source, ref instance, ObjectReferencesCache.Default);
+                //CreateObjectReferenceCache(preserveObjectReferences));
 
             return instance;
         }
@@ -117,8 +118,8 @@ namespace DeepCopy
         public static void CopyTo<T>(T source, ref T destination, bool preserveObjectReferences = false)
             where T : struct
         {
-            _CopyValueType(typeof(T), source, ref destination,
-                    CreateObjectReferenceCache(preserveObjectReferences));
+            _CopyValueType(typeof(T), source, ref destination, ObjectReferencesCache.Default);
+                    //CreateObjectReferenceCache(preserveObjectReferences));
         }
 
         /// <summary>
@@ -131,8 +132,8 @@ namespace DeepCopy
         public static void CopyTo<T>(T? source, ref T? destination, bool preserveObjectReferences = false)
             where T : struct
         {
-            _CopyNullableValueType(source, ref destination,
-                CreateObjectReferenceCache(preserveObjectReferences));
+            _CopyNullableValueType(source, ref destination, ObjectReferencesCache.Default);
+                //CreateObjectReferenceCache(preserveObjectReferences));
         }
 
         /// <summary>
@@ -244,7 +245,8 @@ namespace DeepCopy
         #endregion Obsolete
 
 
-        private static T _Clone<T>(T source, ObjectReferencesCache cache)
+        internal static T _Clone<T>(T source, ObjectReferencesCache cache)
+
         {
 #if DEBUGLOG
             Console.WriteLine($"[{typeof(T).Name}]");
@@ -318,6 +320,9 @@ namespace DeepCopy
             var type = source.GetType();
             if (!type.IsValueType && cache.Get(source, out var obj)) return obj;
 
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Dictionary<,>))
+                return DictionaryCloneDelegateGenerator.GetOrCreateDelegate<Func<object, ObjectReferencesCache, T>>(type)(source, cache);
+
 #if NETSTANDARD2_0
             var instance = (T)FormatterServices.GetUninitializedObject(type);
 #else
@@ -338,7 +343,7 @@ namespace DeepCopy
             return instance;
         }
 
-        private static object _CloneObject(object source, ObjectReferencesCache cache)
+        internal static object _CloneObject(object source, ObjectReferencesCache cache)
         {
             if (source == null) return default;
 
@@ -346,6 +351,11 @@ namespace DeepCopy
 #if DEBUGLOG
             Console.WriteLine($"[{typeof(object).Name} >> {type.Name}]");
 #endif
+
+#if NETSTANDARD2_0
+            if (type == typeof(object)) return new object();
+#endif
+            if (type == typeof(string)) return source;
 
             if (!type.IsValueType && cache.Get(source, out var obj)) return obj;
 

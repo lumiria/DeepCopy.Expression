@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Linq.Expressions;
+using DeepCopy.Internal.BuiltIns;
 using DeepCopy.Internal.Utilities;
 
 namespace DeepCopy.Internal
@@ -72,5 +73,58 @@ namespace DeepCopy.Internal
                 body,
                 sourceParameter, destinationParameter, cacheParameter);
         }
+    }
+
+    internal static class ArrayCloneDelegateGenerator
+    {
+        public delegate object ArrayCloneDelegate(object source, ObjectReferencesCache cache);
+        private static readonly ConcurrentDictionary<Type, object> _caches;
+
+        static ArrayCloneDelegateGenerator()
+        {
+            _caches = [];
+        }
+
+        public static void Cleanup() =>
+           _caches.Clear();
+
+        public static TDelegate GetOrCreateDelegate<TDelegate>(Type type) =>
+            (TDelegate)_caches.GetOrAdd(type, t =>
+            {
+                var elementType = t.GetElementType();
+                var generatorType = typeof(CloneArrayExpressionGenerator<,>);
+                var genericGeneratorType = generatorType.MakeGenericType(elementType, t);
+
+                var method = genericGeneratorType.GetMethod(nameof(CloneArrayExpressionGenerator<,>.CreateDelegate));
+
+                return method.Invoke(null, null);
+            });
+    }
+
+    internal static class DictionaryCloneDelegateGenerator
+    {
+        private static readonly ConcurrentDictionary<Type, object> _caches;
+
+        static DictionaryCloneDelegateGenerator()
+        {
+            _caches = [];
+        }
+
+        public static void Cleanup() =>
+           _caches.Clear();
+
+        public static TDelegate GetOrCreateDelegate<TDelegate>(Type type) =>
+            (TDelegate)_caches.GetOrAdd(type, t =>
+            {
+                var method = FixedDictionaryCloner.GetCloneMethod(t);
+
+                var sourceParameter = Expression.Parameter(typeof(object), "source");
+                var cacheParameter = Expression.Parameter(typeof(ObjectReferencesCache), "cache");
+
+                var call = Expression.Call(null, method, Expression.Convert(sourceParameter, t), cacheParameter);
+                var lambda = Expression.Lambda(call, sourceParameter, cacheParameter);
+
+                return lambda.Compile();
+            });
     }
 }

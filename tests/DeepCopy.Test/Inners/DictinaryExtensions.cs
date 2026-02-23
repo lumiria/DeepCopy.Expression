@@ -12,7 +12,14 @@ namespace DeepCopy.Test.Inners
             var targetKeys = target.Keys;
             if (!keys.SequenceEqual(targetKeys)) return false;
 
-            return self.All(x => x.Value.Equals(target[x.Key]));
+            for (int i = 0; i < self.Count; i++)
+            {
+                var key = self.Keys.ElementAt(i);
+                var targetKey = target.Keys.ElementAt(i);
+
+                if (!(self[key]?.Equals(target[targetKey]) ?? target[targetKey] == null)) return false;
+            }
+            return true;
         }
     }
 }
