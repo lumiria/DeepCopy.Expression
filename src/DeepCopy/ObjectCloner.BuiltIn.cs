@@ -3,7 +3,6 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Diagnostics.Tracing;
 using System.Runtime.CompilerServices;
 using DeepCopy.Internal;
 using DeepCopy.Internal.BuiltIns;
@@ -23,7 +22,7 @@ namespace DeepCopy
             if (type.GetGenericTypeDefinition() == typeof(Dictionary<,>))
             {
                 var cloner = DictionaryCloneDelegateGenerator.GetOrCreateDelegate<Func<object, ObjectReferencesCache, object>>(type);
-                return cloner(source, CreateObjectReferenceCache(preserveObjectReferences));
+                return cloner(source, ObjectReferencesCache.Create(preserveObjectReferences));
             }
 
 #if NETSTANDARD2_0
@@ -40,7 +39,7 @@ namespace DeepCopy
             else
             {
                 _CopyTo(type, source, instance,
-                    CreateObjectReferenceCache(preserveObjectReferences, source, instance));
+                    ObjectReferencesCache.Create(preserveObjectReferences, source, instance));
             }
 
             return instance;
@@ -54,7 +53,7 @@ namespace DeepCopy
 #endif
             where TKey : notnull
         {
-            return DictionaryCloner<TKey, TValue>.Clone(source, CreateObjectReferenceCache(preserveObjectReferences));
+            return DictionaryCloner<TKey, TValue>.Clone(source, ObjectReferencesCache.Create(preserveObjectReferences));
         }
     }
 }

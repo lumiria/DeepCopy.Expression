@@ -14,20 +14,24 @@ namespace DeepCopy.Internal
         private readonly IDictionary<object, object> _cache;
         private static readonly object dummy = new();
 
-        private ObjectReferencesCache(object? self,  object? cloned, bool canCacheAnything = true)
+        private ObjectReferencesCache(bool canCacheAnything , object self, object cloned)
         {
             _canCacheAnything = canCacheAnything;
             _cache = canCacheAnything
-                ? self != null
-                    ? new ConcurrentDictionary<object, object>(ReferenceEqualityComparer.Instance) { [self] = cloned! }
-                    : new ConcurrentDictionary<object, object>(ReferenceEqualityComparer.Instance)
-                : self != null
-                    ? new ObjectCacheDictionary() { [self] = cloned! }
-                    : new ObjectCacheDictionary();
+                ? new ConcurrentDictionary<object, object>(ReferenceEqualityComparer.Instance) { [self] = cloned }
+                : new ObjectCacheDictionary() { [self] = cloned };
+        }
+
+        private ObjectReferencesCache(bool canCacheAnything)
+        {
+            _canCacheAnything = canCacheAnything;
+            _cache = canCacheAnything
+                ? new ConcurrentDictionary<object, object>(ReferenceEqualityComparer.Instance)
+                : new ObjectCacheDictionary();
         }
 
         public static ObjectReferencesCache Default { get; } =
-            new ObjectReferencesCache(null, null, false);
+            new ObjectReferencesCache(false);
 
 #if NETSTANDARD2_0
         public bool Get<T>(in T source, out T? referenceObject)
@@ -55,11 +59,14 @@ namespace DeepCopy.Internal
         public void Add<T>(T source, T clonedObject)
             where T : notnull
         {
-            _cache[source] = clonedObject;
+            _cache.Add(source, clonedObject);
         }
 
-        public static ObjectReferencesCache Create(object? self, object? cloned, bool canCacheAnything) =>
-            new(self, cloned, canCacheAnything);
+        public static ObjectReferencesCache Create(bool canCacheAnything, object self, object cloned) =>
+            new(canCacheAnything, self, cloned);
+
+        public static ObjectReferencesCache Create(bool canCacheAnything) =>
+            new(canCacheAnything);
 
 
         private sealed class ObjectCacheDictionary : IDictionary<object, object>
@@ -122,7 +129,7 @@ namespace DeepCopy.Internal
                 throw new NotImplementedException();
             }
 
-            public bool Remove(object key)
+            public bool Remove(object _)
             {
                 _lastIndex--;
                 return true;
@@ -156,7 +163,7 @@ namespace DeepCopy.Internal
                         return true;
                     }
                 }
-                value = null;
+                value = default!;
                 return false;
             }
 
