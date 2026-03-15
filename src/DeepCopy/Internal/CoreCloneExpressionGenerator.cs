@@ -54,7 +54,13 @@ namespace DeepCopy.Internal
             var expressions = new ReadOnlyCollectionBuilder<Expression>(
                 CreateExpressions(targets, source, destination, cache));
 
+#if NET8_0_OR_GREATER
             return Expression.Block(expressions);
+#else
+            return expressions.Count > 0
+                ? Expression.Block(expressions)
+                : Expression.Empty();
+#endif
         }
 
         internal static Expression CreateCloneExpressionInner(Type type,
