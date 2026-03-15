@@ -129,6 +129,8 @@ namespace DeepCopy
         /// <param name="preserveObjectReferences">A value that specifies whether to preserve object reference data.</param>
         public static void CopyTo<T>(T source, T destination, bool preserveObjectReferences = false)
         {
+            if (source == null) return;
+
             _CopyTo(source.GetType(), source, destination,
                 ObjectReferencesCache.Create(preserveObjectReferences, source, destination));
         }
