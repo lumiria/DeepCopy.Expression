@@ -295,5 +295,17 @@ namespace DeepCopy.Internal.BuiltIns
                 )
             );
         }
+
+        public static void Compile(Type type)
+        {
+            var genericType = type.GetGenericTypeDefinition();
+            var argTypes = type.GetGenericArguments();
+
+            var clonerType = typeof(DictionaryCloner<,>);
+            var genericClonerType = clonerType.MakeGenericType(argTypes);
+
+            var method = genericClonerType.GetMethod("Compile", BindingFlags.NonPublic | BindingFlags.Static);
+            method?.Invoke(null, null);
+        }
     }
 }

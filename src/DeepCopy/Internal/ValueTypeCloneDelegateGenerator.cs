@@ -10,7 +10,7 @@ namespace DeepCopy.Internal
         public delegate void ValueTypeCloneDelegate(in T source, ref T destination, ObjectReferencesCache cache);
 
         private static readonly Type _type;
-        private static ValueTypeCloneDelegate _delegate;
+        private static readonly ValueTypeCloneDelegate _delegate;
 
         static ValueTypeCloneExpressionGenerator()
         {
@@ -18,11 +18,14 @@ namespace DeepCopy.Internal
             _delegate = ValueTypeCloneExpressionGeneratorHelper.Create<T>(_type).Compile();
         }
 
-        public static void Cleanup() =>
-            _delegate = null;
+        public static void Cleanup()
+        {
+            var field = typeof(ValueTypeCloneExpressionGenerator<T>).GetField(nameof(_delegate),
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            field.SetValue(null, null);
+        }
 
-        public static ValueTypeCloneDelegate CreateDelegate() =>
-            _delegate ??= ValueTypeCloneExpressionGeneratorHelper.Create<T>(_type).Compile();
+        public static ValueTypeCloneDelegate Delegate => _delegate;
     }
 
     file static class ValueTypeCloneExpressionGeneratorHelper

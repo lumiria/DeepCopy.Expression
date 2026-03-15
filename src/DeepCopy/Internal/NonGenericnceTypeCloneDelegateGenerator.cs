@@ -18,6 +18,9 @@ namespace DeepCopy.Internal
         public static void Cleanup() =>
            _caches.Clear();
 
+        public static void Cleanup(Type type) =>
+            _caches.TryRemove(type, out _);
+
         public static Action<object, object, ObjectReferencesCache> CreateDelegate(Type type) =>
             _caches.GetOrAdd(type, t => Create(t).Compile());
 
@@ -50,6 +53,9 @@ namespace DeepCopy.Internal
         }
         public static void Cleanup() =>
            _caches.Clear();
+
+        public static void Cleanup(Type type) =>
+            _caches.TryRemove(type, out _);
 
         public static ValueTypeCloneDelegate CreateDelegate(Type type) =>
             _caches.GetOrAdd(type, t => Create(t).Compile());
@@ -88,6 +94,9 @@ namespace DeepCopy.Internal
         public static void Cleanup() =>
            _caches.Clear();
 
+        public static void Cleanup(Type type) =>
+            _caches.TryRemove(type, out _);
+
         public static TDelegate GetOrCreateDelegate<TDelegate>(Type type) =>
             (TDelegate)_caches.GetOrAdd(type, t =>
             {
@@ -95,9 +104,9 @@ namespace DeepCopy.Internal
                 var generatorType = typeof(CloneArrayExpressionGenerator<,>);
                 var genericGeneratorType = generatorType.MakeGenericType(elementType, t);
 
-                var method = genericGeneratorType.GetMethod(nameof(CloneArrayExpressionGenerator<,>.CreateDelegate));
+                var method = genericGeneratorType.GetProperty(nameof(CloneArrayExpressionGenerator<,>.Delegate));
 
-                return method.Invoke(null, null);
+                return method.GetValue(null);
             });
     }
 
@@ -112,6 +121,9 @@ namespace DeepCopy.Internal
 
         public static void Cleanup() =>
            _caches.Clear();
+
+        public static void Cleanup(Type type) =>
+            _caches.TryRemove(type, out _);
 
         public static TDelegate GetOrCreateDelegate<TDelegate>(Type type) =>
             (TDelegate)_caches.GetOrAdd(type, t =>

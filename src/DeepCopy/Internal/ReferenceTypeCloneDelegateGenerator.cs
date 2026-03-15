@@ -6,7 +6,7 @@ namespace DeepCopy.Internal
     internal static class ReferenceTypeCloneDelegateGenerator<T>
     {
         private static readonly Type _type;
-        private static Action<T, T, ObjectReferencesCache> _delegate;
+        private static readonly Action<T, T, ObjectReferencesCache> _delegate;
 
         static ReferenceTypeCloneDelegateGenerator()
         {
@@ -14,11 +14,14 @@ namespace DeepCopy.Internal
             _delegate = ReferenceTypeCloneDelegateGeneratorHelper.Create<T>(_type).Compile();
         }
 
-        public static void Cleanup() =>
-           _delegate = null;
+        public static void Cleanup()
+        {
+            var field = typeof(ReferenceTypeCloneDelegateGenerator<T>).GetField(nameof(_delegate),
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            field.SetValue(null, null);
+        }
 
-        public static Action<T, T, ObjectReferencesCache> CreateDelegate() =>
-            _delegate ??= ReferenceTypeCloneDelegateGeneratorHelper.Create<T>(_type).Compile();
+        public static Action<T, T, ObjectReferencesCache> Delegate => _delegate;
     }
 
     file static class ReferenceTypeCloneDelegateGeneratorHelper

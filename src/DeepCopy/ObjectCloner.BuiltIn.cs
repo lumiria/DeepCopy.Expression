@@ -33,8 +33,8 @@ namespace DeepCopy
 
             if (type.IsValueType)
             {
-                _CopyValueType(type, source, ref instance, ObjectReferencesCache.Default);
-                    //CreateObjectReferenceCache(preserveObjectReferences));
+                _CopyValueType(type, source, ref instance,
+                    ObjectReferencesCache.Create(preserveObjectReferences));
             }
             else
             {
