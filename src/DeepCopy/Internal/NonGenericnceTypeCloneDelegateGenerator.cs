@@ -85,17 +85,25 @@ namespace DeepCopy.Internal
     {
         public delegate object ArrayCloneDelegate(object source, ObjectReferencesCache cache);
         private static readonly ConcurrentDictionary<Type, object> _caches;
+        private static readonly ConcurrentDictionary<Type, Func<Array, ObjectReferencesCache, Array>> _wrapperCaches;
 
         static ArrayCloneDelegateGenerator()
         {
             _caches = [];
+            _wrapperCaches = [];
         }
 
-        public static void Cleanup() =>
-           _caches.Clear();
+        public static void Cleanup()
+        {
+            _caches.Clear();
+            _wrapperCaches.Clear();
+        }
 
-        public static void Cleanup(Type type) =>
+        public static void Cleanup(Type type)
+        {
             _caches.TryRemove(type, out _);
+            _wrapperCaches.TryRemove(type, out _);
+        }
 
         public static TDelegate GetOrCreateDelegate<TDelegate>(Type type) =>
             (TDelegate)_caches.GetOrAdd(type, t =>
@@ -108,6 +116,24 @@ namespace DeepCopy.Internal
 
                 return method.GetValue(null);
             });
+
+        public static Func<Array, ObjectReferencesCache, Array> GetOrCreateWrapperDelegate(Type type) =>
+            _wrapperCaches.GetOrAdd(type, t =>
+            {
+                var @delegate = GetOrCreateDelegate<Delegate>(t);
+
+                var source = Expression.Parameter(typeof(Array), "source");
+                var cache = Expression.Parameter(typeof(ObjectReferencesCache), "cache");
+
+                var castSource = Expression.Convert(source, t);
+                var delegateExpression = Expression.Constant(@delegate, @delegate.GetType());
+                var call = Expression.Invoke(delegateExpression, castSource, cache);
+                var castDest = Expression.Convert(call, typeof(Array));
+
+                return Expression.Lambda<Func<Array, ObjectReferencesCache, Array>>(castDest, source, cache)
+                    .Compile();
+            });
+
     }
 
     internal static class DictionaryCloneDelegateGenerator

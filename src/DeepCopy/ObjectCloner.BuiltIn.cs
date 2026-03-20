@@ -46,6 +46,22 @@ namespace DeepCopy
         }
 
 #if NETSTANDARD2_0
+        public static Array? Clone(Array? source, bool preserveObjectReferences = false)
+#else
+        [return: NotNullIfNotNull(nameof(source))]
+        public static Array? Clone(Array? source, bool preserveObjectReferences = false)
+#endif
+        {
+            if (source == null) return null;
+
+            var type = source.GetType();
+            var cloner = ArrayCloneDelegateGenerator.GetOrCreateWrapperDelegate(type);
+            var instance = cloner(source, ObjectReferencesCache.Create(preserveObjectReferences));
+
+            return instance;
+        }
+
+#if NETSTANDARD2_0
         public static Dictionary<TKey, TValue>? Clone<TKey, TValue>(Dictionary<TKey, TValue>? source, bool preserveObjectReferences = false)
 #else
         [return: NotNullIfNotNull(nameof(source))]
