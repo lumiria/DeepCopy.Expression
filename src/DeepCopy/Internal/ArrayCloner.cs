@@ -19,6 +19,7 @@ namespace DeepCopy.Internal
             Expression cache)
         {
             var elementType = type.GetElementType();
+            System.Diagnostics.Debug.WriteLine($"{copyPolicy} {type} {source} {destination}: {elementType}");
 
             if (copyPolicy == CopyPolicy.DeepCopy)
             {
@@ -137,8 +138,10 @@ namespace DeepCopy.Internal
                 Type type,
                 Expression source,
                 Expression destination) =>
-            Expression.Assign(destination,
-                Expression.Convert(Expression.Call(source, ReflectionUtils.CloneArray), type));
+            Expression.IfThen(
+                Expression.NotEqual(source, Expression.Constant(null, type)),
+                Expression.Assign(destination,
+                    Expression.Convert(Expression.Call(source, ReflectionUtils.CloneArray), type)));
 
         private Expression CreateShallowCopyArrayExpression(
             Type type,
@@ -156,6 +159,7 @@ namespace DeepCopy.Internal
             Expression arrayAssign,
             Expression cache)
         {
+            System.Diagnostics.Debug.WriteLine($"**{source} {destination}: {elementType}, {length}");
             var i = Expression.Parameter(typeof(int), "i");
             var endLoop = Expression.Label("EndLoop");
 
@@ -168,23 +172,25 @@ namespace DeepCopy.Internal
                     Expression.ArrayAccess(destination, i),
                     cache)
                 : ClassCloner.Instance.Build(
-                    elementType,
-                    Expression.ArrayIndex(source, i),
-                    Expression.ArrayAccess(destination, i),
-                    cache);
+                        elementType,
+                        Expression.ArrayIndex(source, i),
+                        Expression.ArrayAccess(destination, i),
+                        cache);
 
-            return Expression.Block(
-                [i],
-                Expression.Assign(i, ExpressionUtils.Zero),
-                arrayAssign,
-                Expression.Loop(
-                    Expression.Block(
-                        Expression.IfThen(
-                            Expression.GreaterThanOrEqual(i, length),
-                            Expression.Break(endLoop)),
-                        elementAssign,
-                        Expression.PreIncrementAssign(i)),
-                    endLoop));
+            return Expression.IfThen(
+                Expression.NotEqual(source, Expression.Constant(null, source.Type)),
+                Expression.Block(
+                    [i],
+                    Expression.Assign(i, ExpressionUtils.Zero),
+                    arrayAssign,
+                    Expression.Loop(
+                        Expression.Block(
+                            Expression.IfThen(
+                                Expression.GreaterThanOrEqual(i, length),
+                                Expression.Break(endLoop)),
+                            elementAssign,
+                            Expression.PreIncrementAssign(i)),
+                        endLoop)));
         }
 
         private Expression CreateDeepCopyRectangulerArrayExpression(
