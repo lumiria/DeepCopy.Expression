@@ -85,6 +85,9 @@ namespace DeepCopy.Internal
                     _ when t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Dictionary<,>)
                         => FixedDictionaryCloner.GetCloneMethod(t),
 
+                    _ when t == typeof(Array)
+                        => ReflectionUtils.ArrayClone,
+
                     _ when !TypeUtils.IsValueType(t)
                         => (type.IsInterface
                             ? ReflectionUtils.InterfaceClone.MakeGenericMethod(t)

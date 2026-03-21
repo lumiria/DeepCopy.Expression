@@ -62,6 +62,21 @@ namespace DeepCopy
         }
 
 #if NETSTANDARD2_0
+        public static void CopyTo(Array? source, Array desitination, bool preserveObjectReferences = false)
+#else
+        public static void CopyTo(Array? source, Array desitination, bool preserveObjectReferences = false)
+#endif
+        {
+            if (source == null) return;
+
+            var type = source.GetType();
+            var cloner = ArrayCloneDelegateGenerator.GetOrCreateWrapperDelegate(type);
+            var instance = cloner(source, ObjectReferencesCache.Create(preserveObjectReferences));
+
+            Array.Copy(instance, desitination, desitination.Length);
+        }
+
+#if NETSTANDARD2_0
         public static Dictionary<TKey, TValue>? Clone<TKey, TValue>(Dictionary<TKey, TValue>? source, bool preserveObjectReferences = false)
 #else
         [return: NotNullIfNotNull(nameof(source))]

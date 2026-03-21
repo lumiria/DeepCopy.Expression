@@ -121,49 +121,6 @@ namespace DeepCopy
         }
 
         /// <summary>
-        /// Copies the object to the specified object.
-        /// </summary>
-        /// <typeparam name="T">The type of object.</typeparam>
-        /// <param name="source">A source object.</param>
-        /// <param name="destination">The object that is destination of the copy.</param>
-        /// <param name="preserveObjectReferences">A value that specifies whether to preserve object reference data.</param>
-        public static void CopyTo<T>(T source, T destination, bool preserveObjectReferences = false)
-        {
-            if (source == null) return;
-
-            _CopyTo(source.GetType(), source, destination,
-                ObjectReferencesCache.Create(preserveObjectReferences, source, destination));
-        }
-
-        /// <summary>
-        /// Deep copies the source object the destination object.
-        /// </summary>
-        /// <typeparam name="T">The type of the object to copy.</typeparam>
-        /// <param name="source">The object to copy.</param>
-        /// <param name="destination">The object to copy to.</param>
-        /// <param name="preserveObjectReferences">Whether to preserve object references.</param>
-        public static void CopyTo<T>(T source, ref T destination, bool preserveObjectReferences = false)
-            where T : struct
-        {
-            _CopyValueType(typeof(T), source, ref destination, ObjectReferencesCache.Default);
-                    //CreateObjectReferenceCache(preserveObjectReferences));
-        }
-
-        /// <summary>
-        /// Deep copies the source object the destination object.
-        /// </summary>
-        /// <typeparam name="T">The type of the object to copy.</typeparam>
-        /// <param name="source">The object to copy.</param>
-        /// <param name="destination">The object to copy to.</param>
-        /// <param name="preserveObjectReferences">Whether to preserve object references.</param>
-        public static void CopyTo<T>(T? source, ref T? destination, bool preserveObjectReferences = false)
-            where T : struct
-        {
-            _CopyNullableValueType(source, ref destination, ObjectReferencesCache.Default);
-                //CreateObjectReferenceCache(preserveObjectReferences));
-        }
-
-        /// <summary>
         /// Creates a new array thas is copy of the specified array.
         /// </summary>
         /// <typeparam name="T">The element type of array.</typeparam>
@@ -231,6 +188,53 @@ namespace DeepCopy
             var cloner = CloneArrayExpressionGenerator<T, T[,,,,]>.Delegate;
             return cloner(source,
                 ObjectReferencesCache.Create(preserveObjectReferences));
+        }
+
+        /// <summary>
+        /// Copies the object to the specified object.
+        /// </summary>
+        /// <typeparam name="T">The type of object.</typeparam>
+        /// <param name="source">A source object.</param>
+        /// <param name="destination">The object that is destination of the copy.</param>
+        /// <param name="preserveObjectReferences">A value that specifies whether to preserve object reference data.</param>
+        public static void CopyTo<T>(T source, T destination, bool preserveObjectReferences = false)
+        {
+            if (source == null) return;
+
+            _CopyTo(source.GetType(), source, destination,
+                ObjectReferencesCache.Create(preserveObjectReferences, source, destination));
+        }
+
+        /// <summary>
+        /// Deep copies the source object the destination object.
+        /// </summary>
+        /// <typeparam name="T">The type of the object to copy.</typeparam>
+        /// <param name="source">The object to copy.</param>
+        /// <param name="destination">The object to copy to.</param>
+        /// <param name="preserveObjectReferences">Whether to preserve object references.</param>
+        public static void CopyTo<T>(T source, ref T destination, bool preserveObjectReferences = false)
+            where T : struct
+        {
+            _CopyValueType(typeof(T), source, ref destination, ObjectReferencesCache.Default);
+        }
+
+        /// <summary>
+        /// Deep copies the source object the destination object.
+        /// </summary>
+        /// <typeparam name="T">The type of the object to copy.</typeparam>
+        /// <param name="source">The object to copy.</param>
+        /// <param name="destination">The object to copy to.</param>
+        /// <param name="preserveObjectReferences">Whether to preserve object references.</param>
+        public static void CopyTo<T>(T? source, ref T? destination, bool preserveObjectReferences = false)
+            where T : struct
+        {
+            _CopyNullableValueType(source, ref destination, ObjectReferencesCache.Default);
+        }
+
+        public static void CopyTo<T>(T[] source, T[] destination, bool preserveObjectReferences = false)
+        {
+            _CopyTo(source, destination,
+                ObjectReferencesCache.Create(preserveObjectReferences, source, destination));
         }
 
         public static void Cleanup<T>()
@@ -430,6 +434,34 @@ namespace DeepCopy
 
                 return instance;
             }
+        }
+
+        private static Array _CloneArray(Array source, ObjectReferencesCache cache)
+        {
+#if DEBUGLOG
+            Console.WriteLine($"[{typeof(Array).Name}]");
+#endif
+            if (source == null) return default;
+
+            if (cache.Get(source, out var obj)) return obj;
+
+            var type = source.GetType();
+#if NET9_0_OR_GREATER
+            var instance = Array.CreateInstanceFromArrayType(type, source.Length);
+#else
+            var instance = Array.CreateInstance(type.GetElementType(), source.Length);
+#endif
+
+            cache.Add(source, instance);
+
+            var cloner = ArrayCloneDelegateGenerator.GetOrCreateWrapperDelegate(type);
+            var cloned = cloner(source, cache);
+
+            cache.RemoveLatest();
+
+            Array.Copy(source, instance, source.Length);
+
+            return instance;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
