@@ -19,14 +19,13 @@ namespace DeepCopy.Internal
             Expression cache)
         {
             var elementType = type.GetElementType();
-            System.Diagnostics.Debug.WriteLine($"{copyPolicy} {type} {source} {destination}: {elementType}");
 
             if (copyPolicy == CopyPolicy.DeepCopy)
             {
                 if (type.GetArrayRank() > 1)
                 {
                     return CreateDeepCopyRectangulerArrayExpression(
-                        type, elementType, source, destination, cache);
+                        type, elementType, source, destination, null, cache);
                 }
 
                 var length = Expression.ArrayLength(source);
@@ -69,7 +68,7 @@ namespace DeepCopy.Internal
                 if (type.GetArrayRank() > 1)
                 {
                     return CreateDeepCopyRectangulerArrayExpression(
-                        type, elementType, source, MemberAccessorGenerator.CreateGetter(destination, member), cache);
+                        type, elementType, source, destination, member, cache);
                 }
 
                 var length = Expression.ArrayLength(source);
@@ -117,7 +116,7 @@ namespace DeepCopy.Internal
             if (type.GetArrayRank() > 1)
             {
                 return CreateDeepCopyRectangulerArrayExpression(
-                    type, elementType, source, destination, cache);
+                    type, elementType, source, destination, null, cache);
             }
 
             var length = Expression.ArrayLength(source);
@@ -159,7 +158,6 @@ namespace DeepCopy.Internal
             Expression arrayAssign,
             Expression cache)
         {
-            System.Diagnostics.Debug.WriteLine($"**{source} {destination}: {elementType}, {length}");
             var i = Expression.Parameter(typeof(int), "i");
             var endLoop = Expression.Label("EndLoop");
 
@@ -198,6 +196,7 @@ namespace DeepCopy.Internal
             Type elementType,
             Expression source,
             Expression destination,
+            MemberInfo? memberInfo,
             Expression cache)
         {
             int rank = type.GetArrayRank();
@@ -209,9 +208,17 @@ namespace DeepCopy.Internal
                 .Select(x => ExpressionUtils.GetArrayLength(source, x))
                 .ToArray();
 
-            var arrayAssign = Expression.Assign(
-                destination,
-                Expression.NewArrayBounds(elementType, lengths));
+            var arrayAssign = memberInfo != null
+              ? MemberAccessorGenerator.CreateSetter(destination, memberInfo,
+                    Expression.NewArrayBounds(elementType, lengths))
+              : Expression.Assign(
+                    destination,
+                    Expression.NewArrayBounds(elementType, lengths));
+
+            if (memberInfo != null)
+            {
+                destination = MemberAccessorGenerator.CreateGetter(destination, memberInfo);
+            }
 
             var elementAssign = elementType.IsArray
                 ? Build(

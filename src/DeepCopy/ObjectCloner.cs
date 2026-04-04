@@ -237,6 +237,38 @@ namespace DeepCopy
                 ObjectReferencesCache.Create(preserveObjectReferences, source, destination));
         }
 
+        public static void CopyTo<T>(T[,] source, T[,] destination, bool preserveObjectReferences = false)
+        {
+            var cloner = CloneArrayExpressionGenerator<T, T[,]>.Delegate;
+            var instance = cloner(source,
+                ObjectReferencesCache.Create(preserveObjectReferences));
+            Array.Copy(source, destination, source.Length);
+        }
+
+        public static void CopyTo<T>(T[,,] source, T[,,] destination, bool preserveObjectReferences = false)
+        {
+            var cloner = CloneArrayExpressionGenerator<T, T[,,]>.Delegate;
+            var instance = cloner(source,
+                ObjectReferencesCache.Create(preserveObjectReferences));
+            Array.Copy(source, destination, source.Length);
+        }
+
+        public static void CopyTo<T>(T[,,,] source, T[,,,] destination, bool preserveObjectReferences = false)
+        {
+            var cloner = CloneArrayExpressionGenerator<T, T[,,,]>.Delegate;
+            var instance = cloner(source,
+                ObjectReferencesCache.Create(preserveObjectReferences));
+            Array.Copy(source, destination, source.Length);
+        }
+
+        public static void CopyTo<T>(T[,,,,] source, T[,,,,] destination, bool preserveObjectReferences = false)
+        {
+            var cloner = CloneArrayExpressionGenerator<T, T[,,,,]>.Delegate;
+            var instance = cloner(source,
+                ObjectReferencesCache.Create(preserveObjectReferences));
+            Array.Copy(source, destination, source.Length);
+        }
+
         public static void Cleanup<T>()
         {
             var type = typeof(T);
@@ -446,10 +478,11 @@ namespace DeepCopy
             if (cache.Get(source, out var obj)) return obj;
 
             var type = source.GetType();
+            var lengths = GetLengths(source);
 #if NET9_0_OR_GREATER
-            var instance = Array.CreateInstanceFromArrayType(type, source.Length);
+            var instance = Array.CreateInstanceFromArrayType(type, lengths);
 #else
-            var instance = Array.CreateInstance(type.GetElementType(), source.Length);
+            var instance = Array.CreateInstance(type.GetElementType(), lengths);
 #endif
 
             cache.Add(source, instance);
@@ -459,9 +492,19 @@ namespace DeepCopy
 
             cache.RemoveLatest();
 
-            Array.Copy(source, instance, source.Length);
+            Array.Copy(cloned, instance, source.Length);
 
             return instance;
+
+            static int[] GetLengths(Array array)
+            {
+                var lengths = new int[array.Rank];
+                for (var i = 0; i < array.Rank; i++)
+                {
+                    lengths[i] = array.GetLength(i);
+                }
+                return lengths;
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

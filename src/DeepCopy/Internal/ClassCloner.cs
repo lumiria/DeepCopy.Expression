@@ -56,7 +56,12 @@ namespace DeepCopy.Internal
                 Expression.Condition(
                     ExpressionUtils.IsObjectOrValueType(source),
                     ExpressionUtils.MemberwiseClone(type, source),
-                    ExpressionUtils.CloneObjectType(source, cache)));
+                    Expression.Condition(
+                        ExpressionUtils.IsArray(source),
+                        Expression.Convert(
+                            ExpressionUtils.CloneArray(Expression.Convert(source, typeof(Array)), cache),
+                            typeof(object)),
+                        ExpressionUtils.CloneObjectType(source, cache))));
         }
 
         private sealed class ClonerCache

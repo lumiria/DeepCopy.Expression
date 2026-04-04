@@ -30,8 +30,14 @@ namespace DeepCopy.Internal.Utilities
             Expression.Call(ReflectionUtils.IsValueType,
                 Expression.Call(instance, ReflectionUtils.GetObjectType));
 
+        public static Expression IsArray(Expression instance) =>
+            Expression.MakeMemberAccess(Expression.Call(instance, ReflectionUtils.GetObjectType), ReflectionUtils.IsArray);
+
         public static Expression CloneObjectType(Expression source, Expression cache) =>
             Expression.Call(ReflectionUtils.ObjectTypeClone, source, cache);
+
+        public static Expression CloneArray(Expression source, Expression cache) =>
+            Expression.Call(ReflectionUtils.ArrayClone, source, cache);
 
         public static BlockExpression Loop(Expression array, Expression length, Func<Expression, Expression> body, params Expression[] initializeExpressions)
         {

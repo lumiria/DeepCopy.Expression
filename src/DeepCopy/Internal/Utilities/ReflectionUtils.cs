@@ -29,6 +29,9 @@ namespace DeepCopy.Internal.Utilities
         public static MethodInfo IsValueType { get; } =
             typeof(TypeUtils).GetMethod("IsValueType", BindingFlags.Static | BindingFlags.Public);
 
+        public static PropertyInfo IsArray { get; } =
+            typeof(Type).GetProperty(nameof(Type.IsArray));
+
         public static MethodInfo ObjectClone { get; } =
             typeof(ObjectCloner).GetMethod("_Clone", BindingFlags.Static | BindingFlags.NonPublic);
 
