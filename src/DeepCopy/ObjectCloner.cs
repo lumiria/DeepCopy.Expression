@@ -394,6 +394,11 @@ namespace DeepCopy
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Dictionary<,>))
                 return DictionaryCloneDelegateGenerator.GetOrCreateDelegate<Func<object, ObjectReferencesCache, T>>(type)(source, cache);
 
+            if (source is Array array)
+            {
+                return _CloneArray(array, cache) is T cloned ? cloned : default;
+            }
+
 #if NETSTANDARD2_0
             var instance = (T)FormatterServices.GetUninitializedObject(type);
 #else
@@ -430,42 +435,24 @@ namespace DeepCopy
 
             if (!type.IsValueType && cache.Get(source, out var obj)) return obj;
 
-            if (!type.IsArray)
-            {
 #if NETSTANDARD2_0
-                var instance = FormatterServices.GetUninitializedObject(type);
+            var instance = FormatterServices.GetUninitializedObject(type);
 #else
-                var instance = RuntimeHelpers.GetUninitializedObject(type);
+            var instance = RuntimeHelpers.GetUninitializedObject(type);
 #endif
 
-                if (type.IsValueType)
-                {
-                    _CopyValueType(type, source, ref instance, cache);
-                }
-                else
-                {
-                    cache.Add(source, instance);
-                    _CopyTo(type, source, instance, cache);
-                    cache.RemoveLatest();
-                }
-
-                return instance;
+            if (type.IsValueType)
+            {
+                _CopyValueType(type, source, ref instance, cache);
             }
             else
             {
-                var castedArray = ((Array)source).Cast<object>().ToArray();
-
-#if NET9_0_OR_GREATER
-                var instance = Array.CreateInstanceFromArrayType(type, castedArray.Length);
-#else
-                var instance = Array.CreateInstance(type.GetElementType(), castedArray.Length);
-#endif
                 cache.Add(source, instance);
-                _CopyTo(castedArray, instance, cache);
+                _CopyTo(type, source, instance, cache);
                 cache.RemoveLatest();
-
-                return instance;
             }
+
+            return instance;
         }
 
         private static Array _CloneArray(Array source, ObjectReferencesCache cache)

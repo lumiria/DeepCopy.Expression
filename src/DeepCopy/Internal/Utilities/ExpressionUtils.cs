@@ -39,6 +39,14 @@ namespace DeepCopy.Internal.Utilities
         public static Expression CloneArray(Expression source, Expression cache) =>
             Expression.Call(ReflectionUtils.ArrayClone, source, cache);
 
+        public static Expression MaybeCloneObjectType(Expression source, Expression cache) =>
+            Expression.Condition(
+                IsArray(source),
+                Expression.Convert(
+                    CloneArray(Expression.Convert(source, typeof(Array)), cache),
+                    typeof(object)),
+                CloneObjectType(source, cache));
+
         public static BlockExpression Loop(Expression array, Expression length, Func<Expression, Expression> body, params Expression[] initializeExpressions)
         {
             var i = Expression.Parameter(typeof(int), "i");
