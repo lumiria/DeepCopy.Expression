@@ -47,6 +47,14 @@ namespace DeepCopy.Internal.Utilities
             _ => IsAssignableType(t, [t])
         };
 
+        public static bool IsReadOnlyStruct(Type type) =>
+            type.IsValueType && type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).All(f => f.IsInitOnly)
+#if NETSTANDARD2_0
+            ;
+#else
+            && type.IsDefined(typeof(IsReadOnlyAttribute), false);
+#endif
+
         public static IEnumerable<FieldInfo> GetFields(Type type, BindingFlags bindingFlags)
         {
             var baseType = type.BaseType;

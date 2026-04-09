@@ -3,6 +3,9 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+#if NET8_0_OR_GREATER
+using System.Collections.Immutable;
+#endif
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using DeepCopy.Internal.BuiltIns;
@@ -18,7 +21,9 @@ namespace DeepCopy.Internal
         {
             _bag = new ()
             {
-                [typeof(Dictionary<,>)] = FixedDictionaryCloner.Build,
+#if NET8_0_OR_GREATER
+                [typeof(ImmutableArray<>)] = ImmutableArrayCloner.Build,
+#endif
                 [typeof(HashSet<>)] = HashSetCloner.Build,
                 [typeof(ConcurrentDictionary<,>)] = ConcurrentDictionaryCloner.Build,
                 [typeof(ReadOnlyDictionary<,>)] = ReadOnlyDictionaryCloner.Build

@@ -56,8 +56,17 @@ namespace DeepCopy.Internal
                             )
                         )
                     )
-                    : CoreCloneExpressionGenerator.CreateCloneExpression<T>(
-                        sourceParameter, destinationParameter, cacheParameter);
+                    : TypeUtils.IsReadOnlyStruct(type)
+                        ? FixedCloner.TryGetBuilder(type, out var builder)
+                            ? builder(sourceParameter, destinationParameter, cacheParameter)
+                            : DeepCopyOptions.ReadOnlyStructBehavior switch {
+                                DeepCopyOptions.CopyBehavior.TryClone => CoreCloneExpressionGenerator.CreateCloneExpression<T>(
+                                    sourceParameter, destinationParameter, cacheParameter),
+                                DeepCopyOptions.CopyBehavior.ShallowCopy => Expression.Assign(destinationParameter, sourceParameter),
+                                _ => Expression.Empty()
+                            }
+                        : CoreCloneExpressionGenerator.CreateCloneExpression<T>(
+                            sourceParameter, destinationParameter, cacheParameter);
 
             return Expression.Lambda<ValueTypeCloneExpressionGenerator<T>.ValueTypeCloneDelegate> (
                 body,
