@@ -164,6 +164,7 @@ The library has some limitations:
 
 * It does not copy delegates.
 * ~~It does not support direct array specification.~~ (Supported in ver1.3.0)
+* Copying immutable collections such as `ImmutableList<T>`, `ImmutableStack<T>`, `ImmutableQueue<T>`, and `ImmutableHashSet<T>` via CopyTo is disabled.
 
 ## License
 This library is under the MIT License.

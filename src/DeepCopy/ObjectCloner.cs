@@ -88,7 +88,7 @@ namespace DeepCopy
             }
             else
             {
-                _CopyTo(type, source, instance,
+                _CopyTo(type, source, ref instance,
                     ObjectReferencesCache.Create(preserveObjectReferences, source, instance));
             }
 
@@ -201,7 +201,9 @@ namespace DeepCopy
         {
             if (source == null) return;
 
-            _CopyTo(source.GetType(), source, destination,
+            ValidateCopyableType(source.GetType());
+
+            _CopyTo(source.GetType(), source, ref destination,
                 ObjectReferencesCache.Create(preserveObjectReferences, source, destination));
         }
 
@@ -233,12 +235,16 @@ namespace DeepCopy
 
         public static void CopyTo<T>(T[] source, T[] destination, bool preserveObjectReferences = false)
         {
+            ValidateCopyableArray(source, destination);
+
             _CopyTo(source, destination,
                 ObjectReferencesCache.Create(preserveObjectReferences, source, destination));
         }
 
         public static void CopyTo<T>(T[,] source, T[,] destination, bool preserveObjectReferences = false)
         {
+            ValidateCopyableArray(source, destination);
+
             var cloner = CloneArrayExpressionGenerator<T, T[,]>.Delegate;
             var instance = cloner(source,
                 ObjectReferencesCache.Create(preserveObjectReferences));
@@ -247,6 +253,8 @@ namespace DeepCopy
 
         public static void CopyTo<T>(T[,,] source, T[,,] destination, bool preserveObjectReferences = false)
         {
+            ValidateCopyableArray(source, destination);
+
             var cloner = CloneArrayExpressionGenerator<T, T[,,]>.Delegate;
             var instance = cloner(source,
                 ObjectReferencesCache.Create(preserveObjectReferences));
@@ -255,6 +263,8 @@ namespace DeepCopy
 
         public static void CopyTo<T>(T[,,,] source, T[,,,] destination, bool preserveObjectReferences = false)
         {
+            ValidateCopyableArray(source, destination);
+
             var cloner = CloneArrayExpressionGenerator<T, T[,,,]>.Delegate;
             var instance = cloner(source,
                 ObjectReferencesCache.Create(preserveObjectReferences));
@@ -263,6 +273,8 @@ namespace DeepCopy
 
         public static void CopyTo<T>(T[,,,,] source, T[,,,,] destination, bool preserveObjectReferences = false)
         {
+            ValidateCopyableArray(source, destination);
+
             var cloner = CloneArrayExpressionGenerator<T, T[,,,,]>.Delegate;
             var instance = cloner(source,
                 ObjectReferencesCache.Create(preserveObjectReferences));
@@ -315,6 +327,27 @@ namespace DeepCopy
 
         #endregion Obsolete
 
+        private static void ValidateCopyableType(Type type)
+        {
+            if (type.IsGenericType && DeepCopyOptions.NonCopyableGenericTypes.Contains(type.GetGenericTypeDefinition()))
+            {
+                throw new NotSupportedException("The type is not supported for copying.");
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void ValidateCopyableArray(Array source, Array destination)
+        {
+            if (source.Rank != destination.Rank)
+            {
+                throw new RankException("source and destination have different ranks.");
+            }
+
+            if (source.Length != destination.Length)
+            {
+                throw new ArgumentException("The lengths of source and description do not match.");
+            }
+        }
 
         internal static T _Clone<T>(T source, ObjectReferencesCache cache)
 
@@ -335,7 +368,7 @@ namespace DeepCopy
 
             cache.Add(source, instance);
 
-            _CopyTo(type, source, instance, cache);
+            _CopyTo(type, source, ref instance, cache);
 
             cache.RemoveLatest();
 
@@ -412,7 +445,7 @@ namespace DeepCopy
             else
             {
                 cache.Add(source, instance);
-                _CopyTo(type, source, instance, cache);
+                _CopyTo(type, source, ref instance, cache);
                 cache.RemoveLatest();
             }
 
@@ -448,7 +481,7 @@ namespace DeepCopy
             else
             {
                 cache.Add(source, instance);
-                _CopyTo(type, source, instance, cache);
+                _CopyTo(type, source, ref instance, cache);
                 cache.RemoveLatest();
             }
 
@@ -495,12 +528,12 @@ namespace DeepCopy
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void _CopyTo<T>(in Type type, T source, T destination, ObjectReferencesCache cache)
+        private static void _CopyTo<T>(in Type type, T source, ref T destination, ObjectReferencesCache cache)
         {
             if (type == typeof(T))
             {
                 var cloner = ReferenceTypeCloneDelegateGenerator<T>.Delegate;
-                cloner(source, destination, cache);
+                cloner(source, ref destination, cache);
             }
             else
             {
