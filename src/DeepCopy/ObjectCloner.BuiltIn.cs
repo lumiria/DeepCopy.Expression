@@ -38,7 +38,7 @@ namespace DeepCopy
             }
             else
             {
-                _CopyTo(type, source, instance,
+                _CopyTo(type, source, ref instance,
                     ObjectReferencesCache.Create(preserveObjectReferences, source, instance));
             }
 

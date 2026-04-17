@@ -23,6 +23,7 @@ namespace DeepCopy.Internal
             {
 #if NET8_0_OR_GREATER
                 [typeof(ImmutableArray<>)] = ImmutableArrayCloner.Build,
+                [typeof(ImmutableHashSet<>)] = ImmutableHashSetCloner.Build,
 #endif
                 [typeof(HashSet<>)] = HashSetCloner.Build,
                 [typeof(ConcurrentDictionary<,>)] = ConcurrentDictionaryCloner.Build,
