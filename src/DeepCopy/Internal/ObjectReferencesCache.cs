@@ -56,6 +56,14 @@ namespace DeepCopy.Internal
             _cache.Remove(dummy);
         }
 
+        public void ReplaceLatest<T>(T source, T clonedObject)
+            where T : notnull
+        {
+            if (_canCacheAnything) return;
+            _cache.Remove(dummy);
+            _cache.Add(source, clonedObject);
+        }
+
         public void Add<T>(T source, T clonedObject)
             where T : notnull
         {

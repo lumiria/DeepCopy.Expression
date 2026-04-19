@@ -51,6 +51,13 @@ namespace DeepCopy.Internal.FixedCloners.Core
                 !.MakeGenericMethod(elementType);
             var toArrayCall = Expression.Call(toArrayMethod, source);
 
+            var replaceCacheMethod = typeof(ObjectReferencesCache)
+                .GetMethod(nameof(ObjectReferencesCache.ReplaceLatest))
+                !.MakeGenericMethod(source.Type);
+
+            var replaceCache = ExpressionUtils.NullCheck(
+                source, Expression.Call(cache, replaceCacheMethod, source, destination));
+
             return TypeUtils.IsAssignableType(elementType)
                 ? Expression.Block(
                     Expression.Assign(
@@ -63,7 +70,8 @@ namespace DeepCopy.Internal.FixedCloners.Core
                         Expression.Call(
                             method,
                             clonedComparer,
-                            Expression.Call(toArrayMethod, EnumerableCloneExpressionBuilder.Build(elementType, source, cache))))
+                            Expression.Call(toArrayMethod, EnumerableCloneExpressionBuilder.Build(elementType, source, cache)))),
+                    replaceCache
                 );
         }
 
