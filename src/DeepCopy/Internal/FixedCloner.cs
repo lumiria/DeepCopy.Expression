@@ -8,7 +8,6 @@ using System.Collections.Immutable;
 #endif
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
-using DeepCopy.Internal.BuiltIns;
 using DeepCopy.Internal.FixedCloners;
 
 namespace DeepCopy.Internal
@@ -24,6 +23,7 @@ namespace DeepCopy.Internal
 #if NET8_0_OR_GREATER
                 [typeof(ImmutableArray<>)] = ImmutableArrayCloner.Build,
                 [typeof(ImmutableHashSet<>)] = ImmutableHashSetCloner.Build,
+                [typeof(ImmutableSortedSet<>)] = ImmutableSortedSetCloner.Build,
 #endif
                 [typeof(HashSet<>)] = HashSetCloner.Build,
                 [typeof(ConcurrentDictionary<,>)] = ConcurrentDictionaryCloner.Build,

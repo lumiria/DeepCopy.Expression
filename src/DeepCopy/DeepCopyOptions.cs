@@ -17,6 +17,7 @@ namespace DeepCopy
             typeof(ImmutableStack<>),
             typeof(ImmutableQueue<>),
             typeof(ImmutableHashSet<>),
+            typeof(ImmutableSortedSet<>),
 #endif
         ];
 

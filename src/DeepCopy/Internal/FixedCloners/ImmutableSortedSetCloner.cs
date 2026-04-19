@@ -6,15 +6,15 @@ using DeepCopy.Internal.FixedCloners.Core;
 
 namespace DeepCopy.Internal.FixedCloners
 {
-    internal static class ImmutableHashSetCloner
+    internal static class ImmutableSortedSetCloner
     {
         public static BlockExpression Build(
             Expression source,
             Expression destination,
             Expression cache)
             => ImmutableSetCloneExpressionBuilder.Create(
-                    typeof(ImmutableHashSet),
-                    EqualityComparerCloneExpressionBuilder.Build
+                    typeof(ImmutableSortedSet),
+                    ComparerCloneExpressionBuilder.Build
                 ).Build(source, destination, cache);
     }
 }
