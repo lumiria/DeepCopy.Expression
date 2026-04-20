@@ -23,7 +23,7 @@ namespace DeepCopy.Internal.FixedCloners
             return Expression.Assign(field, value);
         }
 
-        public static BlockExpression AssignClonedFields(Expression destination, string[] fieldNames, Expression source, Expression cache)
+        public static BlockExpression AssignClonedFields(Expression destination, string[] fieldNames, Expression source, Expression context)
         {
             return Expression.Block(
                 fieldNames.Select(field =>
@@ -31,21 +31,21 @@ namespace DeepCopy.Internal.FixedCloners
                         destination,
                         source,
                         source.Type.GetField(field, bindingFlags)!,
-                        cache
+                        context
                     )
                 )
             );
         }
 
-        public static Expression AssignClonedField(Expression destination, Expression source, FieldInfo fieldInfo, Expression cache)
+        public static Expression AssignClonedField(Expression destination, Expression source, FieldInfo fieldInfo, Expression context)
         {
             return MemberAccessorGenerator.CreateSetter(
                 destination,
                 fieldInfo,
-                GetClonedField(fieldInfo, source, cache));
+                GetClonedField(fieldInfo, source, context));
         }
 
-        public static BinaryExpression AssignClonedComparer(Expression destination, FieldInfo fieldInfo, MemberExpression comparer, Expression cache)
+        public static BinaryExpression AssignClonedComparer(Expression destination, FieldInfo fieldInfo, MemberExpression comparer, Expression context)
         {
             var destinationComparer = Expression.MakeMemberAccess(
                 destination,
@@ -65,13 +65,13 @@ namespace DeepCopy.Internal.FixedCloners
                     Expression.Call(
                         ReflectionUtils.ObjectClone.MakeGenericMethod(comparer.Type),
                         comparer,
-                        cache
+                        context
                     )
                 )
             );
         }
 
-        public static Expression GetClonedField(FieldInfo fieldInfo, Expression source, Expression cache)
+        public static Expression GetClonedField(FieldInfo fieldInfo, Expression source, Expression context)
         {
             var field = Expression.Field(source, fieldInfo);
             var type = field.Type;
@@ -79,9 +79,9 @@ namespace DeepCopy.Internal.FixedCloners
             if (type.IsGenericType && type.GetGenericTypeDefinition() is Type genericType)
             {
                 if (genericType == typeof(IEqualityComparer<>))
-                    return GetClonedEqualityComparer(fieldInfo, source, cache);
+                    return GetClonedEqualityComparer(fieldInfo, source, context);
                 if (genericType == typeof(IComparer<>))
-                    return GetClonedComparer(fieldInfo, source, cache);
+                    return GetClonedComparer(fieldInfo, source, context);
             }
 
             if (TypeUtils.IsAssignableType(type))
@@ -105,7 +105,7 @@ namespace DeepCopy.Internal.FixedCloners
                              type,
                              field,
                              array,
-                             cache
+                             context
                         ),
                         array
                     )
@@ -115,7 +115,7 @@ namespace DeepCopy.Internal.FixedCloners
             var cloneExpression = Expression.Call(
                 ReflectionUtils.ObjectClone.MakeGenericMethod(type),
                 field,
-                cache);
+                context);
 
             if (type != typeof(object))
             {
@@ -134,29 +134,29 @@ namespace DeepCopy.Internal.FixedCloners
         }
 
         private static ConditionalExpression GetClonedEqualityComparer(
-            FieldInfo fieldInfo, Expression source, Expression cache)
+            FieldInfo fieldInfo, Expression source, Expression context)
         {
             var comparer = Expression.Field(source, fieldInfo);
 
             var equalityComparerType = typeof(EqualityComparer<>).MakeGenericType(
                 fieldInfo.FieldType.GetGenericArguments()[0]);
 
-            return GetClonedComparerCore(equalityComparerType, comparer, cache);
+            return GetClonedComparerCore(equalityComparerType, comparer, context);
         }
 
         private static ConditionalExpression GetClonedComparer(
-            FieldInfo fieldInfo, Expression source, Expression cache)
+            FieldInfo fieldInfo, Expression source, Expression context)
         {
             var comparer = Expression.Field(source, fieldInfo);
 
             var equalityComparerType = typeof(Comparer<>).MakeGenericType(
                 fieldInfo.FieldType.GetGenericArguments()[0]);
 
-            return GetClonedComparerCore(equalityComparerType, comparer, cache);
+            return GetClonedComparerCore(equalityComparerType, comparer, context);
         }
 
         private static ConditionalExpression GetClonedComparerCore(
-            Type comparerInstanceType, Expression comparer, Expression cache)
+            Type comparerInstanceType, Expression comparer, Expression context)
         {
             var defaultComparer = Expression.Convert(
                 Expression.Property(
@@ -170,7 +170,7 @@ namespace DeepCopy.Internal.FixedCloners
                 Expression.Call(
                     ReflectionUtils.ObjectClone.MakeGenericMethod(comparer.Type),
                     comparer,
-                    cache
+                    context
                 )
             );
         }

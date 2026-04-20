@@ -10,7 +10,7 @@ namespace DeepCopy.Internal.FixedCloners.Core
     {
         public static Expression Build(
             Expression source,
-            Expression cache)
+            Expression context)
         {
             var type = source.Type;
 
@@ -33,7 +33,7 @@ namespace DeepCopy.Internal.FixedCloners.Core
                 _ => ReflectionUtils.ValueClone.MakeGenericMethod(type),
             };
 
-            return Expression.Call(expression, source, cache);
+            return Expression.Call(expression, source, context);
         }
     }
 }

@@ -12,7 +12,7 @@ namespace DeepCopy.Internal.FixedCloners
         public static BlockExpression Build(
             Expression source,
             Expression destination,
-            Expression cache)
+            Expression context)
         {
 #if NETSTANDARD2_0
             string entriesFileName = "entries";
@@ -27,7 +27,7 @@ namespace DeepCopy.Internal.FixedCloners
             return HashTableClonerHelper.Build(
                 source,
                 destination,
-                cache,
+                context,
                 entriesFileName,
                 countFileName,
                 comparerFileName,
@@ -36,28 +36,28 @@ namespace DeepCopy.Internal.FixedCloners
         }
 
         private static HashTableClonerHelper.AddExpressionDelegate Add() =>
-            (Expression destination, Expression entry, Expression cache) =>
+            (Expression destination, Expression entry, Expression context) =>
             {
                 var methods = destination.Type.GetMethods(privateBindingFlags);
                 var addMethod = destination.Type.GetMethod("Add")!;
                 return Expression.Call(
                     destination,
                     addMethod,
-                    GetClonedKey(entry, cache),
-                    GetClonedValue(entry, cache)
+                    GetClonedKey(entry, context),
+                    GetClonedValue(entry, context)
                 );
             };
 
-        private static Expression GetClonedKey(Expression entry, Expression cache)
+        private static Expression GetClonedKey(Expression entry, Expression context)
         {
             var keyField = entry.Type.GetField("key")!;
-            return FixedClonerHelper.GetClonedField(keyField, entry, cache);
+            return FixedClonerHelper.GetClonedField(keyField, entry, context);
         }
 
-        private static Expression GetClonedValue(Expression entry, Expression cache)
+        private static Expression GetClonedValue(Expression entry, Expression context)
         {
             var valueField = entry.Type.GetField("value")!;
-            return FixedClonerHelper.GetClonedField(valueField, entry, cache);
+            return FixedClonerHelper.GetClonedField(valueField, entry, context);
         }
     }
 }

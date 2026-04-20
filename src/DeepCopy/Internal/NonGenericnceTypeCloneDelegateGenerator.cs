@@ -8,7 +8,7 @@ namespace DeepCopy.Internal
 {
     internal static class ReferenceTypeCloneDelegateGenerator
     {
-        private static readonly ConcurrentDictionary<Type, Action<object, object, ObjectReferencesCache>> _caches;
+        private static readonly ConcurrentDictionary<Type, Action<object, object, DeepCopyContext>> _caches;
 
         static ReferenceTypeCloneDelegateGenerator()
         {
@@ -21,30 +21,30 @@ namespace DeepCopy.Internal
         public static void Cleanup(Type type) =>
             _caches.TryRemove(type, out _);
 
-        public static Action<object, object, ObjectReferencesCache> CreateDelegate(Type type) =>
+        public static Action<object, object, DeepCopyContext> CreateDelegate(Type type) =>
             _caches.GetOrAdd(type, t => Create(t).Compile());
 
-        private static Expression<Action<object, object, ObjectReferencesCache>> Create(Type type)
+        private static Expression<Action<object, object, DeepCopyContext>> Create(Type type)
         {
             var sourceParameter = Expression.Parameter(typeof(object), "source");
             var destinationParameter = Expression.Parameter(typeof(object), "destination");
-            var cacheParameter = Expression.Parameter(typeof(ObjectReferencesCache), "cache");
+            var contextParameter = Expression.Parameter(typeof(DeepCopyContext), "context");
 
             var body = CoreCloneExpressionGenerator.CreateCloneExpression(
                 type,
                 Expression.Convert(sourceParameter, type),
                 Expression.Convert(destinationParameter, type),
-                cacheParameter);
+                contextParameter);
 
-            return Expression.Lambda<Action<object, object, ObjectReferencesCache>>(
+            return Expression.Lambda<Action<object, object, DeepCopyContext>>(
                 body,
-                sourceParameter, destinationParameter, cacheParameter);
+                sourceParameter, destinationParameter, contextParameter);
         }
     }
 
     internal static class ValueTypeCloneDelegateGenerator
     {
-        public delegate void ValueTypeCloneDelegate(object source, out object destination, ObjectReferencesCache cache);
+        public delegate void ValueTypeCloneDelegate(object source, out object destination, DeepCopyContext context);
         private static readonly ConcurrentDictionary<Type, ValueTypeCloneDelegate> _caches;
 
         static ValueTypeCloneDelegateGenerator()
@@ -64,7 +64,7 @@ namespace DeepCopy.Internal
         {
             var sourceParameter = Expression.Parameter(typeof(object), "source");
             var destinationParameter = Expression.Parameter(typeof(object).MakeByRefType(), "destination");
-            var cacheParameter = Expression.Parameter(typeof(ObjectReferencesCache), "cache");
+            var contextParameter = Expression.Parameter(typeof(DeepCopyContext), "context");
 
             var body = TypeUtils.IsAssignableType(type)
                 ? Expression.Assign(destinationParameter, sourceParameter)
@@ -73,19 +73,19 @@ namespace DeepCopy.Internal
                     Expression.Convert(sourceParameter, type),
                     destinationParameter,
                     Expression.Variable(type, "tmp"),
-                    cacheParameter);
+                    contextParameter);
 
             return Expression.Lambda<ValueTypeCloneDelegate>(
                 body,
-                sourceParameter, destinationParameter, cacheParameter);
+                sourceParameter, destinationParameter, contextParameter);
         }
     }
 
     internal static class ArrayCloneDelegateGenerator
     {
-        public delegate object ArrayCloneDelegate(object source, ObjectReferencesCache cache);
+        public delegate object ArrayCloneDelegate(object source, DeepCopyContext context);
         private static readonly ConcurrentDictionary<Type, object> _caches;
-        private static readonly ConcurrentDictionary<Type, Func<Array, ObjectReferencesCache, Array>> _wrapperCaches;
+        private static readonly ConcurrentDictionary<Type, Func<Array, DeepCopyContext, Array>> _wrapperCaches;
 
         static ArrayCloneDelegateGenerator()
         {
@@ -117,20 +117,20 @@ namespace DeepCopy.Internal
                 return method.GetValue(null);
             });
 
-        public static Func<Array, ObjectReferencesCache, Array> GetOrCreateWrapperDelegate(Type type) =>
+        public static Func<Array, DeepCopyContext, Array> GetOrCreateWrapperDelegate(Type type) =>
             _wrapperCaches.GetOrAdd(type, t =>
             {
                 var @delegate = GetOrCreateDelegate<Delegate>(t);
 
                 var source = Expression.Parameter(typeof(Array), "source");
-                var cache = Expression.Parameter(typeof(ObjectReferencesCache), "cache");
+                var context = Expression.Parameter(typeof(DeepCopyContext), "context");
 
                 var castSource = Expression.Convert(source, t);
                 var delegateExpression = Expression.Constant(@delegate, @delegate.GetType());
-                var call = Expression.Invoke(delegateExpression, castSource, cache);
+                var call = Expression.Invoke(delegateExpression, castSource, context);
                 var castDest = Expression.Convert(call, typeof(Array));
 
-                return Expression.Lambda<Func<Array, ObjectReferencesCache, Array>>(castDest, source, cache)
+                return Expression.Lambda<Func<Array, DeepCopyContext, Array>>(castDest, source, context)
                     .Compile();
             });
 
@@ -157,10 +157,10 @@ namespace DeepCopy.Internal
                 var method = FixedDictionaryCloner.GetCloneMethod(t);
 
                 var sourceParameter = Expression.Parameter(typeof(object), "source");
-                var cacheParameter = Expression.Parameter(typeof(ObjectReferencesCache), "cache");
+                var contextParameter = Expression.Parameter(typeof(DeepCopyContext), "context");
 
-                var call = Expression.Call(null, method, Expression.Convert(sourceParameter, t), cacheParameter);
-                var lambda = Expression.Lambda(call, sourceParameter, cacheParameter);
+                var call = Expression.Call(null, method, Expression.Convert(sourceParameter, t), contextParameter);
+                var lambda = Expression.Lambda(call, sourceParameter, contextParameter);
 
                 return lambda.Compile();
             });

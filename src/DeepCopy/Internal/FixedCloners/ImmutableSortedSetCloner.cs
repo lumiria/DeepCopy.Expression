@@ -11,11 +11,11 @@ namespace DeepCopy.Internal.FixedCloners
         public static BlockExpression Build(
             Expression source,
             Expression destination,
-            Expression cache)
+            Expression context)
             => ImmutableSetCloneExpressionBuilder.Create(
                     typeof(ImmutableSortedSet),
                     ComparerCloneExpressionBuilder.Build
-                ).Build(source, destination, cache);
+                ).Build(source, destination, context);
     }
 }
 #endif

@@ -10,13 +10,13 @@ namespace DeepCopy.Internal.FixedCloners.Core
         public static MethodCallExpression Build(
             Type genericArgumentType,
             Expression source,
-            Expression cache)
+            Expression context)
         {
             var enumerator = Expression.Call(source, nameof(IEnumerable.GetEnumerator), Type.EmptyTypes);
 
             var item = Expression.Parameter(genericArgumentType, "x");
 
-            var invokeClone = CloneExpressionBuilder.Build(item, cache);
+            var invokeClone = CloneExpressionBuilder.Build(item, context);
 
             var selectorFuncType = typeof(Func<,>).MakeGenericType(genericArgumentType, genericArgumentType);
             var selector = Expression.Lambda(selectorFuncType, invokeClone, item);

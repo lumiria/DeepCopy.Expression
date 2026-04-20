@@ -40,11 +40,11 @@ namespace DeepCopy.Internal.FixedCloners.Core
         public BlockExpression Build(
             Expression source,
             Expression destination,
-            Expression cache)
+            Expression context)
         {
             var (method, elementType) = GetCloneMethod(source.Type);
             var comparer = Expression.Property(source, "KeyComparer");
-            var clonedComparer = _buildComparer(elementType, comparer, cache);
+            var clonedComparer = _buildComparer(elementType, comparer, context);
 
             var toArrayMethod = typeof(Enumerable)
                 .GetMethod(nameof(Enumerable.ToArray))
@@ -55,6 +55,7 @@ namespace DeepCopy.Internal.FixedCloners.Core
                 .GetMethod(nameof(ObjectReferencesCache.ReplaceLatest))
                 !.MakeGenericMethod(source.Type);
 
+            var cache = Expression.Property(context, nameof(DeepCopyContext.Cache));
             var replaceCache = ExpressionUtils.NullCheck(
                 source, Expression.Call(cache, replaceCacheMethod, source, destination));
 
@@ -70,7 +71,7 @@ namespace DeepCopy.Internal.FixedCloners.Core
                         Expression.Call(
                             method,
                             clonedComparer,
-                            Expression.Call(toArrayMethod, EnumerableCloneExpressionBuilder.Build(elementType, source, cache)))),
+                            Expression.Call(toArrayMethod, EnumerableCloneExpressionBuilder.Build(elementType, source, context)))),
                     replaceCache
                 );
         }

@@ -21,8 +21,8 @@ namespace DeepCopy
             var type = source.GetType();
             if (type.GetGenericTypeDefinition() == typeof(Dictionary<,>))
             {
-                var cloner = DictionaryCloneDelegateGenerator.GetOrCreateDelegate<Func<object, ObjectReferencesCache, object>>(type);
-                return cloner(source, ObjectReferencesCache.Create(preserveObjectReferences));
+                var cloner = DictionaryCloneDelegateGenerator.GetOrCreateDelegate<Func<object, DeepCopyContext, object>>(type);
+                return cloner(source, new(ObjectReferencesCache.Create(preserveObjectReferences)));
             }
 
 #if NETSTANDARD2_0
@@ -34,12 +34,12 @@ namespace DeepCopy
             if (type.IsValueType)
             {
                 _CopyValueType(type, source, ref instance,
-                    ObjectReferencesCache.Create(preserveObjectReferences));
+                    new (ObjectReferencesCache.Create(preserveObjectReferences)));
             }
             else
             {
                 _CopyTo(type, source, ref instance,
-                    ObjectReferencesCache.Create(preserveObjectReferences, source, instance));
+                    new (ObjectReferencesCache.Create(preserveObjectReferences, source, instance)));
             }
 
             return instance;
@@ -56,7 +56,7 @@ namespace DeepCopy
 
             var type = source.GetType();
             var cloner = ArrayCloneDelegateGenerator.GetOrCreateWrapperDelegate(type);
-            var instance = cloner(source, ObjectReferencesCache.Create(preserveObjectReferences));
+            var instance = cloner(source, new (ObjectReferencesCache.Create(preserveObjectReferences)));
 
             return instance;
         }
@@ -71,7 +71,7 @@ namespace DeepCopy
 
             var type = source.GetType();
             var cloner = ArrayCloneDelegateGenerator.GetOrCreateWrapperDelegate(type);
-            var instance = cloner(source, ObjectReferencesCache.Create(preserveObjectReferences));
+            var instance = cloner(source, new (ObjectReferencesCache.Create(preserveObjectReferences)));
 
             Array.Copy(instance, desitination, desitination.Length);
         }
@@ -84,7 +84,7 @@ namespace DeepCopy
 #endif
             where TKey : notnull
         {
-            return DictionaryCloner<TKey, TValue>.Clone(source, ObjectReferencesCache.Create(preserveObjectReferences));
+            return DictionaryCloner<TKey, TValue>.Clone(source, new (ObjectReferencesCache.Create(preserveObjectReferences)));
         }
     }
 }

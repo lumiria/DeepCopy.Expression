@@ -25,7 +25,7 @@ namespace DeepCopy.Internal.FixedCloners
         public static BlockExpression Build(
             Expression source,
             Expression destination,
-            Expression cache)
+            Expression context)
         {
             var (method, elementType, arrayType) = GetCloneMethod(source.Type);
             var length = Expression.Property(source, "Length");
@@ -43,7 +43,7 @@ namespace DeepCopy.Internal.FixedCloners
                         destinationArray,
                         Expression.NewArrayBounds(elementType, length)
                     ),
-                    ArrayCloner.Instance.Build(CopyPolicy.DeepCopy, arrayType, sourceArray, destinationArray, cache),
+                    ArrayCloner.Instance.Build(CopyPolicy.DeepCopy, arrayType, sourceArray, destinationArray, context),
                     Expression.Assign(
                         destination,
                         Expression.Call(

@@ -10,7 +10,7 @@ namespace DeepCopy.Internal.FixedCloners.Core
         public static ConditionalExpression Build(
             Type type,
             Expression sourceComparer,
-            Expression cache)
+            Expression context)
         {
             var comparerType = typeof(Comparer<>).MakeGenericType(type);
             var defaultComparer = Expression.Property(null, comparerType, nameof(Comparer<>.Default));
@@ -22,7 +22,7 @@ namespace DeepCopy.Internal.FixedCloners.Core
 
             var cloneMethod = ReflectionUtils.ObjectClone.MakeGenericMethod(sourceComparer.Type);
 
-            var falseExpression = Expression.Call(cloneMethod, sourceComparer, cache);
+            var falseExpression = Expression.Call(cloneMethod, sourceComparer, context);
 
             return Expression.Condition(
                 condition,

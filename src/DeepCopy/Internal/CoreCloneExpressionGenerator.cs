@@ -13,46 +13,46 @@ namespace DeepCopy.Internal
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Expression CreateCloneExpression<T>(
-            ParameterExpression source, ParameterExpression destination, ParameterExpression cache)
+            ParameterExpression source, ParameterExpression destination, ParameterExpression context)
         {
             try
             {
                 if (FixedCloner.TryGetBuilder(typeof(T), out var builder))
-                    return builder(source, destination, cache);
+                    return builder(source, destination, context);
             }
             catch (Exception exception)
             {
                 throw new InvalidCloneBuilderException(typeof(T), exception);
             }
 
-            return CreateCloneExpressionInner<T>(source, destination, cache);
+            return CreateCloneExpressionInner<T>(source, destination, context);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Expression CreateCloneExpression(Type type,
-            Expression source, Expression destination, Expression cache)
+            Expression source, Expression destination, Expression context)
         {
             try
             {
                 if (FixedCloner.TryGetBuilder(type, out var builder))
-                    return builder(source, destination, cache);
+                    return builder(source, destination, context);
             }
             catch (Exception exception)
             {
                 throw new InvalidCloneBuilderException(type, exception);
             }
 
-            return CreateCloneExpressionInner(type, source, destination, cache);
+            return CreateCloneExpressionInner(type, source, destination, context);
         }
 
         internal static Expression CreateCloneExpressionInner<T>(
-        ParameterExpression source, ParameterExpression destination, ParameterExpression cache,
+        ParameterExpression source, ParameterExpression destination, ParameterExpression context,
             params string[] ignoreFields)
         {
             var targets = CopyMemberExtractor.Extract<T>(ignoreFields);
 
             var expressions = new ReadOnlyCollectionBuilder<Expression>(
-                CreateExpressions(targets, source, destination, cache));
+                CreateExpressions(targets, source, destination, context));
 
 #if NET8_0_OR_GREATER
             return Expression.Block(expressions);
@@ -64,13 +64,13 @@ namespace DeepCopy.Internal
         }
 
         internal static Expression CreateCloneExpressionInner(Type type,
-            Expression source, Expression destination, Expression cache,
+            Expression source, Expression destination, Expression context,
             params string[] ignoreFields)
         {
             var targets = CopyMemberExtractor.Extract(type, ignoreFields);
 
             var expressions = new ReadOnlyCollectionBuilder<Expression>(
-                CreateExpressions(targets, source, destination, cache));
+                CreateExpressions(targets, source, destination, context));
             return expressions.Any()
                 ? Expression.Block(expressions)
                 : Expression.Empty();
@@ -78,12 +78,12 @@ namespace DeepCopy.Internal
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Expression CreateCloneExpression(Type type,
-            Expression source, Expression destination, ParameterExpression variable, Expression cache)
+            Expression source, Expression destination, ParameterExpression variable, Expression context)
         {
             var targets = CopyMemberExtractor.Extract(type);
 
             var expressions = new ReadOnlyCollectionBuilder<Expression>(
-                CreateExpressions(targets, source, variable, cache))
+                CreateExpressions(targets, source, variable, context))
             {
                 Expression.Assign(destination, Expression.Convert(variable, typeof(object)))
             };
@@ -95,16 +95,16 @@ namespace DeepCopy.Internal
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static IEnumerable<Expression> CreateExpressions(
             IEnumerable<(MemberInfo, CopyPolicy)> targets,
-            Expression source, Expression destination, Expression cache)
+            Expression source, Expression destination, Expression context)
         {
             foreach (var target in targets)
-                yield return CreateCloneMemberExpression(source, destination, cache, target.Item1, target.Item2);
+                yield return CreateCloneMemberExpression(source, destination, context, target.Item1, target.Item2);
         }
 
         private static Expression CreateCloneMemberExpression(
             Expression source,
             Expression destination,
-            Expression cache,
+            Expression context,
             MemberInfo member,
             CopyPolicy copyPolicy)
         {
@@ -128,7 +128,7 @@ namespace DeepCopy.Internal
                     value,
                     destination,
                     member,
-                    cache);
+                    context);
             }
             else if (copyPolicy == CopyPolicy.ShallowCopy)
             {
@@ -146,7 +146,7 @@ namespace DeepCopy.Internal
                     value,
                     destination,
                     member,
-                    cache);
+                    context);
             }
             else
             {
@@ -155,7 +155,7 @@ namespace DeepCopy.Internal
                     value,
                     destination,
                     member,
-                    cache);
+                    context);
             }
 
             return TypeUtils.IsNullable(memberType)

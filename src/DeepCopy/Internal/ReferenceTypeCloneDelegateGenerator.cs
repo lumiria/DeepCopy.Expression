@@ -5,7 +5,7 @@ namespace DeepCopy.Internal
 {
     internal static class ReferenceTypeCloneDelegateGenerator<T>
     {
-        public delegate void ReferenceTypeCloneDelegate(T source, ref T destination, ObjectReferencesCache cache);
+        public delegate void ReferenceTypeCloneDelegate(T source, ref T destination, DeepCopyContext context);
 
         private static readonly Type _type;
         private static readonly ReferenceTypeCloneDelegate _delegate;
@@ -32,14 +32,14 @@ namespace DeepCopy.Internal
         {
             var sourceParameter = Expression.Parameter(type, "source");
             var destinationParameter = Expression.Parameter(type.MakeByRefType(), "destination");
-            var cacheParameter = Expression.Parameter(typeof(ObjectReferencesCache), "cache");
+            var contextParameter = Expression.Parameter(typeof(DeepCopyContext), "context");
 
             var body = CoreCloneExpressionGenerator.CreateCloneExpression<T>(
-                sourceParameter, destinationParameter, cacheParameter);
+                sourceParameter, destinationParameter, contextParameter);
 
             return Expression.Lambda<ReferenceTypeCloneDelegateGenerator<T>.ReferenceTypeCloneDelegate >(
                 body,
-                sourceParameter, destinationParameter, cacheParameter);
+                sourceParameter, destinationParameter, contextParameter);
         }
     }
 }

@@ -10,12 +10,12 @@ namespace DeepCopy.Internal.FixedCloners
     {
         private readonly static BindingFlags privateBindingFlags = BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.DeclaredOnly;
 
-        public delegate Expression AddExpressionDelegate(Expression destination, Expression entry, Expression cache);
+        public delegate Expression AddExpressionDelegate(Expression destination, Expression entry, Expression context);
 
         public static BlockExpression Build(
             Expression source,
             Expression destination,
-            Expression cache,
+            Expression context,
             string entriesFieldName,
             string countFieldName,
             string comparerFieldName,
@@ -37,10 +37,10 @@ namespace DeepCopy.Internal.FixedCloners
             return ExpressionUtils.Loop(
                 entries,
                 length,
-                item => add(destination, item, cache),
+                item => add(destination, item, context),
                 construct,
                 InitializeDestination(destination, length),
-                FixedClonerHelper.AssignClonedComparer(destination, comparerFieldInfo, comparer, cache)
+                FixedClonerHelper.AssignClonedComparer(destination, comparerFieldInfo, comparer, context)
             );
         }
 

@@ -16,7 +16,7 @@ namespace DeepCopy.Internal
             Type type,
             Expression source,
             Expression destination,
-            Expression cache)
+            Expression context)
         {
             var elementType = type.GetElementType();
 
@@ -25,7 +25,7 @@ namespace DeepCopy.Internal
                 if (type.GetArrayRank() > 1)
                 {
                     return CreateDeepCopyRectangulerArrayExpression(
-                        type, elementType, source, destination, null, cache);
+                        type, elementType, source, destination, null, context);
                 }
 
                 var length = Expression.ArrayLength(source);
@@ -39,7 +39,7 @@ namespace DeepCopy.Internal
                     destination,
                     length,
                     arrayAssign,
-                    cache);
+                    context);
             }
 
             if (copyPolicy == CopyPolicy.ShallowCopy)
@@ -59,7 +59,7 @@ namespace DeepCopy.Internal
             Expression source,
             Expression destination,
             MemberInfo member,
-            Expression cache)
+            Expression context)
         {
             var elementType = type.GetElementType();
 
@@ -68,7 +68,7 @@ namespace DeepCopy.Internal
                 if (type.GetArrayRank() > 1)
                 {
                     return CreateDeepCopyRectangulerArrayExpression(
-                        type, elementType, source, destination, member, cache);
+                        type, elementType, source, destination, member, context);
                 }
 
                 var length = Expression.ArrayLength(source);
@@ -83,7 +83,7 @@ namespace DeepCopy.Internal
                     MemberAccessorGenerator.CreateGetter(destination, member),
                     length,
                     arrayAssign,
-                    cache);
+                    context);
             }
 
             if (copyPolicy == CopyPolicy.ShallowCopy)
@@ -102,7 +102,7 @@ namespace DeepCopy.Internal
             Type type,
             Expression source,
             Expression destination,
-            Expression cache)
+            Expression context)
         {
             var elementType = type.GetElementType();
             if (TypeUtils.IsAssignableType(elementType))
@@ -116,7 +116,7 @@ namespace DeepCopy.Internal
             if (type.GetArrayRank() > 1)
             {
                 return CreateDeepCopyRectangulerArrayExpression(
-                    type, elementType, source, destination, null, cache);
+                    type, elementType, source, destination, null, context);
             }
 
             var length = Expression.ArrayLength(source);
@@ -130,7 +130,7 @@ namespace DeepCopy.Internal
                 destination,
                 length,
                 arrayAssign,
-                cache);
+                context);
         }
 
         private Expression CreateShallowCopyArrayExpression(
@@ -156,7 +156,7 @@ namespace DeepCopy.Internal
             Expression destination,
             Expression length,
             Expression arrayAssign,
-            Expression cache)
+            Expression context)
         {
             var i = Expression.Parameter(typeof(int), "i");
             var endLoop = Expression.Label("EndLoop");
@@ -168,12 +168,12 @@ namespace DeepCopy.Internal
                     elementType,
                     Expression.ArrayIndex(source, i),
                     Expression.ArrayAccess(destination, i),
-                    cache)
+                    context)
                 : ClassCloner.Instance.Build(
                         elementType,
                         Expression.ArrayIndex(source, i),
                         Expression.ArrayAccess(destination, i),
-                        cache);
+                        context);
 
             return Expression.IfThen(
                 Expression.NotEqual(source, Expression.Constant(null, source.Type)),
@@ -197,7 +197,7 @@ namespace DeepCopy.Internal
             Expression source,
             Expression destination,
             MemberInfo? memberInfo,
-            Expression cache)
+            Expression context)
         {
             int rank = type.GetArrayRank();
             var indexes = Enumerable.Range(0, rank)
@@ -227,12 +227,12 @@ namespace DeepCopy.Internal
                     elementType,
                     Expression.ArrayIndex(source, indexes),
                     Expression.ArrayAccess(destination, indexes),
-                    cache)
+                    context)
                 : ClassCloner.Instance.Build(
                     elementType,
                     Expression.ArrayIndex(source, indexes),
                     Expression.ArrayAccess(destination, indexes),
-                    cache);
+                    context);
 
             Expression Loop(int rankIndex) 
             {

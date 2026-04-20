@@ -14,7 +14,7 @@ namespace DeepCopy.Internal.FixedCloners
         public static BlockExpression Build(
             Expression source,
             Expression destination,
-            Expression cache)
+            Expression context)
         {
 #if NETSTANDARD2_0
             string entriesFileName = "m_slots";
@@ -36,7 +36,7 @@ namespace DeepCopy.Internal.FixedCloners
             return HashTableClonerHelper.Build(
                 source,
                 destination,
-                cache,
+                context,
                 entriesFileName,
                 countFileName,
                 comparerFileName,
@@ -45,7 +45,7 @@ namespace DeepCopy.Internal.FixedCloners
         }
 
         private static HashTableClonerHelper.AddExpressionDelegate Add() =>
-            (Expression destination, Expression entry, Expression cache) =>
+            (Expression destination, Expression entry, Expression context) =>
                 {
 #if NETSTANDARD2_0
                     var valueField = entry.Type.GetField("value", privateBindingFlags)!;
@@ -56,13 +56,13 @@ namespace DeepCopy.Internal.FixedCloners
                     return Expression.Call(
                         destination,
                         addMethod,
-                        GetClonedValue(valueField, entry, cache)
+                        GetClonedValue(valueField, entry, context)
                     );
                 };
 
-        private static Expression GetClonedValue(FieldInfo fieldInfo, Expression entry, Expression cache)
+        private static Expression GetClonedValue(FieldInfo fieldInfo, Expression entry, Expression context)
         {
-            return FixedClonerHelper.GetClonedField(fieldInfo, entry, cache);
+            return FixedClonerHelper.GetClonedField(fieldInfo, entry, context);
         }
     }
 }

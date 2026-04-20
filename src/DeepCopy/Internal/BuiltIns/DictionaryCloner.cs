@@ -13,9 +13,9 @@ namespace DeepCopy.Internal.BuiltIns
     internal static class DictionaryCloner<TKey, TValue>
         where TKey : notnull
     {
-        static readonly Func<Dictionary<TKey, TValue>, ObjectReferencesCache, Dictionary<TKey, TValue>> _clone;
-        static readonly Func<TKey, ObjectReferencesCache, TKey>? _arrayKeyCloner;
-        static readonly Func<TValue, ObjectReferencesCache, TValue>? _arrayValueCloner;
+        static readonly Func<Dictionary<TKey, TValue>, DeepCopyContext, Dictionary<TKey, TValue>> _clone;
+        static readonly Func<TKey, DeepCopyContext, TKey>? _arrayKeyCloner;
+        static readonly Func<TValue, DeepCopyContext, TValue>? _arrayValueCloner;
 
         static DictionaryCloner()
         {
@@ -25,9 +25,9 @@ namespace DeepCopy.Internal.BuiltIns
             var valueType = GetTypeValue(typeof(TValue));
 
             if (keyType == 2)
-                _arrayKeyCloner = ArrayCloneDelegateGenerator.GetOrCreateDelegate<Func<TKey, ObjectReferencesCache, TKey>>(typeof(TKey));
+                _arrayKeyCloner = ArrayCloneDelegateGenerator.GetOrCreateDelegate<Func<TKey, DeepCopyContext, TKey>>(typeof(TKey));
             if (valueType == 2)
-                _arrayValueCloner = ArrayCloneDelegateGenerator.GetOrCreateDelegate<Func<TValue, ObjectReferencesCache, TValue>>(typeof(TValue));
+                _arrayValueCloner = ArrayCloneDelegateGenerator.GetOrCreateDelegate<Func<TValue, DeepCopyContext, TValue>>(typeof(TValue));
 
             _clone ??= (key, value, keyType, valueType) switch
             {
@@ -51,19 +51,19 @@ namespace DeepCopy.Internal.BuiltIns
 
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Style", "IDE1006:Naming Styles", Justification = "<TBD>")]
 #if NETSTANDARD2_0
-        public static Dictionary<TKey, TValue>? Clone(Dictionary<TKey, TValue>? source, ObjectReferencesCache cache)
+        public static Dictionary<TKey, TValue>? Clone(Dictionary<TKey, TValue>? source, DeepCopyContext context)
 #else
         [return: NotNullIfNotNull(nameof(source))]
-        public static Dictionary<TKey, TValue>? Clone(Dictionary<TKey, TValue>? source, ObjectReferencesCache cache)
+        public static Dictionary<TKey, TValue>? Clone(Dictionary<TKey, TValue>? source, DeepCopyContext context)
 #endif
         {
             if (source is null) return null;
-            if (cache.Get(source, out var obj)) return obj;
+            if (context.Cache.Get(source, out var obj)) return obj;
 
-            return _clone(source, cache)!;
+            return _clone(source, context)!;
         }
 
-        private static Dictionary<TKey, TValue> CloneValueSemanticsDictionary(Dictionary<TKey, TValue> source, ObjectReferencesCache cache)
+        private static Dictionary<TKey, TValue> CloneValueSemanticsDictionary(Dictionary<TKey, TValue> source, DeepCopyContext context)
         {
 #if DEBUGLOG
             Console.WriteLine($"[{typeof(Dictionary<TKey, TValue>).Name}] | Clone");
@@ -71,184 +71,184 @@ namespace DeepCopy.Internal.BuiltIns
             return new(source);
         }
 
-        private static Dictionary<TKey, TValue> CloneValueSemanticsKeyDictionary(Dictionary<TKey, TValue> source, ObjectReferencesCache cache)
+        private static Dictionary<TKey, TValue> CloneValueSemanticsKeyDictionary(Dictionary<TKey, TValue> source, DeepCopyContext context)
         {
 #if DEBUGLOG
             Console.WriteLine($"[{typeof(Dictionary<TKey, TValue>).Name}] | Clone Value");
 #endif
-            var dict = Create(source, cache);
+            var dict = Create(source, context);
             foreach (var item in source)
             {
-                dict.Add(item.Key, ObjectCloner._Clone<TValue>(item.Value, cache));
+                dict.Add(item.Key, ObjectCloner._Clone<TValue>(item.Value, context));
             }
 
             return dict;
         }
 
-        private static Dictionary<TKey, TValue> CloneValueSemanticsKeyAndObjectValueDictionary(Dictionary<TKey, TValue> source, ObjectReferencesCache cache)
+        private static Dictionary<TKey, TValue> CloneValueSemanticsKeyAndObjectValueDictionary(Dictionary<TKey, TValue> source, DeepCopyContext context)
         {
 #if DEBUGLOG
             Console.WriteLine($"[{typeof(Dictionary<TKey, TValue>).Name}] | Clone ObjectValue");
 #endif
-            var dict = Create(source, cache);
+            var dict = Create(source, context);
             foreach (var item in source)
             {
-                dict.Add(item.Key, (TValue)ObjectCloner._CloneObject(item.Value, cache));
+                dict.Add(item.Key, (TValue)ObjectCloner._CloneObject(item.Value, context));
             }
 
             return dict;
         }
 
-        private static Dictionary<TKey, TValue> CloneValueSemanticsKeyAndArrayValueDictionary(Dictionary<TKey, TValue> source, ObjectReferencesCache cache)
+        private static Dictionary<TKey, TValue> CloneValueSemanticsKeyAndArrayValueDictionary(Dictionary<TKey, TValue> source, DeepCopyContext context)
         {
 #if DEBUGLOG
             Console.WriteLine($"[{typeof(Dictionary<TKey, TValue>).Name}] | Clone ArrayValue");
 #endif
-            var dict = Create(source, cache);
+            var dict = Create(source, context);
             foreach (var item in source)
             {
-                dict.Add(item.Key, item.Value != null ? _arrayValueCloner!(item.Value, cache) : item.Value);
+                dict.Add(item.Key, item.Value != null ? _arrayValueCloner!(item.Value, context) : item.Value);
             }
 
             return dict;
         }
 
-        private static Dictionary<TKey, TValue> CloneValueSemanticsValueDictionary(Dictionary<TKey, TValue> source, ObjectReferencesCache cache)
+        private static Dictionary<TKey, TValue> CloneValueSemanticsValueDictionary(Dictionary<TKey, TValue> source, DeepCopyContext context)
         {
 #if DEBUGLOG
             Console.WriteLine($"[{typeof(Dictionary<TKey, TValue>).Name}] | Clone Key");
 #endif
-            var dict = Create(source, cache);
+            var dict = Create(source, context);
             foreach (var item in source)
             {
-                dict.Add(ObjectCloner._Clone(item.Key, cache), item.Value);
+                dict.Add(ObjectCloner._Clone(item.Key, context), item.Value);
             }
 
             return dict;
         }
 
-        private static Dictionary<TKey, TValue> CloneValueSemanticsValueAndObjectKeyDictionary(Dictionary<TKey, TValue> source, ObjectReferencesCache cache)
+        private static Dictionary<TKey, TValue> CloneValueSemanticsValueAndObjectKeyDictionary(Dictionary<TKey, TValue> source, DeepCopyContext context)
         {
 #if DEBUGLOG
             Console.WriteLine($"[{typeof(Dictionary<TKey, TValue>).Name}] | Clone Key");
 #endif
-            var dict = Create(source, cache);
+            var dict = Create(source, context);
             foreach (var item in source)
             {
-                dict.Add((TKey)ObjectCloner._CloneObject(item.Key, cache), item.Value);
+                dict.Add((TKey)ObjectCloner._CloneObject(item.Key, context), item.Value);
             }
 
             return dict;
         }
 
-        private static Dictionary<TKey, TValue> CloneValueSemanticsValueAndArrayKeyDictionary(Dictionary<TKey, TValue> source, ObjectReferencesCache cache)
+        private static Dictionary<TKey, TValue> CloneValueSemanticsValueAndArrayKeyDictionary(Dictionary<TKey, TValue> source, DeepCopyContext context)
         {
 #if DEBUGLOG
             Console.WriteLine($"[{typeof(Dictionary<TKey, TValue>).Name}] | Clone ArrayKey");
 #endif
-            var dict = Create(source, cache);
+            var dict = Create(source, context);
             foreach (var item in source)
             {
-                dict.Add(_arrayKeyCloner!(item.Key, cache), item.Value);
+                dict.Add(_arrayKeyCloner!(item.Key, context), item.Value);
             }
 
             return dict;
         }
 
-        private static Dictionary<TKey, TValue> CloneObjectKeyDictionary(Dictionary<TKey, TValue> source, ObjectReferencesCache cache)
+        private static Dictionary<TKey, TValue> CloneObjectKeyDictionary(Dictionary<TKey, TValue> source, DeepCopyContext context)
         {
 #if DEBUGLOG
             Console.WriteLine($"[{typeof(Dictionary<TKey, TValue>).Name}] | Clone Both (Object Key)");
 #endif
-            var dict = Create(source, cache);
+            var dict = Create(source, context);
             foreach (var item in source)
             {
-                dict.Add((TKey)ObjectCloner._CloneObject(item.Key, cache), ObjectCloner._Clone(item.Value, cache));
+                dict.Add((TKey)ObjectCloner._CloneObject(item.Key, context), ObjectCloner._Clone(item.Value, context));
             }
 
             return dict;
         }
 
-        private static Dictionary<TKey, TValue> CloneObjectKeyValueDictionary(Dictionary<TKey, TValue> source, ObjectReferencesCache cache)
+        private static Dictionary<TKey, TValue> CloneObjectKeyValueDictionary(Dictionary<TKey, TValue> source, DeepCopyContext context)
         {
 #if DEBUGLOG
             Console.WriteLine($"[{typeof(Dictionary<TKey, TValue>).Name}] | Clone Both (Object Key/Value)");
 #endif
-            var dict = Create(source, cache);
+            var dict = Create(source, context);
             foreach (var item in source)
             {
-                dict.Add((TKey)ObjectCloner._CloneObject(item.Key, cache), (TValue)ObjectCloner._CloneObject(item.Value, cache));
+                dict.Add((TKey)ObjectCloner._CloneObject(item.Key, context), (TValue)ObjectCloner._CloneObject(item.Value, context));
             }
 
             return dict;
         }
 
 
-        private static Dictionary<TKey, TValue> CloneObjectKeyArrayValueDictionary(Dictionary<TKey, TValue> source, ObjectReferencesCache cache)
+        private static Dictionary<TKey, TValue> CloneObjectKeyArrayValueDictionary(Dictionary<TKey, TValue> source, DeepCopyContext context)
         {
 #if DEBUGLOG
             Console.WriteLine($"[{typeof(Dictionary<TKey, TValue>).Name}] | Clone Both (Object Key / Array Value)");
 #endif
-            var dict = Create(source, cache);
+            var dict = Create(source, context);
             foreach (var item in source)
             {
-                dict.Add((TKey)ObjectCloner._CloneObject(item.Key, cache), item.Value != null ? _arrayValueCloner!(item.Value, cache) : item.Value);
+                dict.Add((TKey)ObjectCloner._CloneObject(item.Key, context), item.Value != null ? _arrayValueCloner!(item.Value, context) : item.Value);
             }
 
             return dict;
         }
 
-        private static Dictionary<TKey, TValue> CloneArrayKeyDictionary(Dictionary<TKey, TValue> source, ObjectReferencesCache cache)
+        private static Dictionary<TKey, TValue> CloneArrayKeyDictionary(Dictionary<TKey, TValue> source, DeepCopyContext context)
         {
 #if DEBUGLOG
             Console.WriteLine($"[{typeof(Dictionary<TKey, TValue>).Name}] | Clone Both (Array Key)");
 #endif
-            var dict = Create(source, cache);
+            var dict = Create(source, context);
             foreach (var item in source)
             {
-                dict.Add(_arrayKeyCloner!(item.Key, cache), (TValue)ObjectCloner._Clone(item.Value, cache));
+                dict.Add(_arrayKeyCloner!(item.Key, context), (TValue)ObjectCloner._Clone(item.Value, context));
             }
 
             return dict;
         }
 
-        private static Dictionary<TKey, TValue> CloneArrayKeyObjectValueDictionary(Dictionary<TKey, TValue> source, ObjectReferencesCache cache)
+        private static Dictionary<TKey, TValue> CloneArrayKeyObjectValueDictionary(Dictionary<TKey, TValue> source, DeepCopyContext context)
         {
 #if DEBUGLOG
             Console.WriteLine($"[{typeof(Dictionary<TKey, TValue>).Name}] | Clone Both (Array Key / Object Value)");
 #endif
-            var dict = Create(source, cache);
+            var dict = Create(source, context);
             foreach (var item in source)
             {
-                dict.Add(_arrayKeyCloner!(item.Key, cache), (TValue)ObjectCloner._CloneObject(item.Value, cache));
+                dict.Add(_arrayKeyCloner!(item.Key, context), (TValue)ObjectCloner._CloneObject(item.Value, context));
             }
 
             return dict;
         }
 
-        private static Dictionary<TKey, TValue> CloneArrayKeyValueDictionary(Dictionary<TKey, TValue> source, ObjectReferencesCache cache)
+        private static Dictionary<TKey, TValue> CloneArrayKeyValueDictionary(Dictionary<TKey, TValue> source, DeepCopyContext context)
         {
 #if DEBUGLOG
             Console.WriteLine($"[{typeof(Dictionary<TKey, TValue>).Name}] | Clone Both (Array Key/Value)");
 #endif
-            var dict = Create(source, cache);
+            var dict = Create(source, context);
             foreach (var item in source)
             {
-                dict.Add(_arrayKeyCloner!(item.Key, cache), item.Value != null ? _arrayValueCloner!(item.Value, cache) : item.Value);
+                dict.Add(_arrayKeyCloner!(item.Key, context), item.Value != null ? _arrayValueCloner!(item.Value, context) : item.Value);
             }
 
             return dict;
         }
 
-        private static Dictionary<TKey, TValue> CloneDictionary(Dictionary<TKey, TValue> source, ObjectReferencesCache cache)
+        private static Dictionary<TKey, TValue> CloneDictionary(Dictionary<TKey, TValue> source, DeepCopyContext context)
         {
 #if DEBUGLOG
             Console.WriteLine($"[{typeof(Dictionary<TKey, TValue>).Name}] | Clone Both");
 #endif
-            var dict = Create(source, cache);
+            var dict = Create(source, context);
             foreach (var item in source)
             {
-                dict.Add(ObjectCloner._Clone(item.Key, cache), item.Value != null ? ObjectCloner._Clone(item.Value, cache) : item.Value);
+                dict.Add(ObjectCloner._Clone(item.Key, context), item.Value != null ? ObjectCloner._Clone(item.Value, context) : item.Value);
             }
 
             return dict;
@@ -264,11 +264,11 @@ namespace DeepCopy.Internal.BuiltIns
             };
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static Dictionary<TKey, TValue> Create(Dictionary<TKey, TValue> source, ObjectReferencesCache cache) =>
+        private static Dictionary<TKey, TValue> Create(Dictionary<TKey, TValue> source, DeepCopyContext context) =>
             new(source.Count,
                 source.Comparer == EqualityComparer<TKey>.Default
                     ? (IEqualityComparer<TKey>)EqualityComparer<TKey>.Default
-                    : ObjectCloner._Clone(source.Comparer, cache));
+                    : ObjectCloner._Clone(source.Comparer, context));
     }
 
     internal static class FixedDictionaryCloner
@@ -284,14 +284,14 @@ namespace DeepCopy.Internal.BuiltIns
             return genericClonerType.GetMethod(nameof(DictionaryCloner<,>.Clone))!;
         }
 
-        public static BlockExpression Build(Expression source, Expression destination, Expression cache)
+        public static BlockExpression Build(Expression source, Expression destination, Expression context)
         {
             var method = GetCloneMethod(source.Type);
 
             return Expression.Block(
                 Expression.Assign(
                     destination,
-                    Expression.Call(null, method, source, cache)
+                    Expression.Call(null, method, source, context)
                 )
             );
         }
