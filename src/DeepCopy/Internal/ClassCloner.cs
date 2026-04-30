@@ -1,9 +1,8 @@
 ﻿using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
-using DeepCopy.Internal.BuiltIns;
+using DeepCopy.Internal.FixedCloners.Core;
 using DeepCopy.Internal.Utilities;
 
 namespace DeepCopy.Internal
@@ -75,29 +74,11 @@ namespace DeepCopy.Internal
             public static ClonerCache Instance { get; } =
                 new ClonerCache();
 
-            public MethodCallExpression Get(Type type, Expression source, Expression cache)
-            {
-                var genericMethod = _cache.GetOrAdd(type, t => t switch
-                {
-                    _ when Nullable.GetUnderlyingType(t) is Type nullableType
-                        => ReflectionUtils.NullableValueClone.MakeGenericMethod(nullableType),
-
-                    _ when t.IsGenericType && t.GetGenericTypeDefinition() == typeof(Dictionary<,>)
-                        => FixedDictionaryCloner.GetCloneMethod(t),
-
-                    _ when t == typeof(Array)
-                        => ReflectionUtils.ArrayClone,
-
-                    _ when !TypeUtils.IsValueType(t)
-                        => (type.IsInterface
-                            ? ReflectionUtils.InterfaceClone.MakeGenericMethod(t)
-                            : ReflectionUtils.ObjectClone.MakeGenericMethod(t)),
-
-                    _ => ReflectionUtils.ValueClone.MakeGenericMethod(t)
-                });
-
-                return Expression.Call(genericMethod, source, cache);
-            }
+            public Expression Get(Type type, Expression source, Expression context)
+                => Expression.Call(
+                    _cache.GetOrAdd(type, t => CloneExpressionBuilder.GetCloneMethod(t, source)),
+                    source,
+                    context);
         }
     }
 }

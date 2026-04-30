@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
+using System.Reflection;
 using DeepCopy.Internal.BuiltIns;
 using DeepCopy.Internal.Utilities;
 
@@ -11,10 +12,20 @@ namespace DeepCopy.Internal.FixedCloners.Core
         public static Expression Build(
             Expression source,
             Expression context)
+        => Build(source.Type, source, context);
+        public static Expression Build(
+            Type type,
+            Expression source,
+            Expression context)
         {
-            var type = source.Type;
+            var cloneMethod = GetCloneMethod(type, source);
+            return Expression.Call(cloneMethod, source, context);
+        }
 
-            var expression = type switch
+        public static MethodInfo GetCloneMethod(
+            Type type,
+            Expression source)
+            => type switch
             {
                 _ when Nullable.GetUnderlyingType(type) is Type nullableType
                     => ReflectionUtils.NullableValueClone.MakeGenericMethod(nullableType),
@@ -25,15 +36,16 @@ namespace DeepCopy.Internal.FixedCloners.Core
                 _ when type == typeof(Array)
                     => ReflectionUtils.ArrayClone,
 
-                _ when !TypeUtils.IsValueType(type)
-                    => (type.IsInterface
-                        ? ReflectionUtils.InterfaceClone.MakeGenericMethod(type)
-                        : ReflectionUtils.ObjectClone.MakeGenericMethod(type)),
+                _ when TypeUtils.IsValueType(type)
+                    => ReflectionUtils.ValueClone.MakeGenericMethod(type),
 
-                _ => ReflectionUtils.ValueClone.MakeGenericMethod(type),
+                _ when type.IsInterface
+                    => ReflectionUtils.InterfaceClone.MakeGenericMethod(type),
+
+                _ when type.IsSealed
+                    => ReflectionUtils.CloneAs.MakeGenericMethod(type),
+
+                _ => ReflectionUtils.ObjectClone.MakeGenericMethod(type),
             };
-
-            return Expression.Call(expression, source, context);
-        }
     }
 }
