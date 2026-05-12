@@ -8,6 +8,8 @@ namespace DeepCopy
 {
     public static class DeepCopyOptions
     {
+        public static int MaxRecursionDepth { get; set; } = 5;
+
         public static CopyBehavior ReadOnlyStructBehavior { get; set; } = CopyBehavior.TryClone;
 
         public static HashSet<Type> NonCopyableGenericTypes { get; } =

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using DeepCopy.Internal;
@@ -85,20 +84,22 @@ namespace DeepCopy
             {
                 if (type == typeof(T))
                 {
-                    _CopyValueType(source, ref instance,
-                        new(ObjectReferencesCache.Create(preserveObjectReferences)));
+                    _CopyValueType(source, ref instance, new(ObjectReferencesCache.Create(preserveObjectReferences)));
                 }
                 else
                 {
-                    _CopyValueType(type, source, ref instance,
-                        new(ObjectReferencesCache.Create(preserveObjectReferences)));
+                    _CopyValueType(type, source, ref instance, new(ObjectReferencesCache.Create(preserveObjectReferences)));
                 }
             }
             else
             {
-                _CopyTo(type, source, ref instance,
-                    new (ObjectReferencesCache.Create(preserveObjectReferences, source, instance)));
+                DeepCopyContext context = new(ObjectReferencesCache.Create(preserveObjectReferences, source, instance));
+
+                _CopyTo(type, source, ref instance, context);
+
+                context.Flush();
             }
+
 
             return instance;
         }
@@ -122,7 +123,7 @@ namespace DeepCopy
             var instance = (T?)RuntimeHelpers.GetUninitializedObject(typeof(T?));
 #endif
 
-            _CopyNullableValueType(source, ref instance, new(ObjectReferencesCache.Default));
+            _CopyNullableValueType(source, ref instance, new());
 
             return instance;
         }
@@ -224,7 +225,7 @@ namespace DeepCopy
         public static void CopyTo<T>(T source, ref T destination, bool preserveObjectReferences = false)
             where T : struct
         {
-            _CopyValueType(source, ref destination, new(ObjectReferencesCache.Default));
+            _CopyValueType(source, ref destination, new());
         }
 
         /// <summary>
@@ -237,7 +238,7 @@ namespace DeepCopy
         public static void CopyTo<T>(T? source, ref T? destination, bool preserveObjectReferences = false)
             where T : struct
         {
-            _CopyNullableValueType(source, ref destination, new(ObjectReferencesCache.Default));
+            _CopyNullableValueType(source, ref destination, new());
         }
 
         public static void CopyTo<T>(T[] source, T[] destination, bool preserveObjectReferences = false)
@@ -357,7 +358,6 @@ namespace DeepCopy
         }
 
         internal static T _Clone<T>(T source, DeepCopyContext context)
-
         {
 #if DEBUGLOG
             Console.WriteLine($"[{typeof(T).Name}]");
@@ -365,17 +365,35 @@ namespace DeepCopy
             if (source == null) return default;
 
             var type = source.GetType();
-            if (context.Cache.TryGetOrCache(type, source, out T instance)) return instance;
+            //if (context.Cache.TryGetOrCache(type, source, out T instance)) return instance;
+            if (context.EnterScope(context, type, source, out T instance)) return instance;
 
             _CopyTo(type, source, ref instance, context);
 
-            context.Cache.RemoveLatest();
+            context.ExitScope();
 
             return instance;
         }
 
-        private static T _CloneAs<T>(T source, DeepCopyContext context)
+        internal static T _CloneAs<T>(T source, DeepCopyContext context)
 
+        {
+#if DEBUGLOG
+            Console.WriteLine($"[{typeof(T).Name}]");
+#endif
+            if (source == null) return default;
+
+            //if (context.Cache.TryGetOrCache(typeof(T), source, out T instance)) return instance;
+            if (context.EnterScope(context, typeof(T), source, out T instance)) return instance;
+
+            _CopyToAs(source, ref instance, context);
+
+            context.ExitScope();
+
+            return instance;
+        }
+
+        internal static T _CloneLeaf<T>(T source, DeepCopyContext context)
         {
 #if DEBUGLOG
             Console.WriteLine($"[{typeof(T).Name}]");
@@ -387,7 +405,6 @@ namespace DeepCopy
             _CopyToAs(source, ref instance, context);
 
             context.Cache.RemoveLatest();
-
             return instance;
         }
 
@@ -459,9 +476,9 @@ namespace DeepCopy
             }
             else
             {
-                context.Cache.Add(source, instance);
+                context.EnterScope(context, source, instance);
                 _CopyTo(type, source, ref instance, context);
-                context.Cache.RemoveLatest();
+                context.ExitScope();
             }
 
             return instance;
@@ -495,9 +512,9 @@ namespace DeepCopy
             }
             else
             {
-                context.Cache.Add(source, instance);
+                context.EnterScope(context, source, instance);
                 _CopyTo(type, source, ref instance, context);
-                context.Cache.RemoveLatest();
+                context.ExitScope();
             }
 
             return instance;
@@ -575,17 +592,9 @@ namespace DeepCopy
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void _CopyValueType<T>(in Type type, in T source, ref T destination, DeepCopyContext context)
         {
-            //if (type == typeof(T))
-            //{
-            //    var cloner = ValueTypeCloneExpressionGenerator<T>.Delegate;
-            //    cloner(source, ref destination, context);
-            //}
-            //else
-            //{
-                var cloner = ValueTypeCloneDelegateGenerator.CreateDelegate(type);
-                cloner(source, out var obj, context);
-                destination = (T)obj;
-            //}
+            var cloner = ValueTypeCloneDelegateGenerator.CreateDelegate(type);
+            cloner(source, out var obj, context);
+            destination = (T)obj;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

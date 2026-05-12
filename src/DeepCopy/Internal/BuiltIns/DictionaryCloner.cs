@@ -19,31 +19,37 @@ namespace DeepCopy.Internal.BuiltIns
 
         static DictionaryCloner()
         {
-            var key = TypeUtils.IsUnmanagedType<TKey>();
-            var value = TypeUtils.IsUnmanagedType<TValue>();
-            var keyType = GetTypeValue(typeof(TKey));
-            var valueType = GetTypeValue(typeof(TValue));
+            var keyType = TypeUtils.IsUnmanagedType<TKey>()
+                ? TypeValue.Value
+                : GetTypeValue(typeof(TKey));
+            var valueType = TypeUtils.IsUnmanagedType<TValue>()
+                ? TypeValue.Value
+                : GetTypeValue(typeof(TValue));
 
-            if (keyType == 2)
+            if (keyType == TypeValue.Array)
                 _arrayKeyCloner = ArrayCloneDelegateGenerator.GetOrCreateDelegate<Func<TKey, DeepCopyContext, TKey>>(typeof(TKey));
-            if (valueType == 2)
+            if (valueType == TypeValue.Array)
                 _arrayValueCloner = ArrayCloneDelegateGenerator.GetOrCreateDelegate<Func<TValue, DeepCopyContext, TValue>>(typeof(TValue));
 
-            _clone ??= (key, value, keyType, valueType) switch
+            _clone ??= (keyType, valueType) switch
             {
-                (true, true, _, _) => CloneValueSemanticsDictionary,
-                (true, false, _, 0) => CloneValueSemanticsKeyDictionary,
-                (true, false, _, 1) => CloneValueSemanticsKeyAndObjectValueDictionary,
-                (true, false, _, 2) => CloneValueSemanticsKeyAndArrayValueDictionary,
-                (false, true, 0, _) => CloneValueSemanticsValueDictionary,
-                (false, true, 1, _) => CloneValueSemanticsValueAndObjectKeyDictionary,
-                (false, true, 2, _) => CloneValueSemanticsValueAndArrayKeyDictionary,
-                (false, false, 1, 0) => CloneObjectKeyDictionary,
-                (false, false, 1, 1) => CloneObjectKeyValueDictionary,
-                (false, false, 1, 2) => CloneObjectKeyArrayValueDictionary,
-                (false, false, 2, 0) => CloneArrayKeyDictionary,
-                (false, false, 2, 1) => CloneArrayKeyObjectValueDictionary,
-                (false, false, 2, 2) => CloneArrayKeyValueDictionary,
+                (TypeValue.Value, TypeValue.Value) => CloneValueSemanticsDictionary,
+                (TypeValue.Value, TypeValue.Default) => CloneValueSemanticsKeyDictionary,
+                (TypeValue.Value, TypeValue.Object) => CloneValueSemanticsKeyAndObjectValueDictionary,
+                (TypeValue.Value, TypeValue.Array) => CloneValueSemanticsKeyAndArrayValueDictionary,
+                (TypeValue.Value, TypeValue.Sealed) => CloneValueSemanticsKeyAndSealedValueDictionary,
+                (TypeValue.Default, TypeValue.Value) => CloneValueSemanticsValueDictionary,
+                (TypeValue.Object, TypeValue.Value) => CloneValueSemanticsValueAndObjectKeyDictionary,
+                (TypeValue.Array, TypeValue.Value) => CloneValueSemanticsValueAndArrayKeyDictionary,
+                (TypeValue.Sealed, TypeValue.Value) => CloneValueSemanticsValueAndSealedKeyDictionary,
+                (TypeValue.Object, TypeValue.Default) => CloneObjectKeyDictionary,
+                (TypeValue.Object, TypeValue.Object) => CloneObjectKeyValueDictionary,
+                (TypeValue.Object, TypeValue.Array) => CloneObjectKeyArrayValueDictionary,
+                (TypeValue.Object, TypeValue.Sealed) => CloneObjectKeySealedValueDictionary,
+                (TypeValue.Array, TypeValue.Default) => CloneArrayKeyDictionary,
+                (TypeValue.Array, TypeValue.Object) => CloneArrayKeyObjectValueDictionary,
+                (TypeValue.Array, TypeValue.Array) => CloneArrayKeyValueDictionary,
+                (TypeValue.Array, TypeValue.Sealed) => CloneArrayKeySealedValueDictionary,
                 _ => CloneDictionary,
             };
         }
@@ -113,6 +119,20 @@ namespace DeepCopy.Internal.BuiltIns
             return dict;
         }
 
+        private static Dictionary<TKey, TValue> CloneValueSemanticsKeyAndSealedValueDictionary(Dictionary<TKey, TValue> source, DeepCopyContext context)
+        {
+#if DEBUGLOG
+            Console.WriteLine($"[{typeof(Dictionary<TKey, TValue>).Name}] | Clone Value");
+#endif
+            var dict = Create(source, context);
+            foreach (var item in source)
+            {
+                dict.Add(item.Key, ObjectCloner._CloneAs<TValue>(item.Value, context));
+            }
+
+            return dict;
+        }
+
         private static Dictionary<TKey, TValue> CloneValueSemanticsValueDictionary(Dictionary<TKey, TValue> source, DeepCopyContext context)
         {
 #if DEBUGLOG
@@ -150,6 +170,20 @@ namespace DeepCopy.Internal.BuiltIns
             foreach (var item in source)
             {
                 dict.Add(_arrayKeyCloner!(item.Key, context), item.Value);
+            }
+
+            return dict;
+        }
+
+        private static Dictionary<TKey, TValue> CloneValueSemanticsValueAndSealedKeyDictionary(Dictionary<TKey, TValue> source, DeepCopyContext context)
+        {
+#if DEBUGLOG
+            Console.WriteLine($"[{typeof(Dictionary<TKey, TValue>).Name}] | Clone ArrayKey");
+#endif
+            var dict = Create(source, context);
+            foreach (var item in source)
+            {
+                dict.Add(ObjectCloner._CloneAs(item.Key, context), item.Value);
             }
 
             return dict;
@@ -198,6 +232,20 @@ namespace DeepCopy.Internal.BuiltIns
             return dict;
         }
 
+        private static Dictionary<TKey, TValue> CloneObjectKeySealedValueDictionary(Dictionary<TKey, TValue> source, DeepCopyContext context)
+        {
+#if DEBUGLOG
+            Console.WriteLine($"[{typeof(Dictionary<TKey, TValue>).Name}] | Clone Both (Object Key / Sealed Value)");
+#endif
+            var dict = Create(source, context);
+            foreach (var item in source)
+            {
+                dict.Add((TKey)ObjectCloner._CloneObject(item.Key, context), (TValue)ObjectCloner._CloneAs(item.Value, context));
+            }
+
+            return dict;
+        }
+
         private static Dictionary<TKey, TValue> CloneArrayKeyDictionary(Dictionary<TKey, TValue> source, DeepCopyContext context)
         {
 #if DEBUGLOG
@@ -240,6 +288,20 @@ namespace DeepCopy.Internal.BuiltIns
             return dict;
         }
 
+        private static Dictionary<TKey, TValue> CloneArrayKeySealedValueDictionary(Dictionary<TKey, TValue> source, DeepCopyContext context)
+        {
+#if DEBUGLOG
+            Console.WriteLine($"[{typeof(Dictionary<TKey, TValue>).Name}] | Clone Both (Array Key/ Sealed Value)");
+#endif
+            var dict = Create(source, context);
+            foreach (var item in source)
+            {
+                dict.Add(_arrayKeyCloner!(item.Key, context), (TValue)ObjectCloner._CloneAs(item.Value, context));
+            }
+
+            return dict;
+        }
+
         private static Dictionary<TKey, TValue> CloneDictionary(Dictionary<TKey, TValue> source, DeepCopyContext context)
         {
 #if DEBUGLOG
@@ -255,12 +317,13 @@ namespace DeepCopy.Internal.BuiltIns
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static uint GetTypeValue(Type type) =>
+        private static TypeValue GetTypeValue(Type type) =>
             type switch
             {
-                _ when type == typeof(object) => 1,
-                _ when type.IsArray => 2,
-                _ => 0
+                _ when type == typeof(object) => TypeValue.Object,
+                _ when type.IsArray => TypeValue.Array,
+                _ when type.IsSealed => TypeValue.Sealed,
+                _ => TypeValue.Default,
             };
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -269,6 +332,15 @@ namespace DeepCopy.Internal.BuiltIns
                 source.Comparer == EqualityComparer<TKey>.Default
                     ? (IEqualityComparer<TKey>)EqualityComparer<TKey>.Default
                     : ObjectCloner._Clone(source.Comparer, context));
+
+        internal enum TypeValue : uint
+        {
+            Default = 0,
+            Object = 1,
+            Array = 2,
+            Sealed = 3,
+            Value = 4,
+        }
     }
 
     internal static class FixedDictionaryCloner

@@ -42,6 +42,9 @@ namespace DeepCopy.Internal.FixedCloners.Core
                 _ when type.IsInterface
                     => ReflectionUtils.InterfaceClone.MakeGenericMethod(type),
 
+                _ when type.IsSealed && TypeUtils.IsAssignableType(type)
+                    => ReflectionUtils.CloneLeaf.MakeGenericMethod(type),
+
                 _ when type.IsSealed
                     => ReflectionUtils.CloneAs.MakeGenericMethod(type),
 

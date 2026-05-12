@@ -38,6 +38,9 @@ namespace DeepCopy.Internal.Utilities
         public static MethodInfo CloneAs { get; } =
             typeof(ObjectCloner).GetMethod("_CloneAs", BindingFlags.Static | BindingFlags.NonPublic);
 
+        public static MethodInfo CloneLeaf { get; } =
+            typeof(ObjectCloner).GetMethod("_CloneLeaf", BindingFlags.Static | BindingFlags.NonPublic);
+
         public static MethodInfo ValueClone { get;  } =
             typeof(ObjectCloner).GetMethod("_CloneValue", BindingFlags.Static | BindingFlags.NonPublic);
 
