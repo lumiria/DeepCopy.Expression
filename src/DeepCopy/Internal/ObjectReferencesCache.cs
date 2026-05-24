@@ -34,6 +34,12 @@ namespace DeepCopy.Internal
             _liteCache = new ObjectCacheDictionary();
         }
 
+        private ObjectReferencesCache(Dictionary<object, object>? cache, ObjectCacheDictionary? liteCache)
+        {
+            _cache = cache;
+            _liteCache = liteCache;
+        }
+
         public static ObjectReferencesCache Default { get; } =
             new ObjectReferencesCache(false);
 
@@ -48,6 +54,9 @@ namespace DeepCopy.Internal
                 _cache!.TryGetValue(source, out instance))
                 
             {
+#if DEBUGLOG
+                Console.WriteLine($"Get: {source} :  {source.GetHashCode()}");
+#endif
                 referenceObject = (T)instance;
                 return true;
             }
@@ -57,11 +66,14 @@ namespace DeepCopy.Internal
         }
 
         public bool TryGetOrCache<T>(Type type, in T source, out T referenceObject)
-    where T : notnull
+            where T : notnull
         {
             if (_liteCache?.TryGetValue(source, out var instance) ??
                 _cache!.TryGetValue(source, out instance))
             {
+#if DEBUGLOG
+                Console.WriteLine($"Get: {source} :  {source.GetHashCode()}");
+#endif
                 referenceObject = (T)instance;
                 return true;
             }
@@ -94,7 +106,10 @@ namespace DeepCopy.Internal
         {
             if (_liteCache == null)
             {
-                _cache!.Add(source, clonedObject);
+                _cache![source] = clonedObject;
+#if DEBUGLOG
+                Console.WriteLine($"Cache: {source} ({_cache!.Count}): {source.GetHashCode()}");
+#endif
                 return;
             }
 
@@ -106,6 +121,11 @@ namespace DeepCopy.Internal
 
         public static ObjectReferencesCache Create(bool canCacheAnything) =>
             new(canCacheAnything);
+
+        internal ObjectReferencesCache Clone() =>
+            new (
+                _cache,
+                _liteCache?.Clone());
 
 
         private sealed class ObjectCacheDictionary
@@ -122,6 +142,9 @@ namespace DeepCopy.Internal
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Add(object key, object value)
             {
+#if DEBUGLOG
+                Console.WriteLine($"Cache: {key} ({_lastIndex+1}): {key.GetHashCode()}");
+#endif
                 if (++_lastIndex >= _items.Length)
                 {
                     var items = new KeyValuePair<object, object>[_items.Length * 2];
@@ -134,6 +157,9 @@ namespace DeepCopy.Internal
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Remove()
             {
+#if DEBUGLOG
+                Console.WriteLine($"Remove ({_lastIndex - 1}): {_items[_lastIndex].Key}: {_items[_lastIndex].Key.GetHashCode()}");
+#endif
                 _lastIndex--;
             }
 
@@ -162,6 +188,13 @@ namespace DeepCopy.Internal
                 value = default!;
                 return false;
             }
+
+            public ObjectCacheDictionary Clone() =>
+                 new ()
+                 {
+                     _items = (KeyValuePair<object, object>[])_items.Clone(),
+                     _lastIndex = _lastIndex,
+                 };
         }
     }
 

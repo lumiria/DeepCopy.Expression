@@ -82,14 +82,18 @@ namespace DeepCopy
 
             if (type.IsValueType)
             {
+                DeepCopyContext context = new(ObjectReferencesCache.Create(preserveObjectReferences));
+
                 if (type == typeof(T))
                 {
-                    _CopyValueType(source, ref instance, new(ObjectReferencesCache.Create(preserveObjectReferences)));
+                    _CopyValueType(source, ref instance, context);
                 }
                 else
                 {
-                    _CopyValueType(type, source, ref instance, new(ObjectReferencesCache.Create(preserveObjectReferences)));
+                    _CopyValueType(type, source, ref instance, context);
                 }
+
+                context.Flush();
             }
             else
             {
@@ -123,7 +127,11 @@ namespace DeepCopy
             var instance = (T?)RuntimeHelpers.GetUninitializedObject(typeof(T?));
 #endif
 
-            _CopyNullableValueType(source, ref instance, new());
+            DeepCopyContext context = new();
+
+            _CopyNullableValueType(source, ref instance, context);
+
+            context.Flush();
 
             return instance;
         }
@@ -137,9 +145,14 @@ namespace DeepCopy
         /// <returns>A new array that is copy of the specified array.</returns>
         public static T[] Clone<T>(T[] source, bool preserveObjectReferences = false)
         {
+            DeepCopyContext context = new(ObjectReferencesCache.Create(preserveObjectReferences));
+
             var cloner = CloneArrayExpressionGenerator<T, T[]>.Delegate;
-            return cloner(source,
-                new(ObjectReferencesCache.Create(preserveObjectReferences)));
+            var instance = cloner(source, context);
+
+            context.Flush();
+
+            return instance;
         }
 
         /// <summary>
@@ -151,9 +164,14 @@ namespace DeepCopy
         /// <returns>A new array that is copy of the specified array.</returns>
         public static T[,] Clone<T>(T[,] source, bool preserveObjectReferences = false)
         {
+            DeepCopyContext context = new(ObjectReferencesCache.Create(preserveObjectReferences));
+
             var cloner = CloneArrayExpressionGenerator<T, T[,]>.Delegate;
-            return cloner(source,
-                new(ObjectReferencesCache.Create(preserveObjectReferences)));
+            var instance = cloner(source, context);
+
+            context.Flush();
+
+            return instance;
         }
 
         /// <summary>
@@ -165,9 +183,14 @@ namespace DeepCopy
         /// <returns>A new array that is copy of the specified array.</returns>
         public static T[,,] Clone<T>(T[,,] source, bool preserveObjectReferences = false)
         {
+            DeepCopyContext context = new(ObjectReferencesCache.Create(preserveObjectReferences));
+
             var cloner = CloneArrayExpressionGenerator<T, T[,,]>.Delegate;
-            return cloner(source,
-                new(ObjectReferencesCache.Create(preserveObjectReferences)));
+            var instance = cloner(source, context);
+
+            context.Flush();
+
+            return instance;
         }
 
         /// <summary>
@@ -179,9 +202,14 @@ namespace DeepCopy
         /// <returns>A new array that is copy of the specified array.</returns>
         public static T[,,,] Clone<T>(T[,,,] source, bool preserveObjectReferences = false)
         {
+            DeepCopyContext context = new(ObjectReferencesCache.Create(preserveObjectReferences));
+
             var cloner = CloneArrayExpressionGenerator<T, T[,,,]>.Delegate;
-            return cloner(source,
-                new(ObjectReferencesCache.Create(preserveObjectReferences)));
+            var instance = cloner(source, context);
+
+            context.Flush();
+
+            return instance;
         }
 
         /// <summary>
@@ -193,9 +221,14 @@ namespace DeepCopy
         /// <returns>A new array that is copy of the specified array.</returns>
         public static T[,,,,] Clone<T>(T[,,,,] source, bool preserveObjectReferences = false)
         {
+            DeepCopyContext context = new(ObjectReferencesCache.Create(preserveObjectReferences));
+
             var cloner = CloneArrayExpressionGenerator<T, T[,,,,]>.Delegate;
-            return cloner(source,
-                new(ObjectReferencesCache.Create(preserveObjectReferences)));
+            var instance = cloner(source, context);
+
+            context.Flush();
+
+            return instance;
         }
 
         /// <summary>
@@ -211,8 +244,11 @@ namespace DeepCopy
 
             ValidateCopyableType(source.GetType());
 
-            _CopyTo(source.GetType(), source, ref destination,
-                new(ObjectReferencesCache.Create(preserveObjectReferences, source, destination)));
+            var context = new DeepCopyContext(ObjectReferencesCache.Create(preserveObjectReferences, source, destination));
+
+            _CopyTo(source.GetType(), source, ref destination, context);
+
+            context.Flush();
         }
 
         /// <summary>
@@ -225,7 +261,11 @@ namespace DeepCopy
         public static void CopyTo<T>(T source, ref T destination, bool preserveObjectReferences = false)
             where T : struct
         {
-            _CopyValueType(source, ref destination, new());
+            DeepCopyContext context = new();
+
+            _CopyValueType(source, ref destination, context);
+
+            context.Flush();
         }
 
         /// <summary>
@@ -238,55 +278,78 @@ namespace DeepCopy
         public static void CopyTo<T>(T? source, ref T? destination, bool preserveObjectReferences = false)
             where T : struct
         {
-            _CopyNullableValueType(source, ref destination, new());
+            DeepCopyContext context = new();
+
+            _CopyNullableValueType(source, ref destination, context);
+
+            context.Flush();
         }
 
         public static void CopyTo<T>(T[] source, T[] destination, bool preserveObjectReferences = false)
         {
             ValidateCopyableArray(source, destination);
 
-            _CopyTo(source, destination,
-                new(ObjectReferencesCache.Create(preserveObjectReferences, source, destination)));
+            DeepCopyContext context = new(ObjectReferencesCache.Create(preserveObjectReferences, source, destination));
+
+            _CopyTo(source, destination, context);
+
+            context.Flush();
         }
 
         public static void CopyTo<T>(T[,] source, T[,] destination, bool preserveObjectReferences = false)
         {
             ValidateCopyableArray(source, destination);
 
+            DeepCopyContext context = new(ObjectReferencesCache.Create(preserveObjectReferences));
+
             var cloner = CloneArrayExpressionGenerator<T, T[,]>.Delegate;
-            var instance = cloner(source,
-                new(ObjectReferencesCache.Create(preserveObjectReferences)));
-            Array.Copy(source, destination, source.Length);
+            var instance = cloner(source, context);
+
+            context.Flush();
+
+            Array.Copy(instance, destination, source.Length);
         }
 
         public static void CopyTo<T>(T[,,] source, T[,,] destination, bool preserveObjectReferences = false)
         {
             ValidateCopyableArray(source, destination);
 
+            DeepCopyContext context = new(ObjectReferencesCache.Create(preserveObjectReferences));
+
             var cloner = CloneArrayExpressionGenerator<T, T[,,]>.Delegate;
-            var instance = cloner(source,
-                new(ObjectReferencesCache.Create(preserveObjectReferences)));
-            Array.Copy(source, destination, source.Length);
+            var instance = cloner(source, context);
+
+            context.Flush();
+
+            Array.Copy(instance, destination, source.Length);
         }
 
         public static void CopyTo<T>(T[,,,] source, T[,,,] destination, bool preserveObjectReferences = false)
         {
             ValidateCopyableArray(source, destination);
 
+            DeepCopyContext context = new(ObjectReferencesCache.Create(preserveObjectReferences));
+
             var cloner = CloneArrayExpressionGenerator<T, T[,,,]>.Delegate;
-            var instance = cloner(source,
-                new(ObjectReferencesCache.Create(preserveObjectReferences)));
-            Array.Copy(source, destination, source.Length);
+            var instance = cloner(source, context);
+
+            context.Flush();
+
+            Array.Copy(instance, destination, source.Length);
         }
 
         public static void CopyTo<T>(T[,,,,] source, T[,,,,] destination, bool preserveObjectReferences = false)
         {
             ValidateCopyableArray(source, destination);
 
+            DeepCopyContext context = new(ObjectReferencesCache.Create(preserveObjectReferences));
+
             var cloner = CloneArrayExpressionGenerator<T, T[,,,,]>.Delegate;
-            var instance = cloner(source,
-                new(ObjectReferencesCache.Create(preserveObjectReferences)));
-            Array.Copy(source, destination, source.Length);
+            var instance = cloner(source, context);
+
+            context.Flush();
+
+            Array.Copy(instance, destination, source.Length);
         }
 
         public static void Cleanup<T>()
@@ -368,9 +431,10 @@ namespace DeepCopy
             //if (context.Cache.TryGetOrCache(type, source, out T instance)) return instance;
             if (context.EnterScope(context, type, source, out T instance)) return instance;
 
+            int queueCount = context.QueueCount;
             _CopyTo(type, source, ref instance, context);
 
-            context.ExitScope();
+            context.ExitScope(queueCount);
 
             return instance;
         }
@@ -386,9 +450,10 @@ namespace DeepCopy
             //if (context.Cache.TryGetOrCache(typeof(T), source, out T instance)) return instance;
             if (context.EnterScope(context, typeof(T), source, out T instance)) return instance;
 
+            int queueCount = context.QueueCount;
             _CopyToAs(source, ref instance, context);
 
-            context.ExitScope();
+            context.ExitScope(queueCount);
 
             return instance;
         }
@@ -476,9 +541,14 @@ namespace DeepCopy
             }
             else
             {
-                context.EnterScope(context, source, instance);
+                if (context.EnterScope(context, type, source, instance))
+                {
+                    return instance;
+                }
+
+                int queueCount = context.QueueCount;
                 _CopyTo(type, source, ref instance, context);
-                context.ExitScope();
+                context.ExitScope(queueCount);
             }
 
             return instance;
@@ -512,9 +582,14 @@ namespace DeepCopy
             }
             else
             {
-                context.EnterScope(context, source, instance);
+                if (context.EnterScope(context, type, source, instance))
+                {
+                    return instance;
+                }
+
+                int queueCount = context.QueueCount;
                 _CopyTo(type, source, ref instance, context);
-                context.ExitScope();
+                context.ExitScope(queueCount);
             }
 
             return instance;

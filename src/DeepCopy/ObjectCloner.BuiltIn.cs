@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Runtime.Serialization;
 using DeepCopy.Internal;
 using DeepCopy.Internal.BuiltIns;
 
@@ -84,7 +85,82 @@ namespace DeepCopy
 #endif
             where TKey : notnull
         {
-            return DictionaryCloner<TKey, TValue>.Clone(source, new (ObjectReferencesCache.Create(preserveObjectReferences)));
+            DeepCopyContext context = new(ObjectReferencesCache.Create(preserveObjectReferences));
+            var instance = DictionaryCloner<TKey, TValue>.Clone(source, context);
+            context.Flush();
+
+            return instance;
+        }
+
+        internal static T CloneKey<T>(T source, DeepCopyContext context)
+            where T : notnull
+        {
+#if DEBUGLOG
+            Console.WriteLine($"[{typeof(T).Name}]");
+#endif
+            var type = source.GetType();
+            if (context.Cache.TryGetOrCache(type, source, out T instance)) return instance;
+
+            context.LockQeueue();
+            _CopyTo(type, source, ref instance, context);
+            context.UnlockQeueue();
+
+            context.Cache.RemoveLatest();
+
+            return instance;
+        }
+
+        internal static object CloneKey(object source, DeepCopyContext context)
+        {
+            var type = source.GetType();
+#if DEBUGLOG
+            Console.WriteLine($"[{typeof(object).Name} >> {type.Name}]");
+#endif
+
+#if NETSTANDARD2_0
+            if (type == typeof(object)) return new object();
+#endif
+            if (type == typeof(string)) return source;
+
+            if (!type.IsValueType && context.Cache.Get(source, out var obj)) return obj;
+
+#if NETSTANDARD2_0
+            var instance = FormatterServices.GetUninitializedObject(type);
+#else
+            var instance = RuntimeHelpers.GetUninitializedObject(type);
+#endif
+
+            context.LockQeueue();
+            if (type.IsValueType)
+            {
+                _CopyValueType(type, source, ref instance, context);
+            }
+            else
+            {
+                context.Cache.Add(source, instance);
+                _CopyTo(type, source, ref instance, context);
+                context.Cache.RemoveLatest();
+            }
+            context.UnlockQeueue();
+
+            return instance;
+        }
+
+        internal static T CloneKeyAs<T>(T source, DeepCopyContext context)
+            where T : notnull
+        {
+#if DEBUGLOG
+            Console.WriteLine($"[{typeof(T).Name}]");
+#endif
+            if (context.Cache.TryGetOrCache(typeof(T), source, out T instance)) return instance;
+
+            context.LockQeueue();
+            _CopyToAs(source, ref instance, context);
+            context.UnlockQeueue();
+
+            context.Cache.RemoveLatest();
+
+            return instance;
         }
     }
 }

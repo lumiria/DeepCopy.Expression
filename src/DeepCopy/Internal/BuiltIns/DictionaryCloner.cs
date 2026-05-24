@@ -141,7 +141,7 @@ namespace DeepCopy.Internal.BuiltIns
             var dict = Create(source, context);
             foreach (var item in source)
             {
-                dict.Add(ObjectCloner._Clone(item.Key, context), item.Value);
+                dict.Add(ObjectCloner.CloneKey(item.Key, context), item.Value);
             }
 
             return dict;
@@ -155,7 +155,7 @@ namespace DeepCopy.Internal.BuiltIns
             var dict = Create(source, context);
             foreach (var item in source)
             {
-                dict.Add((TKey)ObjectCloner._CloneObject(item.Key, context), item.Value);
+                dict.Add((TKey)ObjectCloner.CloneKey((object)item.Key, context), item.Value);
             }
 
             return dict;
@@ -183,7 +183,7 @@ namespace DeepCopy.Internal.BuiltIns
             var dict = Create(source, context);
             foreach (var item in source)
             {
-                dict.Add(ObjectCloner._CloneAs(item.Key, context), item.Value);
+                dict.Add(ObjectCloner.CloneKeyAs(item.Key, context), item.Value);
             }
 
             return dict;
@@ -197,7 +197,7 @@ namespace DeepCopy.Internal.BuiltIns
             var dict = Create(source, context);
             foreach (var item in source)
             {
-                dict.Add((TKey)ObjectCloner._CloneObject(item.Key, context), ObjectCloner._Clone(item.Value, context));
+                dict.Add((TKey)ObjectCloner.CloneKey((object)item.Key, context), ObjectCloner._Clone(item.Value, context));
             }
 
             return dict;
@@ -211,7 +211,7 @@ namespace DeepCopy.Internal.BuiltIns
             var dict = Create(source, context);
             foreach (var item in source)
             {
-                dict.Add((TKey)ObjectCloner._CloneObject(item.Key, context), (TValue)ObjectCloner._CloneObject(item.Value, context));
+                dict.Add((TKey)ObjectCloner.CloneKey((object)item.Key, context), (TValue)ObjectCloner._CloneObject(item.Value, context));
             }
 
             return dict;
@@ -226,7 +226,7 @@ namespace DeepCopy.Internal.BuiltIns
             var dict = Create(source, context);
             foreach (var item in source)
             {
-                dict.Add((TKey)ObjectCloner._CloneObject(item.Key, context), item.Value != null ? _arrayValueCloner!(item.Value, context) : item.Value);
+                dict.Add((TKey)ObjectCloner.CloneKey((object)item.Key, context), item.Value != null ? _arrayValueCloner!(item.Value, context) : item.Value);
             }
 
             return dict;
@@ -240,7 +240,7 @@ namespace DeepCopy.Internal.BuiltIns
             var dict = Create(source, context);
             foreach (var item in source)
             {
-                dict.Add((TKey)ObjectCloner._CloneObject(item.Key, context), (TValue)ObjectCloner._CloneAs(item.Value, context));
+                dict.Add((TKey)ObjectCloner.CloneKey((object)item.Key, context), (TValue)ObjectCloner._CloneAs(item.Value, context));
             }
 
             return dict;
@@ -310,7 +310,7 @@ namespace DeepCopy.Internal.BuiltIns
             var dict = Create(source, context);
             foreach (var item in source)
             {
-                dict.Add(ObjectCloner._Clone(item.Key, context), item.Value != null ? ObjectCloner._Clone(item.Value, context) : item.Value);
+                dict.Add(ObjectCloner.CloneKey(item.Key, context), item.Value != null ? ObjectCloner._Clone(item.Value, context) : item.Value);
             }
 
             return dict;

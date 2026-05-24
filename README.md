@@ -99,10 +99,10 @@ The following example ensures that the cloned object always have unique ID:
 ```csharp
 ObjectCloner.RegisterCustomClone(
     typeof(MyCustomizableObject),
-    (Expression source, Expression destination, Expression cache) =>
+    (Expression source, Expression destination, Expression context) =>
     {
         var fields = CustomCloneHelper.BuildCloneFieldsExpression(
-            source.Type, source, destination, cache, "_id");
+            source.Type, source, destination, context, "_id");
 
         return Expression.Block(
             fields,
@@ -165,6 +165,7 @@ The library has some limitations:
 * It does not copy delegates.
 * Copying immutable collections such as `ImmutableList<T>`, `ImmutableStack<T>`, `ImmutableQueue<T>`, and `ImmutableHashSet<T>` via CopyTo is disabled.
 * `ImmutableHashSet<T>` and `ImmutableSortedSet<T>` objects cannot be copied correctly when they contain self-references.
+* Members deeper than `DeepCopyOptions.MaxRecursionDepth` are processed non-recursively to prevent stack overflows, except for types specified in `DeepCopyOptions.NonCopyableGenericTypes`, which are always processed recursively.
 
 ## License
 This library is under the MIT License.
