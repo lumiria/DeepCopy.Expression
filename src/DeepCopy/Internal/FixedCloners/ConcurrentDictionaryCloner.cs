@@ -14,6 +14,10 @@ namespace DeepCopy.Internal.FixedCloners
             Expression destination,
             Expression context)
         {
+            destination = destination.Type != source.Type
+                ? Expression.Convert(destination, source.Type)
+                : destination;
+
             return Expression.Block(
                 AssignClonedFields(destination, source, context),
                 Clear(destination),

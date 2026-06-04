@@ -42,7 +42,7 @@ namespace DeepCopy.Internal
                 throw new InvalidCloneBuilderException(type, exception);
             }
 
-            return CreateCloneExpressionInner(type, source, destination, context);
+            return CreateCloneExpressionInner(type, source, Expression.Convert(destination, type), context);
         }
 
         internal static Expression CreateCloneExpressionInner<T>(

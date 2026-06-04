@@ -27,7 +27,8 @@ namespace DeepCopy.Internal
 #endif
                 [typeof(HashSet<>)] = HashSetCloner.Build,
                 [typeof(ConcurrentDictionary<,>)] = ConcurrentDictionaryCloner.Build,
-                [typeof(ReadOnlyDictionary<,>)] = ReadOnlyDictionaryCloner.Build
+                [typeof(ReadOnlyDictionary<,>)] = ReadOnlyDictionaryCloner.Build,
+                [typeof(SortedDictionary<,>)] = SortedDictionaryCloner.Build,
             };
         }
 

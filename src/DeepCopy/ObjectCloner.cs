@@ -646,7 +646,9 @@ namespace DeepCopy
             else
             {
                 var cloner = ReferenceTypeCloneDelegateGenerator.CreateDelegate(type);
-                cloner(source, (T)destination, context);
+                object obj = destination;
+                cloner(source, ref obj, context);
+                destination = (T)obj;
             }
         }
 
@@ -661,7 +663,9 @@ namespace DeepCopy
         private static void _CopyToAs<T>(Type type, T source, ref T destination, DeepCopyContext context)
         {
             var cloner = ReferenceTypeCloneDelegateGenerator.CreateDelegate(type);
-            cloner(source, (T)destination, context);
+            object obj = destination;
+            cloner(source, ref obj, context);
+            destination = (T)obj;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

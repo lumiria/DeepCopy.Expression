@@ -8,7 +8,9 @@ namespace DeepCopy.Internal
 {
     internal static class ReferenceTypeCloneDelegateGenerator
     {
-        private static readonly ConcurrentDictionary<Type, Action<object, object, DeepCopyContext>> _caches;
+        public delegate void ReferenceTypeCloneDelegate(object source, ref object destination, DeepCopyContext context);
+
+        private static readonly ConcurrentDictionary<Type, ReferenceTypeCloneDelegate> _caches;
 
         static ReferenceTypeCloneDelegateGenerator()
         {
@@ -21,22 +23,22 @@ namespace DeepCopy.Internal
         public static void Cleanup(Type type) =>
             _caches.TryRemove(type, out _);
 
-        public static Action<object, object, DeepCopyContext> CreateDelegate(Type type) =>
+        public static ReferenceTypeCloneDelegate CreateDelegate(Type type) =>
             _caches.GetOrAdd(type, t => Create(t).Compile());
 
-        private static Expression<Action<object, object, DeepCopyContext>> Create(Type type)
+        private static Expression<ReferenceTypeCloneDelegate> Create(Type type)
         {
             var sourceParameter = Expression.Parameter(typeof(object), "source");
-            var destinationParameter = Expression.Parameter(typeof(object), "destination");
+            var destinationParameter = Expression.Parameter(typeof(object).MakeByRefType(), "destination");
             var contextParameter = Expression.Parameter(typeof(DeepCopyContext), "context");
 
             var body = CoreCloneExpressionGenerator.CreateCloneExpression(
                 type,
                 Expression.Convert(sourceParameter, type),
-                Expression.Convert(destinationParameter, type),
+                destinationParameter,
                 contextParameter);
 
-            return Expression.Lambda<Action<object, object, DeepCopyContext>>(
+            return Expression.Lambda<ReferenceTypeCloneDelegate>(
                 body,
                 sourceParameter, destinationParameter, contextParameter);
         }
