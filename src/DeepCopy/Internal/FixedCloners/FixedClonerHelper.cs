@@ -122,13 +122,17 @@ namespace DeepCopy.Internal.FixedCloners
                 return cloneExpression;
             }
 
-            return Expression.Condition(
-                ExpressionUtils.IsObject(field),
-                Expression.Constant(new object()),
+            return ExpressionUtils.NullTernaryCheck(
+                type,
+                field,
                 Expression.Condition(
-                    ExpressionUtils.IsValueType(field),
-                    field,
-                    cloneExpression
+                    ExpressionUtils.IsObject(field),
+                    Expression.Constant(new object()),
+                    Expression.Condition(
+                        ExpressionUtils.IsValueType(field),
+                        field,
+                        cloneExpression
+                    )
                 )
             );
         }
