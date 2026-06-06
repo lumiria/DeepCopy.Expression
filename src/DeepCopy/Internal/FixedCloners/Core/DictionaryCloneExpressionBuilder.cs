@@ -41,6 +41,8 @@ namespace DeepCopy.Internal.FixedCloners.Core
         static readonly TypeValue _keyType;
         static readonly TypeValue _valueType;
 
+        static readonly Type _comparerType;
+
         static DictionaryCloneExpressionBuilder()
         {
             _keyType = TypeUtils.IsUnmanagedType<TKey>()
@@ -54,6 +56,8 @@ namespace DeepCopy.Internal.FixedCloners.Core
                 _arrayKeyCloner = ArrayCloneDelegateGenerator.GetOrCreateDelegate<Func<TKey, DeepCopyContext, TKey>>(typeof(TKey));
             if (_valueType == TypeValue.Array)
                 _arrayValueCloner = ArrayCloneDelegateGenerator.GetOrCreateDelegate<Func<TValue, DeepCopyContext, TValue>>(typeof(TValue));
+
+            _comparerType =  typeof(TDictionary).GetProperty("Comparer").PropertyType;
 
             _clone ??= (_keyType, _valueType) switch
             {
@@ -91,13 +95,13 @@ namespace DeepCopy.Internal.FixedCloners.Core
             var ctor = type.GetConstructor(new[]
             {
                 typeof(IDictionary<TKey, TValue>),
-                typeof(IComparer<TKey>)
+                _comparerType,
             });
 
             return Expression.New(
                 ctor,
                 source,
-                Expression.Constant(null, typeof(IComparer<TKey>)));
+                Expression.Constant(null, _comparerType));
         }
 
         private static Expression CloneValueSemanticsKeyDictionary(Expression source, Expression context)
@@ -202,12 +206,7 @@ namespace DeepCopy.Internal.FixedCloners.Core
         private static Expression New(Expression source, Expression context)
         {
             var comparer = Expression.Property(source, "Comparer");
-            var defaultComparer = Expression.Convert(
-                Expression.Property(
-                    null,
-                    typeof(Comparer<TKey>),
-                    nameof(Comparer<TKey>.Default)),
-                comparer.Type);
+            var defaultComparer = GetDefaultComparer();
             var cloneMethod = typeof(ObjectCloner)
                 .GetMethod(nameof(ObjectCloner._Clone), BindingFlags.Static | BindingFlags.NonPublic)
                 .MakeGenericMethod(comparer.Type);
@@ -224,13 +223,26 @@ namespace DeepCopy.Internal.FixedCloners.Core
 
             var ctor = typeof(TDictionary).GetConstructor(new[]
             {
-                typeof(IComparer<TKey>)
+                _comparerType,
             });
 
             return Expression.New(
                 ctor,
                 comparerArg);
-        }
+
+            static UnaryExpression GetDefaultComparer() =>
+                Expression.Convert(
+                    _comparerType == typeof(IComparer<TKey>)
+                        ? Expression.Property(
+                            null,
+                            typeof(Comparer<TKey>),
+                            nameof(Comparer<TKey>.Default))
+                        : Expression.Property(
+                            null,
+                            typeof(EqualityComparer<TKey>),
+                            nameof(EqualityComparer<TKey>.Default)),
+                    _comparerType);
+            }
 
         private static Expression BuildCloneKeyExpression(ParameterExpression item, Expression context)
         {

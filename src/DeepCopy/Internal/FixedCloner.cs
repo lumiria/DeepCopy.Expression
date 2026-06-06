@@ -9,6 +9,7 @@ using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using DeepCopy.Internal.FixedCloners;
+using DeepCopy.Internal.FixedCloners.Core;
 
 namespace DeepCopy.Internal
 {
@@ -28,7 +29,10 @@ namespace DeepCopy.Internal
                 [typeof(HashSet<>)] = HashSetCloner.Build,
                 [typeof(ConcurrentDictionary<,>)] = ConcurrentDictionaryCloner.Build,
                 [typeof(ReadOnlyDictionary<,>)] = ReadOnlyDictionaryCloner.Build,
-                [typeof(SortedDictionary<,>)] = SortedDictionaryCloner.Build,
+                [typeof(SortedDictionary<,>)] = DictionaryCloneExpressionBuilder.Build,
+#if NET10_0_OR_GREATER
+                [typeof(OrderedDictionary<,>)] = DictionaryCloneExpressionBuilder.Build,
+#endif
             };
         }
 

@@ -14,7 +14,7 @@ namespace DeepCopy
     /// <param name="desitination"><see cref="Expression"/>  indicating the destination instance.</param>
     /// <param name="context"><see cref="Expression"/> indicating the context of the deep copy process.</param>
     /// <returns>The builded custom clone <see cref="Expression"/>.</returns>
-    public delegate BlockExpression CustomCloneBuilder(
+    public delegate Expression CustomCloneBuilder(
         Expression source, Expression desitination, Expression context);
 
     /// <summary>
