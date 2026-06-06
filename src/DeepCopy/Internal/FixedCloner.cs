@@ -32,6 +32,7 @@ namespace DeepCopy.Internal
                 [typeof(SortedDictionary<,>)] = DictionaryCloneExpressionBuilder.Build,
 #if NET10_0_OR_GREATER
                 [typeof(OrderedDictionary<,>)] = DictionaryCloneExpressionBuilder.Build,
+                [typeof(ImmutableDictionary<,>)] = ImmutableDictinoaryCloner.Build,
 #endif
             };
         }
