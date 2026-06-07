@@ -11,6 +11,28 @@ using DeepCopy.Internal.Utilities;
 
 namespace DeepCopy.Internal.FixedCloners.Core
 {
+    internal static class CoreDictionaryCloneExpressionBuilder
+    {
+        public static Expression Build(
+            Expression source,
+            Expression destination,
+            Expression context)
+        {
+            var dictionaryType = destination.Type;
+            var genericArguments = dictionaryType.GetGenericArguments();
+            var clonerType = typeof(CoreDictionaryCloneExpressionBuilder<,,>)
+                .MakeGenericType([dictionaryType, .. genericArguments]);
+
+            var method = clonerType.GetMethod(
+                nameof(CoreDictionaryCloneExpressionBuilder<,,>.Build),
+                BindingFlags.Public | BindingFlags.Static)!;
+
+            return (Expression)method.Invoke(
+                null,
+                [source, destination, context])!;
+        }
+    }
+
     internal static class CoreDictionaryCloneExpressionBuilder<TDictionary, TKey, TValue>
         where TDictionary : IDictionary<TKey, TValue>
         where TKey : notnull

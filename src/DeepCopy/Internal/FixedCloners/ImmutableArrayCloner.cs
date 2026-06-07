@@ -1,5 +1,6 @@
 ﻿#if NET8_0_OR_GREATER
 #nullable enable
+
 using System;
 using System.Collections.Immutable;
 using System.Linq;

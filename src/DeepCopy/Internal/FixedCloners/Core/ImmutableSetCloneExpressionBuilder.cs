@@ -1,5 +1,6 @@
 ﻿#if NET8_0_OR_GREATER
 #nullable enable
+
 using System;
 using System.Linq;
 using System.Linq.Expressions;
