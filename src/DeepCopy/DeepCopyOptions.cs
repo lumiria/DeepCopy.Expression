@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 #if NET8_0_OR_GREATER
 using System.Collections.Immutable;
+using System.Collections.Frozen;
 #endif
 
 namespace DeepCopy
@@ -18,12 +19,19 @@ namespace DeepCopy
         public static HashSet<Type> NonCopyableGenericTypes { get; } =
 #endif
         [
+            typeof(Dictionary<,>),
+            typeof(SortedDictionary<,>),
 #if NET8_0_OR_GREATER
             typeof(ImmutableList<>),
             typeof(ImmutableStack<>),
             typeof(ImmutableQueue<>),
             typeof(ImmutableHashSet<>),
             typeof(ImmutableSortedSet<>),
+            typeof(ImmutableDictionary<,>),
+            typeof(FrozenDictionary<,>),
+#endif
+#if NET10_0_OR_GREATER
+            typeof(OrderedDictionary<,>),
 #endif
         ];
 

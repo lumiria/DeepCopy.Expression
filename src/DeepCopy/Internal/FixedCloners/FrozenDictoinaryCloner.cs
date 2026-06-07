@@ -1,9 +1,8 @@
-﻿#if NET10_0_OR_GREATER
+﻿#if NET8_0_OR_GREATER
 #nullable enable
 
 using System.Collections.Frozen;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -63,27 +62,8 @@ namespace DeepCopy.Internal.FixedCloners
             return Expression.Block(
                 [dictionary],
                 assignDictionary,
-                CloneDictionary(source, dictionary, context),
+                CoreDictionaryCloneExpressionBuilder.Build(source, dictionary, context),
                 assignDestination);
-        }
-
-        private static Expression CloneDictionary(
-            Expression source,
-            Expression destination,
-            Expression context)
-        {
-            var dictionaryType = destination.Type;
-            var genericArguments = dictionaryType.GetGenericArguments();
-            var clonerType = typeof(CoreDictionaryCloneExpressionBuilder<,,>)
-                .MakeGenericType([dictionaryType, .. genericArguments]);
-
-            var method = clonerType.GetMethod(
-                nameof(CoreDictionaryCloneExpressionBuilder<,,>.Build),
-                BindingFlags.Public | BindingFlags.Static)!;
-
-            return (Expression)method.Invoke(
-                null,
-                [source, destination, context])!;
         }
     }
 }

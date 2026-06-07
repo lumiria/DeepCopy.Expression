@@ -22,19 +22,19 @@ namespace DeepCopy.Internal
         {
             _bag = new()
             {
-#if NET8_0_OR_GREATER
-                [typeof(ImmutableArray<>)] = ImmutableArrayCloner.Build,
-                [typeof(ImmutableHashSet<>)] = ImmutableHashSetCloner.Build,
-                [typeof(ImmutableSortedSet<>)] = ImmutableSortedSetCloner.Build,
-#endif
                 [typeof(HashSet<>)] = HashSetCloner.Build,
                 [typeof(ConcurrentDictionary<,>)] = ConcurrentDictionaryCloner.Build,
                 [typeof(ReadOnlyDictionary<,>)] = ReadOnlyDictionaryCloner.Build,
                 [typeof(SortedDictionary<,>)] = DictionaryCloneExpressionBuilder.Build,
-#if NET10_0_OR_GREATER
-                [typeof(OrderedDictionary<,>)] = DictionaryCloneExpressionBuilder.Build,
+#if NET8_0_OR_GREATER
+                [typeof(ImmutableArray<>)] = ImmutableArrayCloner.Build,
+                [typeof(ImmutableHashSet<>)] = ImmutableHashSetCloner.Build,
+                [typeof(ImmutableSortedSet<>)] = ImmutableSortedSetCloner.Build,
                 [typeof(ImmutableDictionary<,>)] = ImmutableDictinoaryCloner.Build,
                 [typeof(FrozenDictionary<,>)] = FrozenDictinoaryCloner.Build,
+#endif
+#if NET10_0_OR_GREATER
+                [typeof(OrderedDictionary<,>)] = DictionaryCloneExpressionBuilder.Build,
 #endif
             };
         }
