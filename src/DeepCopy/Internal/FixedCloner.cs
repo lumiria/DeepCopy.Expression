@@ -5,6 +5,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 #if NET8_0_OR_GREATER
 using System.Collections.Immutable;
+using System.Collections.Frozen;
 #endif
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
@@ -19,7 +20,7 @@ namespace DeepCopy.Internal
 
         static FixedCloner()
         {
-            _bag = new ()
+            _bag = new()
             {
 #if NET8_0_OR_GREATER
                 [typeof(ImmutableArray<>)] = ImmutableArrayCloner.Build,
@@ -33,6 +34,7 @@ namespace DeepCopy.Internal
 #if NET10_0_OR_GREATER
                 [typeof(OrderedDictionary<,>)] = DictionaryCloneExpressionBuilder.Build,
                 [typeof(ImmutableDictionary<,>)] = ImmutableDictinoaryCloner.Build,
+                [typeof(FrozenDictionary<,>)] = FrozenDictinoaryCloner.Build,
 #endif
             };
         }
@@ -43,8 +45,20 @@ namespace DeepCopy.Internal
         public static bool TryGetBuilder(Type type, [MaybeNullWhen(false)] out CustomCloneBuilder? builder)
 #endif
         {
-            if (type.IsGenericType && _bag.TryGetValue(type.GetGenericTypeDefinition(), out builder))
-                return true;
+            if (type.IsGenericType)
+            {
+                if (_bag.TryGetValue(type.GetGenericTypeDefinition(), out builder))
+                    return true;
+
+#if NET10_0_OR_GREATER
+                if (IsSubclassOfGeneric(type, typeof(FrozenDictionary<,>)))
+                {
+                    builder = FrozenDictinoaryCloner.Build;
+                    return true;
+                }
+#endif
+            }
+
 
             return _bag.TryGetValue(type, out builder);
         }
@@ -52,6 +66,22 @@ namespace DeepCopy.Internal
         public static void Add(Type type, CustomCloneBuilder builder)
         {
             _bag.Add(type, builder);
+        }
+
+        private static bool IsSubclassOfGeneric(Type? type, Type genericType)
+        {
+            while (type != null)
+            {
+                if (type.IsGenericType &&
+                    type.GetGenericTypeDefinition() == genericType)
+                {
+                    return true;
+                }
+
+                type = type.BaseType;
+            }
+
+            return false;
         }
     }
 }

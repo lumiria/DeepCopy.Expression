@@ -40,7 +40,12 @@ namespace DeepCopy.Internal.FixedCloners
             var assignBuilder = Expression.Assign(
                 builder,
                 Expression.Call(
-                    null, createBuilderMethod, keyComparerProperty, valueComparerProperty));
+                    null, createBuilderMethod,
+                    EqualityComparerCloneExpressionBuilder.Build(
+                        genericArguments[0], keyComparerProperty, context),
+                    EqualityComparerCloneExpressionBuilder.Build(
+                        genericArguments[1], valueComparerProperty, context)
+                ));
 
             var toImmuutableMethod = assignBuilder.Type.GetMethod(
                 nameof(ImmutableDictionary<,>.Builder.ToImmutable),
