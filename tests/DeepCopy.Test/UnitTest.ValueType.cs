@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Xml;
 using Xunit;
 
 namespace DeepCopy.Test
@@ -225,6 +226,25 @@ namespace DeepCopy.Test
             cloned.IsStructuralEqual(obj);
         }
 
+        [Fact]
+        public void ValueTypeObjectTest()
+        {
+            var obj = new ValueTypeObject();
+            var cloned = ObjectCloner.Clone(obj);
+
+            cloned.IsNotSameReferenceAs<ValueTypeObject>(obj);
+            cloned.IsStructuralEqual(obj);
+
+            cloned.StructWithRef.Ref.IsNotSameReferenceAs(obj.StructWithRef.Ref);
+            cloned.NullableStructWithRef?.Ref.IsNotSameReferenceAs(obj.NullableStructWithRef?.Ref);
+            cloned.ReadonlyStructWithRef.Ref.IsNotSameReferenceAs(obj.ReadonlyStructWithRef.Ref);
+            cloned.NullableReadonlyStructWithRef?.Ref.IsNotSameReferenceAs(obj.NullableReadonlyStructWithRef?.Ref);
+#if NET8_0_OR_GREATER
+            cloned.RecordStructWithRef.Ref.IsNotSameReferenceAs(obj.RecordStructWithRef.Ref);
+            cloned.NullableRecordStructWithRef?.Ref.IsNotSameReferenceAs(obj.NullableRecordStructWithRef?.Ref);
+#endif
+        }
+
         interface IStructData
         {
 #if NET8_0_OR_GREATER
@@ -243,9 +263,9 @@ namespace DeepCopy.Test
 #else
             public object Value;
 
-            public string Write() =>  "This is StructData";
+            public string Write() => "This is StructData";
 #endif
-            
+
         }
 
         internal enum EnumData
@@ -253,6 +273,177 @@ namespace DeepCopy.Test
             A,
             B,
             C
+        }
+
+        private sealed class ValueTypeObject
+        {
+            private int _intValue;
+
+            private long _longValue;
+
+            private float _floatValue;
+
+            private double _doubleValue;
+
+            private bool _booleanValue;
+
+            private Decimal _decimalValue;
+
+            private DateTime _dateTime;
+
+            private Guid _guid;
+
+            private string _stringValue;
+
+            private TestEnum _enum;
+
+            private StructWithRef _structWithRef;
+
+            private ReadonlyStructWithRef _readonlyStructWithRef;
+
+#if NET8_0_OR_GREATER
+            private RecordStructWithRef _recordStructWithRef;
+#endif
+
+            private int? _nullableIntValue;
+
+            private long? _nullableLongValue;
+
+            private float? _nullableFloatValue;
+
+            private double? _nullableDoubleValue;
+
+            private bool? _nullableBoolValue1;
+
+            private bool? _nullableBoolValue2;
+
+            private Decimal? _nullableDecimalValue1;
+
+            private Decimal? _nullableDecimalValue2;
+
+            private DateTime? _nullableDateTimeValue;
+
+            private Guid? _nullableGuidValue;
+
+#if NET8_0_OR_GREATER
+            private string? _nullableStringValue1;
+
+            private string? _nullableStringValue2;
+#else
+            private string _nullableStringValue1;
+
+            private string _nullableStringValue2;
+#endif
+
+            private TestEnum? _nullableEnum1;
+
+            private TestEnum? _nullableEnum2;
+
+            private StructWithRef? _nullableStructWithRef1;
+
+            private StructWithRef? _nullableStructWithRef2;
+
+            private ReadonlyStructWithRef? _nullableReadonlyStructWithRef1;
+
+            private ReadonlyStructWithRef? _nullableReadonlyStructWithRef2;
+
+#if NET8_0_OR_GREATER
+            private RecordStructWithRef? _nullableRecordStructWithRef1;
+
+            private RecordStructWithRef? _nullableRecordStructWithRef2;
+#endif
+
+            public ValueTypeObject()
+            {
+                var random = new Random(Environment.TickCount);
+
+                _intValue = random.Next();
+                _longValue = random.Next();
+                _floatValue = (float)random.NextDouble();
+                _doubleValue = random.NextDouble();
+                _booleanValue = random.Next(0, 1) == 1;
+                _decimalValue = new Decimal(random.NextDouble());
+                _dateTime = DateTime.Now;
+                _guid = Guid.NewGuid();
+                _stringValue = Guid.NewGuid().ToString();
+                _enum = TestEnum.B;
+                _structWithRef = new StructWithRef(new Node { Value = 1 }, 10);
+                _readonlyStructWithRef = new ReadonlyStructWithRef(new Node { Value = 2 });
+#if NET8_0_OR_GREATER
+                _recordStructWithRef = new RecordStructWithRef(new Node { Value = 3 }, "x");
+#endif
+
+                _nullableIntValue = random.Next();
+                _nullableFloatValue = null;
+                _nullableFloatValue = (float)random.NextDouble();
+                _nullableDoubleValue = null;
+                _nullableBoolValue1 = random.Next(0, 1) == 1;
+                _nullableBoolValue2 = null;
+                _nullableDecimalValue1 = new Decimal(random.NextDouble());
+                _nullableDecimalValue2 = null;
+                _nullableDateTimeValue = DateTime.Now;
+                _nullableGuidValue = null;
+                _nullableStringValue1 = Guid.NewGuid().ToString();
+                _nullableStringValue2 = null;
+                _nullableEnum1 = TestEnum.C;
+                _nullableEnum2 = null;
+                _nullableStructWithRef1 = new StructWithRef(new Node { Value = 4 }, 10);
+                _nullableStructWithRef2 = null;
+                _nullableReadonlyStructWithRef1 = new ReadonlyStructWithRef(new Node { Value = 5 });
+                _nullableReadonlyStructWithRef2 = null;
+#if NET8_0_OR_GREATER
+                _nullableRecordStructWithRef1 = new RecordStructWithRef(new Node { Value = 6 }, "x");
+                _nullableRecordStructWithRef2 = null;
+#endif
+            }
+
+            internal StructWithRef StructWithRef => _structWithRef;
+
+            internal ReadonlyStructWithRef ReadonlyStructWithRef => _readonlyStructWithRef;
+
+#if NET8_0_OR_GREATER
+            internal RecordStructWithRef RecordStructWithRef => _recordStructWithRef;
+#endif
+
+            internal StructWithRef? NullableStructWithRef => _nullableStructWithRef1;
+
+            internal ReadonlyStructWithRef? NullableReadonlyStructWithRef => _nullableReadonlyStructWithRef1;
+
+#if NET8_0_OR_GREATER
+            internal RecordStructWithRef? NullableRecordStructWithRef => _nullableRecordStructWithRef1;
+#endif
+        }
+
+        internal enum TestEnum
+        {
+            A, B, C, D, E
+        }
+
+#if NET8_0_OR_GREATER
+        internal readonly record struct RecordStructWithRef(Node Ref, string Name);
+#endif
+
+        internal readonly struct ReadonlyStructWithRef
+        {
+            public ReadonlyStructWithRef(Node @ref)
+            {
+                Ref = @ref;
+            }
+
+            public Node Ref { get; }
+        }
+
+        internal struct StructWithRef
+        {
+            public StructWithRef(Node @ref, int number)
+            {
+                Ref = @ref;
+                Number = number;
+            }
+
+            public Node Ref { get; set; }
+
+            public int Number { get; set; }
         }
     }
 }

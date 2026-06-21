@@ -292,5 +292,42 @@ namespace DeepCopy.Test
                 }
             }
         }
+
+        internal sealed class Node
+        {
+            public int Value { get; set; }
+
+            override public string ToString() => $"Node({Value}";
+        }
+
+        internal sealed class Graph
+        {
+            public string Name { get; set; } = "";
+
+#if NET8_0_OR_GREATER
+            public Graph? Next { get; set; }
+
+            public Graph? Left { get; set; }
+
+            public Graph? Right { get; set; }
+
+            public Graph? Parent { get; set; }
+
+            public Node? Payload { get; set; }
+
+#else
+            public Graph Next { get; set; }
+
+            public Graph Left { get; set; }
+
+            public Graph Right { get; set; }
+
+            public Graph Parent { get; set; }
+
+            public Node Payload { get; set; }
+#endif
+
+            public List<Graph> Children { get; } = new List<Graph>();
+        }
     }
 }

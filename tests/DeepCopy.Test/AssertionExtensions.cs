@@ -45,7 +45,7 @@ namespace DeepCopy.Test
 
         public static void IsNull<T>(this T @object)
         {
-            Assert.Null(@object); 
+            Assert.Null(@object);
         }
 
         public static void IsTrue(this bool condition)
@@ -55,24 +55,37 @@ namespace DeepCopy.Test
 
         public static void IsStructuralEqual<T>(this T actual, T expected)
         {
+            string? actualJson = null;
+            string? expectedJson = null;
+
             try
             {
-                var actualJson = JsonSerializer.Serialize(actual);
-                var expectedJson = JsonSerializer.Serialize(expected);
+                actualJson = JsonSerializer.Serialize(actual);
+                expectedJson = JsonSerializer.Serialize(expected);
 
+            }
+            catch { };
+
+            if (actualJson != null || expectedJson != null)
+            {
                 if (actualJson != expectedJson)
                 {
                     Assert.Fail($"IsStructuralEqual failed.\nExpected: {expectedJson}\nActual  : {actualJson}");
                 }
                 return;
             }
-            catch { };
 
             var type = typeof(T);
             var fields = GetFields(type, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
             foreach (var field in fields)
             {
-                Assert.Equal(field.GetValue(expected), field.GetValue(actual));
+                if (field.FieldType.IsPrimitive || field.FieldType.IsEnum || field.FieldType == typeof(decimal) || field.FieldType == typeof(string))
+                {
+                    Assert.Equal(field.GetValue(expected), field.GetValue(actual));
+                    return;
+                }
+
+                IsStructuralEqual(field.GetValue(expected), field.GetValue(actual));
             }
         }
 
