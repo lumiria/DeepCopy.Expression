@@ -11,10 +11,10 @@ namespace DeepCopy.Test
         {
             ObjectCloner.RegisterCustomClone(
                 typeof(CustomTestClass),
-                (Expression source, Expression destination, Expression cache) =>
+                (Expression source, Expression destination, Expression context) =>
                 {
                     var fields = CustomCloneHelper.BuildCloneFieldsExpression(
-                        source.Type, source, destination, cache, "_id");
+                        source.Type, source, destination, context, "_id");
 
                     return Expression.Block(
                         fields,

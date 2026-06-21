@@ -22,6 +22,7 @@ namespace DeepCopy.Benchmark.Datas
         private int[] _intArray;
         private List<int> _intList;
         private Dictionary<int, string> _dict;
+        private Dictionary<string, Uri> _dict2;
 
         private Child _child;
         private Child[] _children;
@@ -54,6 +55,8 @@ namespace DeepCopy.Benchmark.Datas
                 .ToList();
             _dict = Enumerable.Range(0, 100)
                 .ToDictionary(x => x, x => random.Next(x).ToString());
+            _dict2 = Enumerable.Range(0, 100)
+                .ToDictionary(x => x.ToString(), x => new Uri($"https://example.com/{x}"));
 
             _child = new Child();
             _children = Enumerable.Range(0, 100)
@@ -91,7 +94,8 @@ namespace DeepCopy.Benchmark.Datas
             instance._intArray = new int[_intArray.Length];
             Buffer.BlockCopy(_intArray, 0, instance._intArray, 0, sizeof(int) * _intArray.Length);
             instance._intList = _intList.ToList();
-            instance._dict = _dict.ToDictionary(x => x.Key, x => x.Value);
+            instance._dict = new Dictionary<int, string>(_dict);
+            instance._dict2 = new Dictionary<string, Uri>(_dict2);
             instance._child = _child.DeepCopy();
             instance._children = new Child[_children.Length];
             for (int i = 0; i < Children.Length; ++i)
@@ -119,6 +123,7 @@ namespace DeepCopy.Benchmark.Datas
             ^ _intArray.GetHashCode()
             ^ _intList.GetHashCode()
             ^ _dict.GetHashCode()
+            ^ _dict2.GetHashCode()
             ^ _child.GetHashCode()
             ^ _children.GetHashCode()
             ^ _readonlyIntValue.GetHashCode()
@@ -146,6 +151,7 @@ namespace DeepCopy.Benchmark.Datas
                 && _child.Equals(other._child)
                 && _children.SequenceEqual(other._children)
                 && _dict.StructuralEquals(other._dict)
+                && _dict2.StructuralEquals(other._dict2)
                 && _readonlyIntValue == other._readonlyIntValue
                 && DoublePropertyValue == other.DoublePropertyValue;
         }

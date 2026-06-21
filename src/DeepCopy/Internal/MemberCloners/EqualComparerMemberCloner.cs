@@ -28,8 +28,8 @@ namespace DeepCopy.Internal.MemberCloners
                 Expression value,
                 Expression destination,
                 MemberInfo member,
-                Expression cache) =>
-                Build(interfaceType, memberType, value, destination, member, cache);
+                Expression context) =>
+                Build(interfaceType, memberType, value, destination, member, context);
             return true;
         }
 
@@ -39,7 +39,7 @@ namespace DeepCopy.Internal.MemberCloners
             Expression value,
             Expression destination,
             MemberInfo member,
-            Expression cache)
+            Expression context)
         {
             var equalityComparerType = typeof(EqualityComparer<>).MakeGenericType(interfaceType.GetGenericArguments()[0]);
             var defaultComparer = Expression.Convert(
@@ -60,7 +60,7 @@ namespace DeepCopy.Internal.MemberCloners
                     value,
                     destination,
                     member,
-                    cache)
+                    context)
             );
         }
     }

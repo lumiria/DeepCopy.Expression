@@ -1,108 +1,127 @@
 # DeepCopy.Expression
-DeepCopy.Expression is a library that allows you to create deep copies of objects using expression trees. A deep copy is a copy that duplicates not only the object itself, but also the objects it references. Expression trees are data structures that represent code as a tree expressions.
 
-## Install
+[![Nuget](https://img.shields.io/nuget/v/DeepCopy.Expression.svg?logo-nuget)](https://www.nuget.org/packages/DeepCopy.Expression/)
+
+[![Nuget Downloads](https://img.shields.io/nuget/dt/DeepCopy.Expression.svg)](https://www.nuget.org/packages/DeepCopy.Expression/)
+
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
+`DeepCopy.Expression` is a high-performance deep copy library for .NET.
+It generates clone logic with expression trees and cashes compiled delegates for repreated use.
+
+A deep copy duplicates not only the object itself, but also the objects it references.
+An Expression Tree is a data structure that represents code as a tree of expressions.
+
+## Features
+- Deep copy for classes, structs, nullable structs, and anonymous types
+- Array clone APIs for `T[]`, `T[,]`, `T[,,]`, `T[,,,]`, `T[,,,,]` and non-generic `Array`
+- Supports deep cloning of polymorphic object hierarchies, including abstract classes and interfaces
+- Handles circular references and self-referencing object graphs
+- Supports cloning deeply nested object graphs such as `LinkedList<T>`.
+- Optional reference-preserving mode (`preserveObjectReferences` parameter) for shared object graphs
+- Member-level copy control with `[Cloneable]`, [`CopyMember]` attributes and `CopyPolicy` parameter.
+- Custom clone logic registration for each type
+- Warm-up and cache lifecycle APIs: `Compile<T>` and `Cleanup<T>` methods
+
+## Installation
 To install the library, you can use the following command in the Package Manager Console
 
 ~~~
 PM > Install-Package DeepCopy.Expression
 ~~~
 
-## Quick start
-To use the library, you can create a class that represents your object and call the ObjectCloner.Clone method to create a deep copy of it. For example:
+## Supported Target Frameworks
+- `net10.0`
+- `netstandard2.0`
+
+## Quick Start
+To create a deep copy of an object, call the `ObjectCloner.Clone` method:
 
 ```csharp
-class MyObject
+var source = new User
 {
-    public MyObject(int id)
-    {
-        Id = id;
-    }
+    Id = 1,
+    Name = "John Doe",
+    Tags = new List<string> { "admin", "reviewer" }
+};
 
-    public int Id { get; }
-    public string Name { get; set; }
-    public List<int> List { get; set; }
-}
-
-class Program
-{
-    static void Main(string[] args)
-    {
-        var obj = new MyObject(1)
-        {
-            Name = "Hoge",
-            List = new List<int> { 10, 20, 30 }
-        };
-        
-        var cloned = ObjectCloner.Clone(obj);
-    }
-}
+var cloned = ObjectCloner.Clone(source);
 ```
 
-The library also supports anonymous types, which are types that are inferred from the data you assign to them. For example:
+Anonymous types are also supported:
 
 ```csharp
-class Program
+var source = new
 {
-    static void Main(string[] args)
-    {
-        var obj = new
-        {
-            Id = 1,
-            Name = "Hoge",
-            List = new List<int> { 10, 20, 30 }
-        };
-        
-        var cloned = ObjectCloner.Clone(obj);
-    }
-}
+    Id = 1,
+    Name = "John Doe",
+    Tags = ["admin", "reviewer"]
+};
+
+var cloned = ObjectCloner.Clone(source);
 ```
 
-You can customize the copy behavior of your classes by using the [Cloneable] attribute and the [CopyMember] attribute. The [Cloneable] attribute marks a class as cloneable and the [CopyMember] attribute marks a field or a property as a member to be copied. You can also specify a copy policy for each member, which determines how the member is copied. For example:
+## Preserving Shared References
+
+By default, objects are deep-cloned without preserving shared references to maximize performance.
+If the object graph contains shared nodes and reference identity must be preserved, pass `true`:
+
+```csharp
+var cloned = ObjectCloner.Clone(source, preserveObjectReferences: true);
+```
+
+## Attribute-Based Member Control
+
+Default behavior (without `[Cloneable]`:
+- All instance fields are copied, including private fields.
+- Event backing fields are excluded
+
+Opt-in behavior (with `[Cloneable]`):
+- Only members marked with `[CopyMember]` are copied
+- A `CopyPolicy` can be specified for each member
 
 ```csharp
 [Cloneable]
-class MyObject
+public sealed class Settings
 {
-    public MyObject(int id)
-    {
-        Id = id;
-    }
-
     [CopyMember]
-    public int Id { get; }
-    public string Name { get; set; }
-    [CopyMember(CopyPolicy.ShallowCopy)]
-    public List<int> List { get; set; }
-}
+    private readonly string _id = Guid.NewGuid().ToString();
 
-class Program
-{
-    static void Main(string[] args)
-    {
-        var obj = new MyObject(1)
-        {
-            Name = "Hoge",
-            List = new List<int> { 10, 20, 30 }
-        };
-        
-        var cloned = ObjectCloner.Clone(obj);
-    }
+    [CopyMember(CopyPolicy.DeepCopy)]
+    public List<string> Values { get; set; } = new ();
+
+    [CopyMember(CopyPolicy.Assign)]
+    public IServiceProvider ServiceProvider { get; set; } = default!;
 }
 ```
 
-## Custom clone
-From Ver1.5.0, it is now possible to pre-register customized clone processing for each type using the `ObjectCloner.RegisterCustomClone` method.
+## Copy Policy
+The following copy policies are available:
 
-The following example ensures that the cloned object always have unique ID:
+- `Default`: Uses the default behavior for the member type. Value types are assigned, reference types are deep-copied, arrays are cloned, and delegates are assigned.
+- `DeepCopy`: Performs a deep copy of the member regardless of its type.
+- `ShallowCopy`: Performs a shallow copy of the member regardless of its type. A shallow copy duplicates only the object itself and not the objects it references.
+- `Assign`: Copies the member as-is regardless of its type. For reference types, no new instance is created and the original reference is shared.
+
+|                |  ValueType | Class /<br>Struct (contains references) | Array (Value Type) | Array (Class) | Delegate |
+|----------------|:----------:|:---------------:|:----------------:|:------------:|:--------:|
+|     **Default**|     Assign |        DeepCopy |            Clone |     DeepCopy |   Assign |
+|    **DeepCopy**|     Assign |        DeepCopy |         DeepCopy |     DeepCopy |   Assign |
+| **ShallowCopy**|     Assign | MemberwiseClone |            Clone |        Clone |   Assign |
+|      **Assign**|     Assign |          Assign |           Assign |       Assign |   Assign |
+
+## Custom Clone Registration
+Starting with version 1.5.0, custom clone logic can be registered for specific types using the `ObjectCloner.RegisterCustomClone` method.
+
+The following example ensures that cloned object recieves a new unique ID:
 
 ```csharp
 ObjectCloner.RegisterCustomClone(
     typeof(MyCustomizableObject),
-    (Expression source, Expression destination, Expression cache) =>
+    (source, destination, context) =>
     {
         var fields = CustomCloneHelper.BuildCloneFieldsExpression(
-            source.Type, source, destination, cache, "_id");
+            source.Type, source, destination, context, "_id");
 
         return Expression.Block(
             fields,
@@ -110,42 +129,7 @@ ObjectCloner.RegisterCustomClone(
                 destination, "_id", Guid.NewGuid())
         );
     });
-
-var orignal = new MyCustomizableObject("Foo");
-var cloned = ObjectCloner.Clone(instance);
-
-Debug.Assert(clined.Id != orignal.Id);
-
-
-public sealed class MyCustomizableObject
-{
-    private Guid _id;
-
-    public MyCustomizableObject(string name)
-    {
-        _id = Guid.NewGuid();
-        Name = name;
-    }
-
-    public Guid Id => _id;
-    public string Name { get; }
-}
 ```
-
-## Copy policy
-The available copy policies are:
-
-- Default: The default policy for the type of the member. For value types, it performs an assignment, For reference tytpes, it performs a deep copy. For arrays, it performs a clone. For delegates, it performs an assignment.
-- DeepCopy: Performs a deep copy of the member regardless of its type.
-- ShallowCopy: Performs a shallow copy of the member regardless of its type. Shallow copy is a copy that duplicates only object itself, but not the objects it references.
-- Assign: Performs an assignment to the member regardless of its type.
-
-|                |  ValueType | Class /<br>Struct with reference| Array(ValueType) | Array(Class) | Delegate |
-|----------------|:----------:|:---------------:|:----------------:|:------------:|:--------:|
-|     **Default**|     Assign |        DeepCopy |            Clone |     DeepCopy |   Assgin |
-|    **DeepCopy**|     Assign |        DeepCopy |         DeepCopy |     DeepCopy |   Assgin |
-| **ShallowCopy**|     Assgin | MemberwiseClone |            Clone |        Clone |   Assgin |
-|      **Assign**|     Assgin |          Assgin |           Assgin |       Assgin |   Assgin |
 
 ## Performance
 This is a benchmark of [TestObject](https://github.com/lumiria/DeepCopy.Expression/blob/master/tests/DeepCopy.Test/TestObject.cs)'s deep clone.
@@ -162,8 +146,10 @@ The performance of the library is comparable to the code that is specially imple
 ## Limitations
 The library has some limitations:
 
-* It does not copy delegates.
-* ~~It does not support direct array specification.~~ (Supported in ver1.3.0)
+* Delegates are not copied and are shared between the source and cloned objects.
+* `CopyTo` is disabled for immutable collections such as `ImmutableList<T>`, `ImmutableStack<T>`, `ImmutableQueue<T>`, and `ImmutableHashSet<T>`.
+* `ImmutableHashSet<T>` and `ImmutableSortedSet<T>` cannot be cloned correctly when they contain self-references.
+* To prevent stack overflows, members deeper than `DeepCopyOptions.MaxRecursionDepth` are processed interatively, except for types specified in `DeepCopyOptions.NonCopyableGenericTypes`, which are always processed recursively.
 
 ## License
 This library is under the MIT License.

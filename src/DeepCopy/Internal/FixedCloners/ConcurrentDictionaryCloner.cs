@@ -12,16 +12,20 @@ namespace DeepCopy.Internal.FixedCloners
         public static BlockExpression Build(
             Expression source,
             Expression destination,
-            Expression cache)
+            Expression context)
         {
+            destination = destination.Type != source.Type
+                ? Expression.Convert(destination, source.Type)
+                : destination;
+
             return Expression.Block(
-                AssignClonedFields(destination, source, cache),
+                AssignClonedFields(destination, source, context),
                 Clear(destination),
-                LoopBuckets(destination, source, cache)
+                LoopBuckets(destination, source, context)
             );
         }
 
-        private static BlockExpression AssignClonedFields(Expression destination, Expression source, Expression cache)
+        private static BlockExpression AssignClonedFields(Expression destination, Expression source, Expression context)
         {
 #if NETSTANDARD2_0
             string[] fields = [
@@ -41,7 +45,7 @@ namespace DeepCopy.Internal.FixedCloners
 #endif
 
             return FixedClonerHelper.AssignClonedFields(
-                destination, fields, source, cache);
+                destination, fields, source, context);
         }
 
         private static MethodCallExpression Clear(Expression destination)
@@ -51,7 +55,7 @@ namespace DeepCopy.Internal.FixedCloners
                 destination.Type.GetMethod("Clear")!);
         }
 
-        private static BlockExpression LoopBuckets(Expression destination, Expression source, Expression cache)
+        private static BlockExpression LoopBuckets(Expression destination, Expression source, Expression context)
         {
 #if NETSTANDARD2_0
             var tableFieldName = "m_tables";
@@ -82,7 +86,7 @@ namespace DeepCopy.Internal.FixedCloners
                             Expression.GreaterThanOrEqual(i, length),
                             Expression.Break(endLoop)
                         ),
-                        LoopNode(destination, bucket, cache),
+                        LoopNode(destination, bucket, context),
                         Expression.PreIncrementAssign(i)
                     ),
                     endLoop
@@ -90,7 +94,7 @@ namespace DeepCopy.Internal.FixedCloners
             );
         }
 
-        private static BlockExpression LoopNode(Expression destination, Expression bucket, Expression cache)
+        private static BlockExpression LoopNode(Expression destination, Expression bucket, Expression context)
         {
 #if NETSTANDARD2_0
             var nextFieldName = "m_next";
@@ -121,7 +125,7 @@ namespace DeepCopy.Internal.FixedCloners
                             Expression.Equal(current, @null),
                             Expression.Break(endLoop)
                         ),
-                        Add(destination, current, cache),
+                        Add(destination, current, context),
                         Expression.Assign(current, next)
                     ),
                     endLoop
@@ -129,7 +133,7 @@ namespace DeepCopy.Internal.FixedCloners
             );
         }
 
-        private static MethodCallExpression Add(Expression destination, Expression node, Expression cache)
+        private static MethodCallExpression Add(Expression destination, Expression node, Expression context)
         {
 #if NETSTANDARD2_0
             var keyFieldName = "m_key";
@@ -142,11 +146,11 @@ namespace DeepCopy.Internal.FixedCloners
             var key = FixedClonerHelper.GetClonedField(
                 node.Type.GetField(keyFieldName, privateBindingFlags)!,
                 node,
-                cache);
+                context);
             var value = FixedClonerHelper.GetClonedField(
                 node.Type.GetField(valueFieldName, privateBindingFlags)!,
                 node,
-                cache);
+                context);
 
             var addMethod = destination.Type.GetMethod("TryAdd")!;
             return Expression.Call(

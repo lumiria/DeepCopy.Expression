@@ -12,10 +12,10 @@ namespace DeepCopy
     /// </summary>
     /// <param name="source"><see cref="Expression"/> indicating the source instance.</param>
     /// <param name="desitination"><see cref="Expression"/>  indicating the destination instance.</param>
-    /// <param name="cache"><see cref="Expression"/>  indicating the reference caches.</param>
+    /// <param name="context"><see cref="Expression"/> indicating the context of the deep copy process.</param>
     /// <returns>The builded custom clone <see cref="Expression"/>.</returns>
-    public delegate BlockExpression CustomCloneBuilder(
-        Expression source, Expression desitination, Expression cache);
+    public delegate Expression CustomCloneBuilder(
+        Expression source, Expression desitination, Expression context);
 
     /// <summary>
     /// Provides a helper for building custom clones.
@@ -28,14 +28,14 @@ namespace DeepCopy
         /// <param name="type">Indicates the <see cref="Type"/> of the target object.</param>
         /// <param name="source"><see cref="Expression"/> indicating the source instance.</param>
         /// <param name="desitination"><see cref="Expression"/>  indicating the destination instance.</param>
-        /// <param name="cache"><see cref="Expression"/>  indicating the reference caches.</param>
+        /// <param name="context"><see cref="Expression"/> indicating the context of the deep copy process.</param>
         /// <param name="ignoreFields">Indicates the field names to exclude from the clone target.</param>
         /// <returns>The built <see cref="Expression"/> for cloning fields.</returns>
         public static Expression BuildCloneFieldsExpression(
-            Type type, Expression source, Expression destination, Expression cache,
+            Type type, Expression source, Expression destination, Expression context,
             params string[] ignoreFields
         ) => CoreCloneExpressionGenerator.CreateCloneExpressionInner(
-            type, source, destination, cache, ignoreFields);
+            type, source, destination, context, ignoreFields);
 
         /// <summary>
         /// Builds an <see cref="Expression"/> to assign value for specified field.

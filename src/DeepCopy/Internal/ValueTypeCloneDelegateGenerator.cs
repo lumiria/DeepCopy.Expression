@@ -7,10 +7,10 @@ namespace DeepCopy.Internal
 {
     internal static class ValueTypeCloneExpressionGenerator<T>
     {
-        public delegate void ValueTypeCloneDelegate(in T source, ref T destination, ObjectReferencesCache cache);
+        public delegate void ValueTypeCloneDelegate(in T source, ref T destination, DeepCopyContext context);
 
         private static readonly Type _type;
-        private static ValueTypeCloneDelegate _delegate;
+        private static readonly ValueTypeCloneDelegate _delegate;
 
         static ValueTypeCloneExpressionGenerator()
         {
@@ -18,11 +18,14 @@ namespace DeepCopy.Internal
             _delegate = ValueTypeCloneExpressionGeneratorHelper.Create<T>(_type).Compile();
         }
 
-        public static void Cleanup() =>
-            _delegate = null;
+        public static void Cleanup()
+        {
+            var field = typeof(ValueTypeCloneExpressionGenerator<T>).GetField(nameof(_delegate),
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            field.SetValue(null, null);
+        }
 
-        public static ValueTypeCloneDelegate CreateDelegate() =>
-            _delegate ??= ValueTypeCloneExpressionGeneratorHelper.Create<T>(_type).Compile();
+        public static ValueTypeCloneDelegate Delegate => _delegate;
     }
 
     file static class ValueTypeCloneExpressionGeneratorHelper
@@ -32,7 +35,7 @@ namespace DeepCopy.Internal
             var refType = type.MakeByRefType();
             var sourceParameter = Expression.Parameter(refType, "source");
             var destinationParameter = Expression.Parameter(refType, "destination");
-            var cacheParameter = Expression.Parameter(typeof(ObjectReferencesCache), "cache");
+            var contextParameter = Expression.Parameter(typeof(DeepCopyContext), "context");
 
             var body = TypeUtils.IsAssignableType(type)
                 ? Expression.Assign(destinationParameter, sourceParameter)
@@ -48,17 +51,26 @@ namespace DeepCopy.Internal
                                     Expression.MakeMemberAccess(
                                         sourceParameter,
                                         sourceParameter.Type.GetField("value", BindingFlags.Instance | BindingFlags.NonPublic)),
-                                    cacheParameter),
+                                    contextParameter),
                                 type
                             )
                         )
                     )
-                    : CoreCloneExpressionGenerator.CreateCloneExpression<T>(
-                        sourceParameter, destinationParameter, cacheParameter);
+                    : TypeUtils.IsReadOnlyStruct(type)
+                        ? FixedCloner.TryGetBuilder(type, out var builder)
+                            ? builder(sourceParameter, destinationParameter, contextParameter)
+                            : DeepCopyOptions.ReadOnlyStructBehavior switch {
+                                DeepCopyOptions.CopyBehavior.TryClone => CoreCloneExpressionGenerator.CreateCloneExpression<T>(
+                                    sourceParameter, destinationParameter, contextParameter),
+                                DeepCopyOptions.CopyBehavior.ShallowCopy => Expression.Assign(destinationParameter, sourceParameter),
+                                _ => Expression.Empty()
+                            }
+                        : CoreCloneExpressionGenerator.CreateCloneExpression<T>(
+                            sourceParameter, destinationParameter, contextParameter);
 
             return Expression.Lambda<ValueTypeCloneExpressionGenerator<T>.ValueTypeCloneDelegate> (
                 body,
-                sourceParameter, destinationParameter, cacheParameter);
+                sourceParameter, destinationParameter, contextParameter);
         }
     }
 }

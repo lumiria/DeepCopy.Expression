@@ -29,8 +29,17 @@ namespace DeepCopy.Internal.Utilities
         public static MethodInfo IsValueType { get; } =
             typeof(TypeUtils).GetMethod("IsValueType", BindingFlags.Static | BindingFlags.Public);
 
+        public static PropertyInfo IsArray { get; } =
+            typeof(Type).GetProperty(nameof(Type.IsArray));
+
         public static MethodInfo ObjectClone { get; } =
             typeof(ObjectCloner).GetMethod("_Clone", BindingFlags.Static | BindingFlags.NonPublic);
+
+        public static MethodInfo CloneAs { get; } =
+            typeof(ObjectCloner).GetMethod("_CloneAs", BindingFlags.Static | BindingFlags.NonPublic);
+
+        public static MethodInfo CloneLeaf { get; } =
+            typeof(ObjectCloner).GetMethod("_CloneLeaf", BindingFlags.Static | BindingFlags.NonPublic);
 
         public static MethodInfo ValueClone { get;  } =
             typeof(ObjectCloner).GetMethod("_CloneValue", BindingFlags.Static | BindingFlags.NonPublic);
@@ -43,5 +52,8 @@ namespace DeepCopy.Internal.Utilities
 
         public static MethodInfo ObjectTypeClone { get; } =
             typeof(ObjectCloner).GetMethod("_CloneObject", BindingFlags.Static | BindingFlags.NonPublic);
+
+        public static MethodInfo ArrayClone { get; } =
+            typeof(ObjectCloner).GetMethod("_CloneArray", BindingFlags.Static | BindingFlags.NonPublic);
     }
 }

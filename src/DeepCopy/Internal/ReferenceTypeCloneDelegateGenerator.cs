@@ -5,8 +5,10 @@ namespace DeepCopy.Internal
 {
     internal static class ReferenceTypeCloneDelegateGenerator<T>
     {
+        public delegate void ReferenceTypeCloneDelegate(T source, ref T destination, DeepCopyContext context);
+
         private static readonly Type _type;
-        private static Action<T, T, ObjectReferencesCache> _delegate;
+        private static readonly ReferenceTypeCloneDelegate _delegate;
 
         static ReferenceTypeCloneDelegateGenerator()
         {
@@ -14,27 +16,30 @@ namespace DeepCopy.Internal
             _delegate = ReferenceTypeCloneDelegateGeneratorHelper.Create<T>(_type).Compile();
         }
 
-        public static void Cleanup() =>
-           _delegate = null;
+        public static void Cleanup()
+        {
+            var field = typeof(ReferenceTypeCloneDelegateGenerator<T>).GetField(nameof(_delegate),
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            field.SetValue(null, null);
+        }
 
-        public static Action<T, T, ObjectReferencesCache> CreateDelegate() =>
-            _delegate ??= ReferenceTypeCloneDelegateGeneratorHelper.Create<T>(_type).Compile();
+        public static ReferenceTypeCloneDelegate Delegate => _delegate;
     }
 
     file static class ReferenceTypeCloneDelegateGeneratorHelper
     {
-        public static Expression<Action<T, T, ObjectReferencesCache>> Create<T>(Type type)
+        public static Expression<ReferenceTypeCloneDelegateGenerator<T>.ReferenceTypeCloneDelegate> Create<T>(Type type)
         {
             var sourceParameter = Expression.Parameter(type, "source");
-            var destinationParameter = Expression.Parameter(type, "destination");
-            var cacheParameter = Expression.Parameter(typeof(ObjectReferencesCache), "cache");
+            var destinationParameter = Expression.Parameter(type.MakeByRefType(), "destination");
+            var contextParameter = Expression.Parameter(typeof(DeepCopyContext), "context");
 
             var body = CoreCloneExpressionGenerator.CreateCloneExpression<T>(
-                sourceParameter, destinationParameter, cacheParameter);
+                sourceParameter, destinationParameter, contextParameter);
 
-            return Expression.Lambda<Action<T, T, ObjectReferencesCache>>(
+            return Expression.Lambda<ReferenceTypeCloneDelegateGenerator<T>.ReferenceTypeCloneDelegate >(
                 body,
-                sourceParameter, destinationParameter, cacheParameter);
+                sourceParameter, destinationParameter, contextParameter);
         }
     }
 }

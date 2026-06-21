@@ -9,13 +9,13 @@ namespace DeepCopy.Internal.FixedCloners
         public static BlockExpression Build(
             Expression source,
             Expression destination,
-            Expression cache)
+            Expression context)
         {
             var expression = CoreCloneExpressionGenerator.CreateCloneExpressionInner(
                 destination.Type,
                 source,
                 destination,
-                cache,
+                context,
 #if NETSTANDARD2_0
                 "m_keys", "m_values"
 #else

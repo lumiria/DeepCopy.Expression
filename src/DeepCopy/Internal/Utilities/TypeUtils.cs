@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace DeepCopy.Internal.Utilities
 {
@@ -27,6 +28,32 @@ namespace DeepCopy.Internal.Utilities
 
         public static bool IsAssignableType(Type type) =>
             IsAssignableType(type, [typeof(Type)]);
+
+        public static bool IsUnmanagedType<T>() => typeof(T) switch
+        {
+            Type t when t == typeof(string) || t == typeof(decimal) => true,
+#if NETSTANDARD2_0
+            Type t when t.IsPrimitive || t.IsEnum => true,
+            _ => IsAssignableType(typeof(T), [typeof(T)])
+#else
+            _ => !RuntimeHelpers.IsReferenceOrContainsReferences<T>()
+#endif
+        };
+
+        public static bool IsUnmanagedType(Type t) => t switch
+        {
+            _ when t == typeof(string) || t == typeof(decimal) => true,
+            _ when t.IsPrimitive || t.IsEnum => true,
+            _ => IsAssignableType(t, [t])
+        };
+
+        public static bool IsReadOnlyStruct(Type type) =>
+            type.IsValueType && type.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).All(f => f.IsInitOnly)
+#if NETSTANDARD2_0
+            ;
+#else
+            && type.IsDefined(typeof(IsReadOnlyAttribute), false);
+#endif
 
         public static IEnumerable<FieldInfo> GetFields(Type type, BindingFlags bindingFlags)
         {

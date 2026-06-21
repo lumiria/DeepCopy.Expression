@@ -6,32 +6,36 @@ namespace DeepCopy.Internal
     internal static class CloneArrayExpressionGenerator<T, TArray>
     {
         private static readonly Type _type;
-        private static Func<TArray, ObjectReferencesCache, TArray> _delegate;
+        private static readonly Func<TArray, DeepCopyContext, TArray> _delegate;
 
         static CloneArrayExpressionGenerator()
         {
             _type = typeof(TArray);
+            _delegate = Create().Compile();
         }
 
-        public static void Cleanup() =>
-            _delegate = null;
+        public static void Cleanup()
+        {
+            var field = typeof(CloneArrayExpressionGenerator<T, TArray>).GetField(nameof(_delegate),
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            field.SetValue(null, null);
+        }
 
-        public static Func<TArray, ObjectReferencesCache, TArray> CreateDelegate() =>
-            _delegate ??= Create().Compile();
+        public static Func<TArray, DeepCopyContext, TArray> Delegate => _delegate;
 
-        private static Expression<Func<TArray, ObjectReferencesCache, TArray>> Create()
+        private static Expression<Func<TArray, DeepCopyContext, TArray>> Create()
         {
             var sourceParameter = Expression.Parameter(_type, "source");
-            var cacheParameter = Expression.Parameter(typeof(ObjectReferencesCache), "cache");
+            var contextParameter = Expression.Parameter(typeof(DeepCopyContext), "context");
 
-            var body = CreateCloneExpression(sourceParameter, cacheParameter);
+            var body = CreateCloneExpression(sourceParameter, contextParameter);
 
-            return Expression.Lambda<Func<TArray, ObjectReferencesCache, TArray>>(
+            return Expression.Lambda<Func<TArray, DeepCopyContext, TArray>>(
                 body,
-                sourceParameter, cacheParameter);
+                sourceParameter, contextParameter);
         }
 
-        private static Expression CreateCloneExpression(ParameterExpression source, ParameterExpression cache)
+        private static Expression CreateCloneExpression(ParameterExpression source, ParameterExpression context)
         {
             var destination = Expression.Parameter(_type, "destination");
 
@@ -41,7 +45,7 @@ namespace DeepCopy.Internal
                     _type,
                     source,
                     destination,
-                    cache),
+                    context),
                 destination);
         }
     }

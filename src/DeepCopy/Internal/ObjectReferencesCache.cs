@@ -1,30 +1,47 @@
 ﻿#nullable enable
 
 using System;
-using System.Collections;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace DeepCopy.Internal
 {
-    internal sealed class ObjectReferencesCache
+    public sealed class ObjectReferencesCache
     {
-        private readonly bool _canCacheAnything;
-        private readonly IDictionary<object, object> _cache;
-        private static readonly object dummy = new();
+        private readonly Dictionary<object, object>? _cache;
+        private readonly ObjectCacheDictionary? _liteCache;
 
-        private ObjectReferencesCache(object? self,  object? cloned, bool canCacheAnything = true)
+        private ObjectReferencesCache(bool canCacheAnything , object self, object cloned)
         {
-            _canCacheAnything = canCacheAnything;
-            _cache = canCacheAnything
-                ? self != null
-                    ? new ConcurrentDictionary<object, object>(ReferenceEqualityComparer.Instance) { [self] = cloned! }
-                    : new ConcurrentDictionary<object, object>(ReferenceEqualityComparer.Instance)
-                : self != null
-                    ? new ObjectCacheDictionary() { [self] = cloned! }
-                    : new ObjectCacheDictionary();
+            if (canCacheAnything)
+            {
+                _cache = new Dictionary<object, object>(ReferenceEqualityComparer.Instance) { [self] = cloned };
+                return;
+            }
+
+            _liteCache = new ObjectCacheDictionary() { [self] = cloned };
         }
+
+        private ObjectReferencesCache(bool canCacheAnything)
+        {
+            if (canCacheAnything)
+            {
+                _cache = new Dictionary<object, object>(ReferenceEqualityComparer.Instance);
+                return;
+            }
+
+            _liteCache = new ObjectCacheDictionary();
+        }
+
+        private ObjectReferencesCache(Dictionary<object, object>? cache, ObjectCacheDictionary? liteCache)
+        {
+            _cache = cache;
+            _liteCache = liteCache;
+        }
+
+        public static ObjectReferencesCache Default { get; } =
+            new ObjectReferencesCache(false);
 
 #if NETSTANDARD2_0
         public bool Get<T>(in T source, out T? referenceObject)
@@ -33,8 +50,13 @@ namespace DeepCopy.Internal
 #endif
             where T : notnull
         {
-            if (_cache.TryGetValue(source, out var instance))
+            if (_liteCache?.TryGetValue(source, out var instance) ??
+                _cache!.TryGetValue(source, out instance))
+                
             {
+#if DEBUGLOG
+                Console.WriteLine($"Get: {source} :  {source.GetHashCode()}");
+#endif
                 referenceObject = (T)instance;
                 return true;
             }
@@ -43,94 +65,105 @@ namespace DeepCopy.Internal
             return false;
         }
 
+        public bool TryGetOrCache<T>(Type type, in T source, out T referenceObject)
+            where T : notnull
+        {
+            if (_liteCache?.TryGetValue(source, out var instance) ??
+                _cache!.TryGetValue(source, out instance))
+            {
+#if DEBUGLOG
+                Console.WriteLine($"Get: {source} :  {source.GetHashCode()}");
+#endif
+                referenceObject = (T)instance;
+                return true;
+            }
+
+#if NETSTANDARD2_0
+            referenceObject = (T)System.Runtime.Serialization.FormatterServices.GetUninitializedObject(type);
+#else
+            referenceObject = (T)RuntimeHelpers.GetUninitializedObject(type);
+#endif
+            Add(source, referenceObject);
+
+            return false;
+        }
+
         public void RemoveLatest()
         {
-            if (_canCacheAnything) return;
-            _cache.Remove(dummy);
+            _liteCache?.Remove();
+        }
+
+        public void ReplaceLatest<T>(T source, T clonedObject)
+            where T : notnull
+        {
+            if (_liteCache == null) return;
+            _liteCache.Remove();
+            _liteCache.Add(source, clonedObject);
         }
 
         public void Add<T>(T source, T clonedObject)
             where T : notnull
         {
-            _cache[source] = clonedObject;
+            if (_liteCache == null)
+            {
+                _cache![source] = clonedObject;
+#if DEBUGLOG
+                Console.WriteLine($"Cache: {source} ({_cache!.Count}): {source.GetHashCode()}");
+#endif
+                return;
+            }
+
+            _liteCache?.Add(source, clonedObject);
         }
 
-        public static ObjectReferencesCache Create(object? self, object? cloned, bool canCacheAnything) =>
-            new(self, cloned, canCacheAnything);
+        public static ObjectReferencesCache Create(bool canCacheAnything, object self, object cloned) =>
+            new(canCacheAnything, self, cloned);
+
+        public static ObjectReferencesCache Create(bool canCacheAnything) =>
+            new(canCacheAnything);
+
+        internal ObjectReferencesCache Clone() =>
+            new (
+                _cache,
+                _liteCache?.Clone());
 
 
-        private sealed class ObjectCacheDictionary : IDictionary<object, object>
+        private sealed class ObjectCacheDictionary
         {
-            private KeyValuePair<object, object>[] _items = new KeyValuePair<object, object>[4];
+            private KeyValuePair<object, object>[] _items = new KeyValuePair<object, object>[2];
             private int _lastIndex = -1;
 
             public object this[object key]
             {
-                get => throw new NotImplementedException();
                 set => Add(key, value);
             }
 
-            public ICollection<object> Keys => throw new NotImplementedException();
 
-            public ICollection<object> Values => throw new NotImplementedException();
-
-            public int Count => throw new NotImplementedException();
-
-            public bool IsReadOnly => throw new NotImplementedException();
-
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public void Add(object key, object value)
             {
+#if DEBUGLOG
+                Console.WriteLine($"Cache: {key} ({_lastIndex+1}): {key.GetHashCode()}");
+#endif
                 if (++_lastIndex >= _items.Length)
                 {
-                    var items = new KeyValuePair<object, object>[_items.Length + 4];
+                    var items = new KeyValuePair<object, object>[_items.Length * 2];
                     _items.CopyTo(items, 0);
                     _items = items;
                 }
                 _items[_lastIndex] = new KeyValuePair<object, object>(key, value);
             }
 
-            public void Add(KeyValuePair<object, object> item)
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void Remove()
             {
-                Add(item.Key, item.Value);
-            }
-
-            public void Clear()
-            {
-                throw new NotImplementedException();
-            }
-
-            public bool Contains(KeyValuePair<object, object> item)
-            {
-                throw new NotImplementedException();
-            }
-
-            public bool ContainsKey(object key)
-            {
-                throw new NotImplementedException();
-            }
-
-            public void CopyTo(KeyValuePair<object, object>[] array, int arrayIndex)
-            {
-                throw new NotImplementedException();
-            }
-
-            public IEnumerator<KeyValuePair<object, object>> GetEnumerator()
-            {
-                throw new NotImplementedException();
-            }
-
-            public bool Remove(object key)
-            {
+#if DEBUGLOG
+                Console.WriteLine($"Remove ({_lastIndex - 1}): {_items[_lastIndex].Key}: {_items[_lastIndex].Key.GetHashCode()}");
+#endif
                 _lastIndex--;
-                return true;
             }
 
-            public bool Remove(KeyValuePair<object, object> item)
-            {
-                throw new NotImplementedException();
-                //return Remove(item.Key);
-            }
-
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
 #if NETSTANDARD2_0
             public bool TryGetValue(object key, out object value)
             {
@@ -143,24 +176,25 @@ namespace DeepCopy.Internal
 #else
             public bool TryGetValue(object key, [MaybeNullWhen(false)] out object value)
             {
-                //foreach (ref var item in CollectionsMarshal.AsSpan(_list)[..(_lastIndex + 1)])
                 foreach (ref var item in _items.AsSpan(0, _lastIndex + 1))
                 {
 #endif
-                    if (item.Key == key)
+                    if (ReferenceEquals(item.Key, key))
                     {
                         value = item.Value;
                         return true;
                     }
                 }
-                value = null;
+                value = default!;
                 return false;
             }
 
-            IEnumerator IEnumerable.GetEnumerator()
-            {
-                throw new NotImplementedException();
-            }
+            public ObjectCacheDictionary Clone() =>
+                 new ()
+                 {
+                     _items = (KeyValuePair<object, object>[])_items.Clone(),
+                     _lastIndex = _lastIndex,
+                 };
         }
     }
 
