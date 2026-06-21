@@ -17,6 +17,7 @@ An Expression Tree is a data structure that represents code as a tree of express
 - Array clone APIs for `T[]`, `T[,]`, `T[,,]`, `T[,,,]`, `T[,,,,]` and non-generic `Array`
 - Supports deep cloning of polymorphic object hierarchies, including abstract classes and interfaces
 - Handles circular references and self-referencing object graphs
+- Supports cloning deeply nested object graphs such as `LinkedList<T>`.
 - Optional reference-preserving mode (`preserveObjectReferences` parameter) for shared object graphs
 - Member-level copy control with `[Cloneable]`, [`CopyMember]` attributes and `CopyPolicy` parameter.
 - Custom clone logic registration for each type
@@ -99,15 +100,15 @@ The following copy policies are available:
 
 - `Default`: Uses the default behavior for the member type. Value types are assigned, reference types are deep-copied, arrays are cloned, and delegates are assigned.
 - `DeepCopy`: Performs a deep copy of the member regardless of its type.
-- `ShallowCopy`: Performs a shallow copy of the member regardless of its type. A Shallow copy duplicates only the object itself and not the objects it references.
+- `ShallowCopy`: Performs a shallow copy of the member regardless of its type. A shallow copy duplicates only the object itself and not the objects it references.
 - `Assign`: Copies the member as-is regardless of its type. For reference types, no new instance is created and the original reference is shared.
 
-|                |  ValueType | Class /<br>Struct with reference| Array(ValueType) | Array(Class) | Delegate |
+|                |  ValueType | Class /<br>Struct (contains references) | Array (Value Type) | Array (Class) | Delegate |
 |----------------|:----------:|:---------------:|:----------------:|:------------:|:--------:|
-|     **Default**|     Assign |        DeepCopy |            Clone |     DeepCopy |   Assgin |
-|    **DeepCopy**|     Assign |        DeepCopy |         DeepCopy |     DeepCopy |   Assgin |
-| **ShallowCopy**|     Assgin | MemberwiseClone |            Clone |        Clone |   Assgin |
-|      **Assign**|     Assgin |          Assgin |           Assgin |       Assgin |   Assgin |
+|     **Default**|     Assign |        DeepCopy |            Clone |     DeepCopy |   Assign |
+|    **DeepCopy**|     Assign |        DeepCopy |         DeepCopy |     DeepCopy |   Assign |
+| **ShallowCopy**|     Assign | MemberwiseClone |            Clone |        Clone |   Assign |
+|      **Assign**|     Assign |          Assign |           Assign |       Assign |   Assign |
 
 ## Custom Clone Registration
 Starting with version 1.5.0, custom clone logic can be registered for specific types using the `ObjectCloner.RegisterCustomClone` method.
@@ -145,10 +146,10 @@ The performance of the library is comparable to the code that is specially imple
 ## Limitations
 The library has some limitations:
 
-* It does not copy delegates.
-* Copying immutable collections such as `ImmutableList<T>`, `ImmutableStack<T>`, `ImmutableQueue<T>`, and `ImmutableHashSet<T>` via CopyTo is disabled.
-* `ImmutableHashSet<T>` and `ImmutableSortedSet<T>` objects cannot be copied correctly when they contain self-references.
-* Members deeper than `DeepCopyOptions.MaxRecursionDepth` are processed non-recursively to prevent stack overflows, except for types specified in `DeepCopyOptions.NonCopyableGenericTypes`, which are always processed recursively.
+* Delegates are not copied and are shared between the source and cloned objects.
+* `CopyTo` is disabled for immutable collections such as `ImmutableList<T>`, `ImmutableStack<T>`, `ImmutableQueue<T>`, and `ImmutableHashSet<T>`.
+* `ImmutableHashSet<T>` and `ImmutableSortedSet<T>` cannot be cloned correctly when they contain self-references.
+* To prevent stack overflows, members deeper than `DeepCopyOptions.MaxRecursionDepth` are processed interatively, except for types specified in `DeepCopyOptions.NonCopyableGenericTypes`, which are always processed recursively.
 
 ## License
 This library is under the MIT License.
